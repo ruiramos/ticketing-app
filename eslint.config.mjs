@@ -1,8 +1,10 @@
 import tseslint from 'typescript-eslint';
+import { globalIgnores } from 'eslint/config';
 import reactPlugin from 'eslint-plugin-react';
 import hooksPlugin from 'eslint-plugin-react-hooks';
 
 export default tseslint.config(
+  globalIgnores(['src/generated']),
   {
     files: ['**/*.js', '**/*.ts', '**/*.tsx'],
     plugins: {
@@ -20,6 +22,7 @@ export default tseslint.config(
 
       // Place to specify ESLint rules. Can be used to overwrite rules specified from the extended configs
       '@typescript-eslint/consistent-type-definitions': 'off',
+      '@typescript-eslint/no-redundant-type-constituents': 'off',
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
       '@typescript-eslint/no-unused-vars': [

@@ -3,21 +3,66 @@
  *
  * @see https://www.prisma.io/docs/guides/database/seed-database
  */
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const firstPostId = '5c03994c-fc16-47e0-bd02-d218a370a078';
-  await prisma.post.upsert({
+  const id = 'c0cb00ae-fd1a-45ff-985f-38950f605a56';
+  const firstEvent: Prisma.EventCreateInput = {
+    id: id,
+    title: 'Summer fair',
+    text: 'A very summer fair',
+    enabled: true,
+    eventExtras: {
+      createMany: {
+        data: {
+          title: 'Gift the grotto?',
+          price: 5,
+          currency: 'GBP',
+        },
+      },
+    },
+    variants: {
+      createMany: {
+        data: [
+          {
+            title: '10:00am - 10:15am',
+            stock: 10,
+            price: 5,
+            order: 1,
+            currency: 'GBP',
+          },
+          {
+            title: '10:15am - 10:30am',
+            stock: 2,
+            price: 5,
+            order: 2,
+            currency: 'GBP',
+          },
+          {
+            title: '10:30am - 10:45am',
+            stock: 0,
+            price: 5,
+            order: 3,
+            currency: 'GBP',
+          },
+          {
+            title: '10:45am - 11:00am',
+            stock: 10,
+            price: 7.5,
+            order: 4,
+            currency: 'GBP',
+          },
+        ],
+      },
+    },
+  };
+  await prisma.event.upsert({
     where: {
-      id: firstPostId,
+      id: firstEvent.id,
     },
-    create: {
-      id: firstPostId,
-      title: 'First Post',
-      text: 'This is an example post generated from `prisma/seed.ts`',
-    },
+    create: { ...firstEvent },
     update: {},
   });
 }

@@ -8,6 +8,10 @@ import { z } from 'zod';
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   NODE_ENV: z.enum(['development', 'test', 'production']),
+  PAYPAL_CLIENT_ID: z.string(),
+  PAYPAL_CLIENT_SECRET: z.string(),
+  PAYPAL_ENV: z.enum(['Production', 'Sandbox']).optional(),
+  DEPLOYED_URL: z.string().url().optional(),
 });
 
 const _env = envSchema.safeParse(process.env);

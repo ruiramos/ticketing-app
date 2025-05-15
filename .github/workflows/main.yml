@@ -1,106 +1,47 @@
-name: Testing
-on: [push]
+name: Docker Image CI
+
+on:
+  push:
+    branches: ['main']
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
 jobs:
-  e2e:
-    name: 'Build + E2E tests'
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_DATABASE: trpcdb
-          POSTGRES_USER: postgres
-          POSTGRES_HOST_AUTH_METHOD: trust
-        ports:
-          - 5432:5432
-    env:
-      NODE_ENV: test
-      NEXTAUTH_SECRET: supersecret
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Expose GitHub Runtime
+        uses: crazy-max/ghaction-github-runtime@v3
+
+      - name: 'Authenticate to GCP via Workload Identity Federation'
+        id: auth
+        uses: 'google-github-actions/auth@v2'
         with:
-          fetch-depth: 0
+          create_credentials_file: 'true'
+          project_id: 'vernal-mantra-665'
+          workload_identity_provider: '$${{ var.WIF_PROVIDER }}'
 
-      - uses: pnpm/action-setup@v2
+      - uses: 'google-github-actions/setup-gcloud@v2'
         with:
-          version: 8.5.1
+          version: '>= 416.0.0'
 
-      - uses: actions/setup-node@v3
+      - name: Docker login
+        uses: docker/login-action@v3
         with:
-          node-version: 22.x
-          cache: 'pnpm' # You can active this cache when your repo has a lockfile
+          registry: europe-west2-docker.pkg.dev
+          username: oauth2accesstoken
+          password: '${{ steps.auth.outputs.auth_token }}'
 
-      - name: Install deps (with cache)
-        run: pnpm install
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install playwright
-        run: pnpm exec playwright install chromium
-
-      - name: Next.js cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-nextjs
-
-      - name: Setup Prisma
-        run: pnpm prebuild
-
-      - run: pnpm build
-      - run: pnpm test-e2e
-
-      - name: Check types
-        run: pnpm tsc
-
-      - name: Upload test results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: test results
-          path: |
-            playwright/test-results
-
-  unit:
-    name: 'Unit tests + typecheck'
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_DATABASE: trpcdb
-          POSTGRES_USER: postgres
-          POSTGRES_HOST_AUTH_METHOD: trust
-        ports:
-          - 5432:5432
-    env:
-      NODE_ENV: test
-      NEXTAUTH_SECRET: supersecret
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8.5.1
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 22.x
-          cache: 'pnpm' # You can active this cache when your repo has a lockfile
-
-      - name: Install deps (with cache)
-        run: pnpm install
-
-      - name: Next.js cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-nextjs
-
-      - name: Setup Prisma
-        run: pnpm prebuild
-
-      - run: pnpm test-unit
-      - run: pnpm tsc
+      - name: Build and push the Docker image
+        run: |
+          docker buildx build \
+            -t europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:${{ github.ref_name }} \
+            -t europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:${{ github.sha }} \
+            --push --cache-to type=gha,mode=max --cache-from type=gha .

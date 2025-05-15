@@ -1,22 +1,17 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
-test.setTimeout(35e3);
+test.setTimeout(5000);
 
 test('go to /', async ({ page }) => {
   await page.goto('/');
 
-  await page.waitForSelector(`text=Starter`);
+  await page.waitForSelector(`text=Events`);
 });
 
-test('add a post', async ({ page }) => {
-  const nonce = `${Math.random()}`;
-
+test('see an event', async ({ page }) => {
   await page.goto('/');
-  await page.fill(`[name=title]`, nonce);
-  await page.fill(`[name=text]`, nonce);
-  await page.click(`form [type=submit]`);
-  await page.waitForLoadState('networkidle');
-  await page.reload();
-
-  await page.waitForSelector(`text="${nonce}"`);
+  await page.click(`a`);
+  await expect(
+    page.getByRole('heading', { name: 'Summer fair' }),
+  ).toBeVisible();
 });
