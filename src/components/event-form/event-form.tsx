@@ -38,6 +38,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
   const typeId = useId();
   const quantityId = useId();
   const formRef = useRef<HTMLFormElement>(null);
+  const selectTriggerRef = useRef<HTMLButtonElement>(null);
   const createOrderMutation = trpc.order.createOrder.useMutation();
   const captureOrderMutation = trpc.order.captureOrder.useMutation();
 
@@ -59,7 +60,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
     <form
       method="get"
       ref={formRef}
-      className="flex flex-col gap-4 lg:w-1/2 lg:max-w-72"
+      className="flex flex-col gap-4 md:w-1/2 md:max-w-72"
       onSubmit={handleFormSubmit}
     >
       {error ? (
@@ -75,12 +76,19 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
             value={selectedVariant?.id}
             required
             onValueChange={(id) => {
+              if (selectTriggerRef?.current)
+                selectTriggerRef.current.style.borderColor = '';
+
               setSelectedVariant(
                 event.variants.find((v) => v.id === id) ?? null,
               );
             }}
           >
-            <SelectTrigger id={typeId}>
+            <SelectTrigger
+              id={typeId}
+              ref={selectTriggerRef}
+              className={'border invalid:border-red-500'}
+            >
               <SelectValue placeholder="Select your time slot" />
             </SelectTrigger>
             <SelectContent>
@@ -145,6 +153,9 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
               return actions.resolve();
             } else {
               form?.reportValidity();
+              if (selectTriggerRef?.current)
+                selectTriggerRef.current.style.borderColor = 'red';
+
               return actions.reject();
             }
           }}
