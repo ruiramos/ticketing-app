@@ -27,6 +27,9 @@ COPY --from=prod /app/public ./public
 COPY --from=prod /app/.next/standalone ./
 COPY --from=prod /app/.next/static ./.next/static
 
+COPY --from=prod /app/src/scripts ./src/scripts
+
+
 EXPOSE 3000
 ENV PORT=3000
 ENV NODE_ENV=production
