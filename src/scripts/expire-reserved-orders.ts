@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { prisma } from '../server/prisma';
 
 async function doIt() {
+  // TODO this also needs a transaction
   const orders = await prisma.order.findMany({
     where: {
       status: 'RESERVED',

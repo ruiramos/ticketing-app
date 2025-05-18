@@ -201,12 +201,15 @@ export const orderRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
-      try {
-        const { result: capturedOrder } = await ordersController.captureOrder({
-          id: input.id,
-        });
+      let order, capturedOrder, ourOrderId;
 
-        const ourOrderId = capturedOrder.purchaseUnits?.[0].referenceId;
+      // locks our order to confirmed so it doesnt expire and the tickets dont get relased
+      try {
+        ({ result: order } = await ordersController.getOrder({
+          id: input.id,
+        }));
+
+        ourOrderId = order.purchaseUnits?.[0].referenceId;
 
         if (!ourOrderId) {
           throw new Error(
@@ -214,32 +217,30 @@ export const orderRouter = router({
           );
         }
 
-        try {
-          await prisma.order.update({
-            where: {
-              id: ourOrderId,
-            },
-            data: {
-              status: 'CONFIRMED',
-              externalTransactionId:
-                capturedOrder.purchaseUnits?.[0].payments?.captures?.[0].id,
-              customer: (capturedOrder.payer ?? {}) as Prisma.JsonObject,
-            },
-          });
-        } catch (error) {
-          console.warn(
-            `Error during capure: could not update our order ${ourOrderId}, paypal id: ${capturedOrder.id}. Error: ${(error as any).message}`,
-          );
-        }
-
-        return capturedOrder;
-      } catch (error: any) {
-        console.error(error);
-
-        const { result: order } = await ordersController.getOrder({
-          id: input.id,
+        await prisma.order.update({
+          where: {
+            id: ourOrderId,
+            status: 'RESERVED',
+          },
+          data: {
+            status: 'CONFIRMED',
+          },
         });
-        const ourOrderId = order.purchaseUnits?.[0].referenceId;
+      } catch (error) {
+        console.warn(
+          `Error during capure: could not confirm our order. Error: ${(error as any).message}`,
+        );
+        throw new Error('Could not confirm order - order might have expired.');
+      }
+
+      // tries to capture payment
+      try {
+        ({ result: capturedOrder } = await ordersController.captureOrder({
+          id: input.id,
+        }));
+      } catch (error: any) {
+        // if capture fails, release tickets and cancel order
+        console.error(error);
 
         prisma.$transaction(async (tx) => {
           const ourOrder = await tx.order.findUnique({
@@ -273,6 +274,28 @@ export const orderRouter = router({
 
         throw new Error(error.message);
       }
+
+      // update order info after capture
+      try {
+        const ourOrderId = capturedOrder.purchaseUnits?.[0].referenceId;
+
+        await prisma.order.update({
+          where: {
+            id: ourOrderId,
+          },
+          data: {
+            externalTransactionId:
+              capturedOrder.purchaseUnits?.[0].payments?.captures?.[0].id,
+            customer: (capturedOrder.payer ?? {}) as Prisma.JsonObject,
+          },
+        });
+      } catch (e) {
+        console.error(
+          `Could not update customer and transaction details on order: ${(e as any).message}`,
+        );
+      }
+
+      return capturedOrder;
     }),
   byId: publicProcedure
     .input(
