@@ -17,6 +17,10 @@ jobs:
       - name: Expose GitHub Runtime
         uses: crazy-max/ghaction-github-runtime@v3
 
+      - name: Get short commit SHA
+        id: vars
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: 'Authenticate to GCP via Workload Identity Federation'
         id: auth
         uses: 'google-github-actions/auth@v2'
@@ -44,7 +48,7 @@ jobs:
           docker buildx build \
             --build-arg NEXT_PUBLIC_PAYPAL_CLIENT_ID \
             -t europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:${{ github.ref_name }} \
-            -t europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:${{ github.sha }} \
+            -t europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:${{ env.SHORT_SHA }} \
             --push --cache-to type=gha,mode=max --cache-from type=gha .
         env:
           NEXT_PUBLIC_PAYPAL_CLIENT_ID: AWpkJNdY9f7V_3OaLqMa0JkcuxEnsny8WEbXp3nDVU9JEJPeaMCzNA3oPzbkY4kYu-UTYEeOxk2eSOdj
