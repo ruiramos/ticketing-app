@@ -11,8 +11,8 @@ export const DefaultLayout = ({ children }: DefaultLayoutProps) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="h-screen p-6 bg-gray-100">
-        <div className="bg-white p-6">{children}</div>
+      <main className="h-screen p-3 lg:p-6 bg-gray-100">
+        <div className="bg-white p-3 lg:p-6">{children}</div>
       </main>
     </>
   );

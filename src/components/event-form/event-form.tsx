@@ -59,7 +59,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
     <form
       method="get"
       ref={formRef}
-      className="flex flex-col gap-4 lg:w-1/2 max-w-72"
+      className="flex flex-col gap-4 lg:w-1/2 lg:max-w-72"
       onSubmit={handleFormSubmit}
     >
       {error ? (
@@ -133,7 +133,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
           </div>
         ))}
       </div>
-      <div className="text-sm bg-gray-100 rounded p-2 flex justify-between">
+      <div className="text-sm bg-gray-100 rounded p-2 flex justify-between mt-8">
         <span className="font-semibold">Total:</span>{' '}
         <span className="">£{price ?? '-'}</span>
       </div>
