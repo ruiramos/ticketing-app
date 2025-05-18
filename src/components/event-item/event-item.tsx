@@ -11,8 +11,10 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
 
   return (
     <div className="">
-      <h1 className="text-4xl font-bold mt-8 mb-2">{event.title}</h1>
-      <p className="mb-8 text-gray-500">{event.text}</p>
+      <h1 className="text-2xl lg:text-4xl font-bold mt-2 mb-2">
+        {event.title}
+      </h1>
+      <p className="text-sm lg:text-md mb-8 text-gray-500">{event.text}</p>
       {orderResult ? (
         <OrderConfirmation order={orderResult} />
       ) : (

@@ -59,7 +59,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
     <form
       method="get"
       ref={formRef}
-      className="flex flex-col gap-4 w-1/2 max-w-72"
+      className="flex flex-col gap-4 lg:w-1/2 max-w-72"
       onSubmit={handleFormSubmit}
     >
       {error ? (
