@@ -27,6 +27,7 @@ COPY --from=prod /app/public ./public
 COPY --from=prod /app/.next/standalone ./
 COPY --from=prod /app/.next/static ./.next/static
 
+COPY --from=prod /app/tsconfig.json ./tsconfig.json
 COPY --from=prod /app/src/server ./src/server
 COPY --from=prod /app/src/generated ./src/generated
 COPY --from=prod /app/src/scripts ./src/scripts
