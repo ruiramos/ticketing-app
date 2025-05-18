@@ -6,6 +6,8 @@ import {
   Environment,
   LogLevel,
   OrdersController,
+  PaypalExperienceUserAction,
+  PaypalWalletContextShippingPreference,
 } from '@paypal/paypal-server-sdk';
 import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
@@ -18,7 +20,8 @@ const client = new Client({
     oAuthClientSecret: env.PAYPAL_CLIENT_SECRET,
   },
   timeout: 0,
-  environment: (env.PAYPAL_ENV as Environment) ?? Environment.Sandbox,
+  environment:
+    (env.NEXT_PUBLIC_PAYPAL_ENV as Environment) ?? Environment.Sandbox,
   logging: {
     logLevel: LogLevel.Info,
     logRequest: { logBody: true },
@@ -151,6 +154,15 @@ export const orderRouter = router({
       const { result: paypalOrder } = await ordersController.createOrder({
         body: {
           intent: 'CAPTURE' as CheckoutPaymentIntent,
+          paymentSource: {
+            paypal: {
+              experienceContext: {
+                shippingPreference:
+                  PaypalWalletContextShippingPreference.NoShipping,
+                userAction: PaypalExperienceUserAction.PayNow,
+              },
+            },
+          },
           purchaseUnits: [
             {
               items: items,
@@ -220,6 +232,10 @@ export const orderRouter = router({
           );
         }
 
+        const { result: orderDetails } = await ordersController.getOrder({
+          id: capturedOrder.id!,
+        });
+
         return capturedOrder;
       } catch (error: any) {
         console.error(error);
@@ -240,5 +256,17 @@ export const orderRouter = router({
 
         throw new Error(error.message);
       }
+    }),
+  byId: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { result: order } = await ordersController.getOrder({
+        id: input.id,
+      });
+      return order;
     }),
 });

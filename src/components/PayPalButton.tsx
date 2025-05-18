@@ -14,7 +14,11 @@ const PayPalButton: FunctionComponent<PayPalButtonsComponentProps> = (
   const initialOptions: ReactPayPalScriptOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
     currency: 'GBP',
-    components: 'buttons,applepay',
+    components: ['buttons', 'applepay'],
+    commit: true,
+    environment: (process.env.NEXT_PUBLIC_PAYPAL_ENV
+      ? process.env.NEXT_PUBLIC_PAYPAL_ENV.toLowerCase()
+      : 'sandbox') as 'production' | 'sandbox',
     // Add other options as needed
   };
 
