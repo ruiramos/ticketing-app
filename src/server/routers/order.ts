@@ -232,10 +232,6 @@ export const orderRouter = router({
           );
         }
 
-        const { result: orderDetails } = await ordersController.getOrder({
-          id: capturedOrder.id!,
-        });
-
         return capturedOrder;
       } catch (error: any) {
         console.error(error);
@@ -244,14 +240,35 @@ export const orderRouter = router({
           id: input.id,
         });
         const ourOrderId = order.purchaseUnits?.[0].referenceId;
-        await prisma.order.update({
-          where: {
-            id: ourOrderId,
-          },
-          data: {
-            status: 'CANCELLED',
-            error: error.result,
-          },
+
+        prisma.$transaction(async (tx) => {
+          const ourOrder = await tx.order.findUnique({
+            where: { id: ourOrderId },
+          });
+
+          const variantId = ourOrder?.variantId;
+          const quantity = ourOrder?.quantity;
+
+          await tx.variant.update({
+            where: {
+              id: variantId,
+            },
+            data: {
+              stock: {
+                increment: quantity,
+              },
+            },
+          });
+
+          await tx.order.update({
+            where: {
+              id: ourOrderId,
+            },
+            data: {
+              status: 'CANCELLED',
+              error: error.result,
+            },
+          });
         });
 
         throw new Error(error.message);

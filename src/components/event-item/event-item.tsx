@@ -4,13 +4,10 @@ import { Order } from '@paypal/paypal-server-sdk';
 import { trpc, type RouterOutput } from '~/utils/trpc';
 import EventForm from '../event-form/event-form';
 
-import { ORDER_CAPTURE_COMPLETE } from '~/utils/fixtures/order';
-
 type EventByIdOutput = RouterOutput['event']['byId'];
 
 const EventItem = ({ event }: { event: EventByIdOutput }) => {
   const [orderResult, setOrderResult] = useState<Order>();
-  //ORDER_CAPTURE_COMPLETE as Order,
 
   return (
     <div className="">

@@ -179,10 +179,14 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
             }
           }}
           onApprove={async (data) => {
-            const order = await captureOrderMutation.mutateAsync({
-              id: data.orderID,
-            });
-            setOrderResult(order);
+            try {
+              const order = await captureOrderMutation.mutateAsync({
+                id: data.orderID,
+              });
+              setOrderResult(order);
+            } catch {
+              setError('Could not complete your purchase. Please try again.');
+            }
           }}
         />
       </ErrorBoundary>
