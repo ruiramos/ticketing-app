@@ -8,6 +8,8 @@ RUN apt-get update -y && apt-get install -y openssl
 
 FROM base AS prod
 
+ARG NEXT_PUBLIC_PAYPAL_CLIENT_ID
+
 COPY pnpm-*.yaml /app
 RUN pnpm fetch
 
