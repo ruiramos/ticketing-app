@@ -35,7 +35,7 @@ async function doIt() {
           id: order.id,
         },
         data: {
-          status: 'CANCELLED',
+          status: 'EXPIRED',
         },
       }),
     ]);
