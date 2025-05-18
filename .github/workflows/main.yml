@@ -42,6 +42,7 @@ jobs:
       - name: Build and push the Docker image
         run: |
           docker buildx build \
+            --build-arg NEXT_PUBLIC_PAYPAL_CLIENT_ID \
             -t europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:${{ github.ref_name }} \
             -t europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:${{ github.sha }} \
             --push --cache-to type=gha,mode=max --cache-from type=gha .
