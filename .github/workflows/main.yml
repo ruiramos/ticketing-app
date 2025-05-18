@@ -45,3 +45,5 @@ jobs:
             -t europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:${{ github.ref_name }} \
             -t europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:${{ github.sha }} \
             --push --cache-to type=gha,mode=max --cache-from type=gha .
+        env:
+          NEXT_PUBLIC_PAYPAL_CLIENT_ID: AWpkJNdY9f7V_3OaLqMa0JkcuxEnsny8WEbXp3nDVU9JEJPeaMCzNA3oPzbkY4kYu-UTYEeOxk2eSOdj
