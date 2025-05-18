@@ -13,6 +13,7 @@ import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
 import { Order, Prisma } from '@prisma/client';
 import { env } from '../env';
+import { generateMailContent, sendEmail } from '~/utils/email';
 
 const client = new Client({
   clientCredentialsAuthCredentials: {
@@ -293,6 +294,16 @@ export const orderRouter = router({
         console.error(
           `Could not update customer and transaction details on order: ${(e as any).message}`,
         );
+      }
+
+      // send email
+      if (capturedOrder.payer?.emailAddress) {
+        sendEmail({
+          to: capturedOrder.payer?.emailAddress,
+          replyTo: 'info@friendsofhped.com',
+          subject: 'Order Confirmation - FoHPED Summer Fair 2025',
+          content: generateMailContent(order),
+        });
       }
 
       return capturedOrder;

@@ -12,6 +12,7 @@ const envSchema = z.object({
   PAYPAL_CLIENT_SECRET: z.string(),
   NEXT_PUBLIC_PAYPAL_ENV: z.enum(['Production', 'Sandbox']).optional(),
   DEPLOYED_URL: z.string().url().optional(),
+  SENDGRID_API_KEY: z.string(),
 });
 
 const _env = envSchema.safeParse(process.env);
