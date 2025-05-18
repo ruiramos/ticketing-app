@@ -121,6 +121,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
           value={quantity}
           max={EVENT_MAX_TICKETS}
           min={1}
+          className="invalid:border-red-500"
           onChange={(e) => setQuantity(Number(e.target.value))}
         />
       </div>
@@ -153,7 +154,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
               return actions.resolve();
             } else {
               form?.reportValidity();
-              if (selectTriggerRef?.current)
+              if (selectTriggerRef?.current && !selectedVariant)
                 selectTriggerRef.current.style.borderColor = 'red';
 
               return actions.reject();
