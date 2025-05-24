@@ -1,4 +1,4 @@
-import { EventExtras, Variant } from '@prisma/client';
+import { EventExtras, Variant } from '~/generated/prisma/client';
 import { Order } from '@paypal/paypal-server-sdk';
 
 interface EventFormProps {
@@ -28,6 +28,7 @@ import {
 import { trpc } from '~/utils/trpc';
 import { Checkbox } from '../ui/checkbox';
 import { LAST_FEW_STOCK_WARNING, EVENT_MAX_TICKETS } from '~/utils/contants';
+import { Button } from '../ui/button';
 
 const EventForm = ({ event, setOrderResult }: EventFormProps) => {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
@@ -89,7 +90,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
               ref={selectTriggerRef}
               className={'border invalid:border-red-500'}
             >
-              <SelectValue placeholder="Select your time slot" />
+              <SelectValue placeholder="Choose a time slot" />
             </SelectTrigger>
             <SelectContent>
               {event.variants.map((variant) => (
@@ -100,7 +101,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
                   className="data-[disabled]:text-muted-foreground data-[disabled]:cursor-no-drop"
                 >
                   <span className={variant.stock === 0 ? 'line-through' : ''}>
-                    {variant.title}
+                    {variant.title} - £{variant.price}
                   </span>{' '}
                   {!variant.stock ? <>(Sold out)</> : null}
                   {variant.stock && variant.stock <= LAST_FEW_STOCK_WARNING ? (
@@ -114,19 +115,39 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
       </div>
       <div className="">
         <Label htmlFor={quantityId}>Quantity</Label>
-        <Input
-          id={quantityId}
-          placeholder="Number of tickets"
-          type="number"
-          value={quantity}
-          max={EVENT_MAX_TICKETS}
-          min={1}
-          className="invalid:border-red-500"
-          onChange={(e) => setQuantity(Number(e.target.value))}
-        />
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant={'outline'}
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            disabled={quantity <= 1}
+          >
+            -
+          </Button>
+          <Input
+            id={quantityId}
+            placeholder="Number of tickets"
+            type="number"
+            value={quantity}
+            max={EVENT_MAX_TICKETS}
+            min={1}
+            className="invalid:border-red-500 text-center"
+            onChange={(e) => setQuantity(Number(e.target.value))}
+          />
+          <Button
+            type="button"
+            variant={'outline'}
+            onClick={() =>
+              setQuantity(Math.min(EVENT_MAX_TICKETS, quantity + 1))
+            }
+            disabled={quantity >= EVENT_MAX_TICKETS}
+          >
+            +
+          </Button>
+        </div>
       </div>
       <div>
-        {/*<Label className="text-muted-foreground">Event extras:</Label>*/}
+        <Label className="block font-medium text-base mb-2">Add-ons</Label>
         {event.eventExtras.map((e) => (
           <div key={e.id}>
             <EventExtra
@@ -142,9 +163,9 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
           </div>
         ))}
       </div>
-      <div className="text-sm bg-gray-100 rounded p-2 flex justify-between mt-8">
-        <span className="font-semibold">Total:</span>{' '}
-        <span className="">£{price ?? '-'}</span>
+      <div className="bg-gray-100 p-4 rounded">
+        <p className="text-sm text-gray-500">Total</p>
+        <p className="text-xl font-bold">£{price ?? '-'}</p>
       </div>
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
         <PayPalButton
@@ -220,16 +241,16 @@ const EventExtra: React.FC<EventExtraProps> = ({
   value,
 }) => {
   return (
-    <div className="flex align-middle gap-1.5">
+    <div className="flex items-center gap-1.5">
       <Checkbox
         id={`extra-${id}`}
         checked={value}
         onCheckedChange={(checked) => onChange(checked)}
       />{' '}
-      <Label htmlFor={`extra-${id}`}>
+      <Label htmlFor={`extra-${id}`} className="font-normal text-sm">
         {title}{' '}
         {price ? (
-          <span className="text-gray-300 pl-1">
+          <span className="text-gray-400">
             (+{currency} {price})
           </span>
         ) : null}

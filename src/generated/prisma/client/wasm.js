@@ -124,11 +124,14 @@ exports.Prisma.EventScalarFieldEnum = {
   id: 'id',
   title: 'title',
   text: 'text',
+  location: 'location',
+  link: 'link',
   startsAt: 'startsAt',
   endsAt: 'endsAt',
   enabled: 'enabled',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  organizationId: 'organizationId'
 };
 
 exports.Prisma.VariantScalarFieldEnum = {
@@ -137,13 +140,14 @@ exports.Prisma.VariantScalarFieldEnum = {
   stock: 'stock',
   price: 'price',
   currency: 'currency',
-  order: 'order',
+  displayOrder: 'displayOrder',
   eventId: 'eventId'
 };
 
 exports.Prisma.EventExtrasScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  description: 'description',
   price: 'price',
   currency: 'currency',
   multiple: 'multiple',
@@ -165,6 +169,33 @@ exports.Prisma.OrderScalarFieldEnum = {
   error: 'error',
   amount: 'amount',
   currency: 'currency',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId'
+};
+
+exports.Prisma.OrganizationScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  phone: 'phone',
+  address: 'address',
+  city: 'city',
+  postCode: 'postCode',
+  website: 'website',
+  logoUrl: 'logoUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  role: 'role',
+  name: 'name',
+  phone: 'phone',
+  address: 'address',
+  organizationId: 'organizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -209,7 +240,9 @@ exports.Prisma.ModelName = {
   Event: 'Event',
   Variant: 'Variant',
   EventExtras: 'EventExtras',
-  Order: 'Order'
+  Order: 'Order',
+  Organization: 'Organization',
+  User: 'User'
 };
 
 /**

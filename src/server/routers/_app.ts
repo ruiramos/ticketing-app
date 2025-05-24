@@ -4,13 +4,14 @@
 import { createCallerFactory, publicProcedure, router } from '../trpc';
 import { eventRouter } from './event';
 import { orderRouter } from './order';
+import { userRouter } from './user';
 
 export const appRouter = router({
   healthcheck: publicProcedure.query(() => 'yay!'),
 
-  //post: postRouter,
   event: eventRouter,
   order: orderRouter,
+  user: userRouter,
 });
 
 export const createCaller = createCallerFactory(appRouter);

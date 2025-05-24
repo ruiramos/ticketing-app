@@ -3,7 +3,7 @@
  *
  * @see https://www.prisma.io/docs/guides/database/seed-database
  */
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '~/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -17,7 +17,9 @@ async function main() {
     eventExtras: {
       createMany: {
         data: {
-          title: 'Gift the grotto?',
+          title: 'Gift the grotto',
+          description:
+            'Gift a grotto ticket to another child when you buy your entry - available for an extra £5.',
           price: 5,
           currency: 'GBP',
         },
@@ -30,31 +32,57 @@ async function main() {
             title: '10:00am - 10:15am',
             stock: 10,
             price: 5,
-            order: 1,
+            displayOrder: 1,
             currency: 'GBP',
           },
           {
             title: '10:15am - 10:30am',
             stock: 2,
             price: 5,
-            order: 2,
+            displayOrder: 2,
             currency: 'GBP',
           },
           {
             title: '10:30am - 10:45am',
             stock: 0,
             price: 5,
-            order: 3,
+            displayOrder: 3,
             currency: 'GBP',
           },
           {
             title: '10:45am - 11:00am',
             stock: 10,
             price: 7.5,
-            order: 4,
+            displayOrder: 4,
             currency: 'GBP',
           },
         ],
+      },
+    },
+    organization: {
+      create: {
+        name: 'FOHPED',
+        email: 'info@friendsofhped.com',
+        phone: '07712345678',
+        address: 'ferris road',
+        city: 'London',
+        postCode: 'se22 9nd',
+        users: {
+          createMany: {
+            data: [
+              {
+                email: 'fairs@friendsofhped.com',
+                name: 'Vicky',
+                role: 'ADMIN',
+              },
+              {
+                email: 'comms@friendsofhped.com',
+                name: 'Rui',
+                role: 'ADMIN',
+              },
+            ],
+          },
+        },
       },
     },
   };

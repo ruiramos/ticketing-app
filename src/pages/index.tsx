@@ -16,7 +16,7 @@ const IndexPage: NextPageWithLayout = () => {
       {eventsQuery.data?.items.map((event) => (
         <div key={event.id} className="mb-4">
           <h2 className="text-xl">
-            <Link href={`/event/${event.id}`}>{event.title}</Link>
+            <Link href={`/events/${event.id}`}>{event.title}</Link>
           </h2>
           <p>{event.text}</p>
         </div>

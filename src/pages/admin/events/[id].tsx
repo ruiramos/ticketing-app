@@ -1,0 +1,255 @@
+import { useRouter } from 'next/router';
+import { useState } from 'react';
+import { AdminLayout } from '~/components/AdminLayout';
+import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '~/components/ui/table';
+import { Order } from '~/generated/prisma/client';
+import { trpc } from '~/utils/trpc';
+import { Download, Plus, Minus } from 'lucide-react';
+import { Checkbox } from '~/components/ui/checkbox';
+import { Label } from '~/components/ui/label';
+import { Input } from '~/components/ui/input';
+
+const EventAdminPage = () => {
+  const id = useRouter().query.id as string;
+  const [showExpiredOrders, setShowExpiredOrders] = useState(false);
+  const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
+  const { data: event } = trpc.user.getUserEvent.useQuery(
+    { eventId: id },
+    { enabled: !!id },
+  );
+  const { data: orders } = trpc.user.getUserEventOrders.useQuery(
+    { eventId: id },
+    { enabled: !!id },
+  );
+
+  if (!event || !orders) return null;
+
+  const updateQuantity = (orderId: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    setOrderQuantities(prev => ({
+      ...prev,
+      [orderId]: newQuantity
+    }));
+  };
+
+  const getQuantity = (order: Order) => {
+    return orderQuantities[order.id] ?? order.quantity;
+  };
+
+  return (
+    <div>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-semibold inline-block">
+              {event.title}
+            </h1>
+            <Badge variant={'outline'}>
+              <span
+                className="size-1.5 rounded-full bg-emerald-500 mx-0.5"
+                aria-hidden="true"
+              ></span>
+              {event.enabled ? 'Live' : 'Disabled'}
+            </Badge>
+          </div>
+          <p className="text-muted-foreground font-medium text-sm">
+            {event.text}
+          </p>
+          <p className="text-muted-foreground font-medium text-sm">
+            {event.startsAt.toLocaleString()}
+            {event.endsAt ? ` - ${event.endsAt.toLocaleString()}` : ''}
+          </p>
+        </div>
+        <div className="flex flex-col items-end">
+          <Button variant={'outline'}>
+            <Download className="-ms-1 opacity-60" size={16} />
+            <span>Export Orders</span>
+          </Button>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-semibold mt-8 mb-4">Variants</h2>
+
+      <Table className="bg-white">
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Name</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Stock left</TableHead>
+            <TableHead>Confirmed Orders</TableHead>
+            <TableHead>Pending Orders</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {(event.variants || []).map((variant) => (
+            <TableRow key={variant.id}>
+              <TableCell className="font-medium">{variant.title}</TableCell>
+              <TableCell>
+                {variant.currency} {variant.price}
+              </TableCell>
+              <TableCell>{variant.stock}</TableCell>
+              <TableCell>
+                {
+                  variant.orders.filter((order) => order.status === 'CONFIRMED')
+                    .length
+                }
+              </TableCell>
+              <TableCell>
+                {
+                  variant.orders.filter((order) => order.status === 'RESERVED')
+                    .length
+                }
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <div className="flex items-center justify-between mt-8 mb-4">
+        <h2 className="text-xl font-semibold">Orders</h2>
+        <div>
+          <Checkbox
+            id={`show-expired-orders`}
+            checked={showExpiredOrders}
+            onCheckedChange={(checked) => setShowExpiredOrders(!!checked)}
+          />{' '}
+          <Label htmlFor={`show-expired-orders`}>Show expired orders</Label>
+        </div>
+      </div>
+
+      <Table className="bg-white">
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>External ID</TableHead>
+            <TableHead>Transaction ID</TableHead>
+            <TableHead>Variant</TableHead>
+            <TableHead>Quantity</TableHead>
+            <TableHead>Extras</TableHead>
+            <TableHead>Grand Total</TableHead>
+            <TableHead>Customer name</TableHead>
+            <TableHead>Customer email</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {orders
+            .filter((order) => showExpiredOrders || order.status !== 'EXPIRED')
+            .map((order) => (
+              <TableRow
+                key={order.id}
+                className={order.status === 'EXPIRED' ? 'bg-gray-50' : ''}
+              >
+                <TableCell>{order.createdAt.toLocaleString()}</TableCell>
+                <TableCell>{order.status}</TableCell>
+                <TableCell>{order.externalId}</TableCell>
+                <TableCell>{order.externalTransactionId}</TableCell>
+                <TableCell>{order.variant.title}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => updateQuantity(order.id, getQuantity(order) - 1)}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={getQuantity(order)}
+                      onChange={(e) => updateQuantity(order.id, parseInt(e.target.value) || 1)}
+                      className="h-8 w-16 text-center"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => updateQuantity(order.id, getQuantity(order) + 1)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {((order.selectedExtras as any[]) || []).map((extra) => (
+                    <p>
+                      {extra.title} ({extra.quantity})
+                    </p>
+                  ))}
+                </TableCell>
+                <TableCell>{order.amount}</TableCell>
+                <TableCell>
+                  {order.customer?.name?.givenName}{' '}
+                  {order.customer?.name?.surname}
+                </TableCell>
+                <TableCell>{order.customer?.emailAddress}</TableCell>
+              </TableRow>
+            ))}
+        </TableBody>
+      </Table>
+
+      {/* <h3 className="mt-4 font-semibold">Variant info</h3>
+      {event.variants.map((variant) => {
+        return (
+          <div className="mb-4">
+            <p>Name: {variant.title}</p>
+            <p>
+              Price: {variant.currency} {variant.price}
+            </p>
+            <p>Stock left: {variant.stock}</p>
+            {variant.orders.length > 0 && (
+              <VariantOrderTable orders={variant.orders} />
+            )}
+          </div>
+        );
+      })}
+      <h3 className="mt-4 font-semibold">Available extras:</h3>
+      {event.eventExtras.map((extra) => JSON.stringify(extra))} */}
+    </div>
+  );
+};
+
+const VariantOrderTable = ({ orders }: { orders: Order[] }) => {
+  return (
+    <table className="w-full border">
+      <th>
+        <td>Id</td>
+        <td>Status</td>
+        <td>External Id</td>
+        <td>Transaction Id</td>
+        <td>Quantity</td>
+        <td>Items</td>
+        <td>Extras</td>
+        <td>Customer</td>
+      </th>
+      {orders.map((order) => {
+        return (
+          <tr>
+            <td>{order.id}</td>
+            <td>{order.status}</td>
+            <td>{order.externalId}</td>
+            <td>{order.externalTransactionId}</td>
+            <td>{order.quantity}</td>
+            <td>{JSON.stringify(order.items)}</td>
+            <td>{JSON.stringify(order.selectedExtras)}</td>
+            <td>{JSON.stringify(order.customer)}</td>
+          </tr>
+        );
+      })}
+    </table>
+  );
+};
+
+EventAdminPage.getLayout = (page) => <AdminLayout>{page}</AdminLayout>;
+export default EventAdminPage;

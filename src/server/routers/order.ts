@@ -161,6 +161,7 @@ export const orderRouter = router({
                 shippingPreference:
                   PaypalWalletContextShippingPreference.NoShipping,
                 userAction: PaypalExperienceUserAction.PayNow,
+                locale: 'en-GB',
               },
             },
           },

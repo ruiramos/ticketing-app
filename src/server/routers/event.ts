@@ -1,5 +1,5 @@
 import { router, publicProcedure } from '../trpc';
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '~/generated/prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { prisma } from '~/server/prisma';
@@ -12,7 +12,7 @@ const defaultEventSelect = {
   updatedAt: true,
   variants: {
     orderBy: {
-      order: 'asc',
+      displayOrder: 'asc',
     },
   },
   eventExtras: true,
