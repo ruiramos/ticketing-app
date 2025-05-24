@@ -21,7 +21,9 @@ import { Input } from '~/components/ui/input';
 const EventAdminPage = () => {
   const id = useRouter().query.id as string;
   const [showExpiredOrders, setShowExpiredOrders] = useState(false);
-  const [orderQuantities, setOrderQuantities] = useState<Record<string, number>>({});
+  const [orderQuantities, setOrderQuantities] = useState<
+    Record<string, number>
+  >({});
   const { data: event } = trpc.user.getUserEvent.useQuery(
     { eventId: id },
     { enabled: !!id },
@@ -35,9 +37,9 @@ const EventAdminPage = () => {
 
   const updateQuantity = (orderId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
-    setOrderQuantities(prev => ({
+    setOrderQuantities((prev) => ({
       ...prev,
-      [orderId]: newQuantity
+      [orderId]: newQuantity,
     }));
   };
 
@@ -154,33 +156,7 @@ const EventAdminPage = () => {
                 <TableCell>{order.externalId}</TableCell>
                 <TableCell>{order.externalTransactionId}</TableCell>
                 <TableCell>{order.variant.title}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => updateQuantity(order.id, getQuantity(order) - 1)}
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={getQuantity(order)}
-                      onChange={(e) => updateQuantity(order.id, parseInt(e.target.value) || 1)}
-                      className="h-8 w-16 text-center"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => updateQuantity(order.id, getQuantity(order) + 1)}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </TableCell>
+                <TableCell>{order.quantity}</TableCell>
                 <TableCell>
                   {((order.selectedExtras as any[]) || []).map((extra) => (
                     <p>

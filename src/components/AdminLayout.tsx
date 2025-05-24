@@ -17,7 +17,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="bg-gray-100">
+      <main className="min-h-screen bg-gray-100">
         <AdminHeader user={user} />
         <div className="max-w-6xl mx-auto py-12">{children}</div>
       </main>
