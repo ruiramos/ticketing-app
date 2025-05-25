@@ -133,7 +133,13 @@ const EventAdminPage = () => {
             .map((order) => (
               <TableRow
                 key={order.id}
-                className={order.status === 'EXPIRED' ? 'bg-gray-50' : ''}
+                className={
+                  order.status === 'EXPIRED'
+                    ? 'bg-gray-50 hover:bg-gray-100'
+                    : order.status === 'CANCELLED'
+                      ? 'bg-red-50 hover:bg-red-100'
+                      : ''
+                }
               >
                 <TableCell>{order.createdAt.toLocaleString()}</TableCell>
                 <TableCell>{order.status}</TableCell>
