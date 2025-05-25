@@ -108,7 +108,9 @@ const EventAdminPage = () => {
             checked={showExpiredOrders}
             onCheckedChange={(checked) => setShowExpiredOrders(!!checked)}
           />{' '}
-          <Label htmlFor={`show-expired-orders`}>Show expired orders</Label>
+          <Label htmlFor={`show-expired-orders`} className="font-normal">
+            Show expired orders
+          </Label>
         </div>
       </div>
 
@@ -123,6 +125,7 @@ const EventAdminPage = () => {
             <TableHead>Quantity</TableHead>
             <TableHead>Extras</TableHead>
             <TableHead>Grand Total</TableHead>
+            <TableHead>Currency</TableHead>
             <TableHead>Customer name</TableHead>
             <TableHead>Customer email</TableHead>
           </TableRow>
@@ -155,6 +158,7 @@ const EventAdminPage = () => {
                   ))}
                 </TableCell>
                 <TableCell>{order.amount}</TableCell>
+                <TableCell>{order.currency}</TableCell>
                 <TableCell>
                   {(order.customer as any)?.name?.givenName}{' '}
                   {(order.customer as any)?.name?.surname}
