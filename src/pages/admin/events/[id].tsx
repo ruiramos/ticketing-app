@@ -11,19 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table';
-import { Order } from '~/generated/prisma/client';
+
 import { trpc } from '~/utils/trpc';
-import { Download, Plus, Minus } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Checkbox } from '~/components/ui/checkbox';
 import { Label } from '~/components/ui/label';
-import { Input } from '~/components/ui/input';
 
 const EventAdminPage = () => {
   const id = useRouter().query.id as string;
   const [showExpiredOrders, setShowExpiredOrders] = useState(false);
-  const [orderQuantities, setOrderQuantities] = useState<
-    Record<string, number>
-  >({});
   const { data: event } = trpc.user.getUserEvent.useQuery(
     { eventId: id },
     { enabled: !!id },
@@ -34,18 +30,6 @@ const EventAdminPage = () => {
   );
 
   if (!event || !orders) return null;
-
-  const updateQuantity = (orderId: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    setOrderQuantities((prev) => ({
-      ...prev,
-      [orderId]: newQuantity,
-    }));
-  };
-
-  const getQuantity = (order: Order) => {
-    return orderQuantities[order.id] ?? order.quantity;
-  };
 
   return (
     <div>
@@ -166,10 +150,10 @@ const EventAdminPage = () => {
                 </TableCell>
                 <TableCell>{order.amount}</TableCell>
                 <TableCell>
-                  {order.customer?.name?.givenName}{' '}
-                  {order.customer?.name?.surname}
+                  {(order.customer as any)?.name?.givenName}{' '}
+                  {(order.customer as any)?.name?.surname}
                 </TableCell>
-                <TableCell>{order.customer?.emailAddress}</TableCell>
+                <TableCell>{(order.customer as any)?.emailAddress}</TableCell>
               </TableRow>
             ))}
         </TableBody>
@@ -196,36 +180,5 @@ const EventAdminPage = () => {
   );
 };
 
-const VariantOrderTable = ({ orders }: { orders: Order[] }) => {
-  return (
-    <table className="w-full border">
-      <th>
-        <td>Id</td>
-        <td>Status</td>
-        <td>External Id</td>
-        <td>Transaction Id</td>
-        <td>Quantity</td>
-        <td>Items</td>
-        <td>Extras</td>
-        <td>Customer</td>
-      </th>
-      {orders.map((order) => {
-        return (
-          <tr>
-            <td>{order.id}</td>
-            <td>{order.status}</td>
-            <td>{order.externalId}</td>
-            <td>{order.externalTransactionId}</td>
-            <td>{order.quantity}</td>
-            <td>{JSON.stringify(order.items)}</td>
-            <td>{JSON.stringify(order.selectedExtras)}</td>
-            <td>{JSON.stringify(order.customer)}</td>
-          </tr>
-        );
-      })}
-    </table>
-  );
-};
-
-EventAdminPage.getLayout = (page) => <AdminLayout>{page}</AdminLayout>;
+EventAdminPage.getLayout = (page: any) => <AdminLayout>{page}</AdminLayout>;
 export default EventAdminPage;

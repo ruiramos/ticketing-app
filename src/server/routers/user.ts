@@ -2,7 +2,6 @@ import { router, publicProcedure } from '../trpc';
 import type { Prisma } from '~/generated/prisma/client';
 import { z } from 'zod';
 import { prisma } from '~/server/prisma';
-import { TRPCError } from '@trpc/server';
 
 const defaultUserSelect = {
   id: true,

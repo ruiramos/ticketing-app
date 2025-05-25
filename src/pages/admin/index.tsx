@@ -5,7 +5,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -58,5 +57,5 @@ const AdminPage = () => {
   );
 };
 
-AdminPage.getLayout = (page) => <AdminLayout>{page}</AdminLayout>;
+AdminPage.getLayout = (page: any) => <AdminLayout>{page}</AdminLayout>;
 export default AdminPage;
