@@ -10,7 +10,7 @@ type GetUserOutput = RouterOutput['user']['getUser'];
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { data: user } = trpc.user.getUser.useQuery();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   useEffect(() => {
     if (status === 'unauthenticated') {

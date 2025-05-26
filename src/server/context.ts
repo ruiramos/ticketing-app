@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type * as trpcNext from '@trpc/server/adapters/next';
 import { getServerSession, Session } from 'next-auth';
 import { authOptions } from '../pages/api/auth/[...nextauth]';
