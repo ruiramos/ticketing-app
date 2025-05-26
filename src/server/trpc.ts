@@ -8,9 +8,11 @@
  * @see https://trpc.io/docs/v11/procedures
  */
 
-import { initTRPC } from '@trpc/server';
+import { initTRPC, TRPCError } from '@trpc/server';
 import { transformer } from '~/utils/transformer';
 import type { Context } from './context';
+import { z } from 'zod';
+import { prisma } from './prisma';
 
 const t = initTRPC.context<Context>().create({
   /**
@@ -37,6 +39,55 @@ export const router = t.router;
  **/
 export const publicProcedure = t.procedure;
 
+export const authedProcedure = t.procedure.use(async function isAuthed(opts) {
+  const { ctx } = opts;
+
+  if (!ctx?.session?.user) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+
+  return opts.next({
+    ctx: {
+      user: ctx.session.user,
+    },
+  });
+});
+
+export const authedProcedureWithEventId = authedProcedure
+  .input(z.object({ eventId: z.string() }))
+  .use(async function validateEventId(opts) {
+    const { ctx } = opts;
+
+    if (!ctx.user.email) {
+      console.error('Could not get email from user');
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+    }
+
+    const event = await prisma.event.findUnique({
+      where: { id: opts.input.eventId },
+      select: {
+        id: true,
+        organization: { select: { users: { select: { email: true } } } },
+      },
+    });
+
+    if (!event) {
+      throw new TRPCError({ code: 'NOT_FOUND' });
+    }
+
+    if (
+      !event.organization?.users.find((user) => user.email === ctx.user.email)
+    ) {
+      throw new TRPCError({ code: 'FORBIDDEN' });
+    }
+
+    return opts.next({
+      ctx: {
+        user: ctx.user,
+        event: event,
+      },
+    });
+  });
 /**
  * Merge multiple routers together
  * @see https://trpc.io/docs/v11/merging-routers

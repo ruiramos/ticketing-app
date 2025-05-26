@@ -1,6 +1,6 @@
-import { router, publicProcedure } from '../trpc';
+import { router, authedProcedure, authedProcedureWithEventId } from '../trpc';
 import type { Prisma } from '~/generated/prisma/client';
-import { z } from 'zod';
+
 import { prisma } from '~/server/prisma';
 
 const defaultUserSelect = {
@@ -20,19 +20,20 @@ const defaultUserSelect = {
   },
 } satisfies Prisma.UserSelect;
 
-// TODO user login - get from session
-const userEmail = 'comms@friendsofhped.com';
-
 export const userRouter = router({
-  getUser: publicProcedure.query(async () => {
+  getUser: authedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.email) throw new Error('Could not get email from user');
+
     const user = await prisma.user.findFirstOrThrow({
       select: defaultUserSelect,
-      where: { email: userEmail },
+      where: { email: ctx.user.email },
     });
 
     return user;
   }),
-  getUserEvents: publicProcedure.query(async () => {
+  getUserEvents: authedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.email) throw new Error('Could not get email from user');
+
     const user = await prisma.user.findFirstOrThrow({
       select: {
         id: true,
@@ -51,54 +52,50 @@ export const userRouter = router({
           },
         },
       },
-      where: { email: userEmail },
+      where: { email: ctx.user.email },
     });
 
-    return user.organization?.events;
+    return user.organization?.events || [];
   }),
-  getUserEvent: publicProcedure
-    .input(z.object({ eventId: z.string().uuid() }))
-    .query(async ({ input }) => {
-      const event = await prisma.event.findFirstOrThrow({
-        select: {
-          title: true,
-          text: true,
-          location: true,
-          link: true,
-          enabled: true,
-          startsAt: true,
-          endsAt: true,
-          variants: {
-            select: {
-              id: true,
-              title: true,
-              stock: true,
-              price: true,
-              currency: true,
-              displayOrder: true,
-              orders: {
-                select: {
-                  status: true,
-                },
+  getUserEvent: authedProcedureWithEventId.query(async ({ input }) => {
+    const event = await prisma.event.findFirstOrThrow({
+      select: {
+        title: true,
+        text: true,
+        location: true,
+        link: true,
+        enabled: true,
+        startsAt: true,
+        endsAt: true,
+        variants: {
+          select: {
+            id: true,
+            title: true,
+            stock: true,
+            price: true,
+            currency: true,
+            displayOrder: true,
+            orders: {
+              select: {
+                status: true,
               },
             },
           },
-          eventExtras: true,
         },
-        where: { id: input.eventId },
-      });
+        eventExtras: true,
+      },
+      where: { id: input.eventId },
+    });
 
-      return event;
-    }),
-  getUserEventOrders: publicProcedure
-    .input(z.object({ eventId: z.string().uuid() }))
-    .query(async ({ input }) => {
-      const orders = await prisma.order.findMany({
-        include: { variant: { select: { title: true } } },
-        where: { eventId: input.eventId },
-        orderBy: { createdAt: 'desc' },
-      });
+    return event;
+  }),
+  getUserEventOrders: authedProcedureWithEventId.query(async ({ input }) => {
+    const orders = await prisma.order.findMany({
+      include: { variant: { select: { title: true } } },
+      where: { eventId: input.eventId },
+      orderBy: { createdAt: 'desc' },
+    });
 
-      return orders;
-    }),
+    return orders;
+  }),
 });

@@ -8,7 +8,6 @@ type GetUserOutput = RouterOutput['user']['getUser'];
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { data: user } = trpc.user.getUser.useQuery();
-  if (!user) return;
 
   return (
     <>
@@ -18,7 +17,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       </Head>
 
       <main className="min-h-screen bg-gray-100">
-        <AdminHeader user={user} />
+        {!!user && <AdminHeader user={user} />}
         <div className="max-w-6xl mx-auto py-12">{children}</div>
       </main>
     </>

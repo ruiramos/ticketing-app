@@ -10,7 +10,6 @@ import {
   TableRow,
 } from '~/components/ui/table';
 import { Badge } from '~/components/ui/badge';
-
 const AdminPage = () => {
   const { data: user } = trpc.user.getUser.useQuery();
   const { data: events } = trpc.user.getUserEvents.useQuery();
