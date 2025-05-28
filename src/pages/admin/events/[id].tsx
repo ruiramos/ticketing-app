@@ -34,15 +34,13 @@ const EventAdminPage = () => {
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/admin">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Events
-          </Link>
-        </Button>
+      <div className="flex flex-col gap-2 mb-2">
+        <Link href="/admin" className="text-xs flex items-center">
+          <ArrowLeft className="w-3 h-3 mr-1 inline" />
+          Back to all events
+        </Link>
       </div>
-      
+
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -67,7 +65,7 @@ const EventAdminPage = () => {
         </div>
         <div className="flex flex-col items-end gap-2">
           <Button variant={'outline'} asChild>
-            <Link href={`/admin/events/edit/${id}`}>
+            <Link href={`/admin/events/edit/${id}`} className="no-underline">
               <Edit className="-ms-1 opacity-60" size={16} />
               <span>Edit Event</span>
             </Link>

@@ -44,12 +44,12 @@ const EditEventPage = () => {
 
   const { data: event, isLoading } = trpc.event.byId.useQuery(
     { id: eventId },
-    { enabled: !!eventId }
+    { enabled: !!eventId },
   );
 
   const { data: eventWithOrders } = trpc.user.getUserEvent.useQuery(
     { eventId: eventId },
-    { enabled: !!eventId }
+    { enabled: !!eventId },
   );
 
   const updateEventMutation = trpc.event.update.useMutation({
@@ -66,7 +66,7 @@ const EditEventPage = () => {
       setLocation(event.location || '');
       setLink(event.link || '');
       setEnabled(event.enabled);
-      
+
       // Format dates for datetime-local input
       if (event.startsAt) {
         setStartsAt(new Date(event.startsAt).toISOString().slice(0, 16));
@@ -84,7 +84,7 @@ const EditEventPage = () => {
             price: variant.price,
             stock: variant.stock,
             displayOrder: variant.displayOrder || index,
-          }))
+          })),
         );
       }
 
@@ -95,7 +95,7 @@ const EditEventPage = () => {
             id: extra.id,
             title: extra.title,
             price: extra.price || 0,
-          }))
+          })),
         );
       }
     }
@@ -104,27 +104,35 @@ const EditEventPage = () => {
   const addVariant = () => {
     setVariants([
       ...variants,
-      { title: '', price: 0, stock: 0, displayOrder: variants.length }
+      { title: '', price: 0, stock: 0, displayOrder: variants.length },
     ]);
   };
 
   const removeVariant = (index: number) => {
     if (variants.length > 1) {
       const variant = variants[index];
-      const hasOrders = variant.id && eventWithOrders?.variants.find(v => 
-        v.id === variant.id && v.orders && v.orders.length > 0
-      );
-      
+      const hasOrders =
+        variant.id &&
+        eventWithOrders?.variants.find(
+          (v) => v.id === variant.id && v.orders && v.orders.length > 0,
+        );
+
       if (hasOrders) {
-        alert('Cannot delete this variant as it has existing orders. You can only edit its details.');
+        alert(
+          'Cannot delete this variant as it has existing orders. You can only edit its details.',
+        );
         return;
       }
-      
+
       setVariants(variants.filter((_, i) => i !== index));
     }
   };
 
-  const updateVariant = (index: number, field: keyof Variant, value: string | number) => {
+  const updateVariant = (
+    index: number,
+    field: keyof Variant,
+    value: string | number,
+  ) => {
     const updated = [...variants];
     updated[index] = { ...updated[index], [field]: value };
     setVariants(updated);
@@ -138,7 +146,11 @@ const EditEventPage = () => {
     setExtras(extras.filter((_, i) => i !== index));
   };
 
-  const updateExtra = (index: number, field: keyof EventExtra, value: string | number) => {
+  const updateExtra = (
+    index: number,
+    field: keyof EventExtra,
+    value: string | number,
+  ) => {
     const updated = [...extras];
     updated[index] = { ...updated[index], [field]: value };
     setExtras(updated);
@@ -158,8 +170,8 @@ const EditEventPage = () => {
         startsAt: new Date(startsAt),
         endsAt: endsAt ? new Date(endsAt) : null,
         enabled,
-        variants: variants.filter(v => v.title && v.price >= 0),
-        extras: extras.filter(e => e.title && e.price >= 0),
+        variants: variants.filter((v) => v.title && v.price >= 0),
+        extras: extras.filter((e) => e.title && e.price >= 0),
       });
     } catch (error) {
       console.error('Failed to update event:', error);
@@ -170,42 +182,45 @@ const EditEventPage = () => {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <>
         <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-300 rounded mb-4"></div>
             <div className="h-64 bg-gray-300 rounded"></div>
           </div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   if (!event) {
     return (
-      <AdminLayout>
+      <>
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-4">Event not found</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+              Event not found
+            </h1>
             <Button asChild>
               <Link href="/admin">Back to Events</Link>
             </Button>
           </div>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/admin/events/${eventId}`}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Event
-            </Link>
-          </Button>
+        <div className="flex flex-col gap-2 mb-8">
+          <Link
+            href={`/admin/events/${eventId}`}
+            className="text-xs flex items-center"
+          >
+            <ArrowLeft className="w-3 h-3 mr-1 inline" />
+            Back to events
+          </Link>
           <h1 className="text-3xl font-semibold">Edit Event</h1>
         </div>
 
@@ -298,7 +313,12 @@ const EditEventPage = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Ticket Variants</CardTitle>
-                <Button type="button" variant="outline" size="sm" onClick={addVariant}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addVariant}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Variant
                 </Button>
@@ -306,65 +326,92 @@ const EditEventPage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {variants.map((variant, index) => {
-                const hasOrders = variant.id && eventWithOrders?.variants.find(v => 
-                  v.id === variant.id && v.orders && v.orders.length > 0
-                );
-                
+                const hasOrders =
+                  variant.id &&
+                  eventWithOrders?.variants.find(
+                    (v) =>
+                      v.id === variant.id && v.orders && v.orders.length > 0,
+                  );
+
                 return (
-                <div key={index} className="flex items-end gap-4 p-4 border rounded">
-                  {hasOrders && (
-                    <div className="absolute -mt-8 mb-2">
-                      <Alert className="border-orange-200 bg-orange-50">
-                        <AlertTriangle className="h-4 w-4 text-orange-600" />
-                        <AlertDescription className="text-orange-800 text-xs">
-                          This variant has existing orders and cannot be deleted
-                        </AlertDescription>
-                      </Alert>
+                  <div
+                    key={index}
+                    className="flex items-end gap-4 p-4 border rounded"
+                  >
+                    {hasOrders && (
+                      <div className="absolute -mt-8 mb-2">
+                        <Alert className="border-orange-200 bg-orange-50">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <AlertDescription className="text-orange-800 text-xs">
+                            This variant has existing orders and cannot be
+                            deleted
+                          </AlertDescription>
+                        </Alert>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <Label htmlFor={`variant-title-${index}`}>Title</Label>
+                      <Input
+                        id={`variant-title-${index}`}
+                        value={variant.title}
+                        onChange={(e) =>
+                          updateVariant(index, 'title', e.target.value)
+                        }
+                        placeholder="e.g., Standard Ticket"
+                      />
                     </div>
-                  )}
-                  <div className="flex-1">
-                    <Label htmlFor={`variant-title-${index}`}>Title</Label>
-                    <Input
-                      id={`variant-title-${index}`}
-                      value={variant.title}
-                      onChange={(e) => updateVariant(index, 'title', e.target.value)}
-                      placeholder="e.g., Standard Ticket"
-                    />
+                    <div className="w-24">
+                      <Label htmlFor={`variant-price-${index}`}>
+                        Price (£)
+                      </Label>
+                      <Input
+                        id={`variant-price-${index}`}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={variant.price}
+                        onChange={(e) =>
+                          updateVariant(
+                            index,
+                            'price',
+                            parseFloat(e.target.value) || 0,
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="w-24">
+                      <Label htmlFor={`variant-stock-${index}`}>Stock</Label>
+                      <Input
+                        id={`variant-stock-${index}`}
+                        type="number"
+                        min="0"
+                        value={variant.stock}
+                        onChange={(e) =>
+                          updateVariant(
+                            index,
+                            'stock',
+                            parseInt(e.target.value) || 0,
+                          )
+                        }
+                      />
+                    </div>
+                    {variants.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeVariant(index)}
+                        disabled={hasOrders}
+                        title={
+                          hasOrders
+                            ? 'Cannot delete - variant has existing orders'
+                            : 'Delete variant'
+                        }
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
-                  <div className="w-24">
-                    <Label htmlFor={`variant-price-${index}`}>Price (£)</Label>
-                    <Input
-                      id={`variant-price-${index}`}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={variant.price}
-                      onChange={(e) => updateVariant(index, 'price', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="w-24">
-                    <Label htmlFor={`variant-stock-${index}`}>Stock</Label>
-                    <Input
-                      id={`variant-stock-${index}`}
-                      type="number"
-                      min="0"
-                      value={variant.stock}
-                      onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value) || 0)}
-                    />
-                  </div>
-                  {variants.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeVariant(index)}
-                      disabled={hasOrders}
-                      title={hasOrders ? "Cannot delete - variant has existing orders" : "Delete variant"}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
                 );
               })}
             </CardContent>
@@ -374,7 +421,12 @@ const EditEventPage = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Add-ons (Optional)</CardTitle>
-                <Button type="button" variant="outline" size="sm" onClick={addExtra}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addExtra}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Extra
                 </Button>
@@ -385,13 +437,18 @@ const EditEventPage = () => {
                 <p className="text-muted-foreground">No add-ons configured</p>
               ) : (
                 extras.map((extra, index) => (
-                  <div key={index} className="flex items-end gap-4 p-4 border rounded">
+                  <div
+                    key={index}
+                    className="flex items-end gap-4 p-4 border rounded"
+                  >
                     <div className="flex-1">
                       <Label htmlFor={`extra-title-${index}`}>Title</Label>
                       <Input
                         id={`extra-title-${index}`}
                         value={extra.title}
-                        onChange={(e) => updateExtra(index, 'title', e.target.value)}
+                        onChange={(e) =>
+                          updateExtra(index, 'title', e.target.value)
+                        }
                         placeholder="e.g., T-shirt, Meal voucher"
                       />
                     </div>
@@ -403,7 +460,13 @@ const EditEventPage = () => {
                         step="0.01"
                         min="0"
                         value={extra.price}
-                        onChange={(e) => updateExtra(index, 'price', parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          updateExtra(
+                            index,
+                            'price',
+                            parseFloat(e.target.value) || 0,
+                          )
+                        }
                       />
                     </div>
                     <Button
@@ -430,7 +493,7 @@ const EditEventPage = () => {
           </div>
         </form>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 
