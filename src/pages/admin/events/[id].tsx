@@ -152,10 +152,12 @@ const EventAdminPage = () => {
                 key={order.id}
                 className={
                   order.status === 'EXPIRED'
-                    ? 'bg-gray-50 hover:bg-gray-100'
-                    : order.status === 'CANCELLED'
-                      ? 'bg-red-50 hover:bg-red-100'
-                      : ''
+                    ? 'bg-gray-100 hover:bg-gray-100 text-gray-500'
+                    : order.status === 'RESERVED'
+                      ? 'bg-gray-50 hover:bg-gray-100'
+                      : order.status === 'CANCELLED'
+                        ? 'bg-red-50 hover:bg-red-100'
+                        : ''
                 }
               >
                 <TableCell>{order.createdAt.toLocaleString()}</TableCell>
