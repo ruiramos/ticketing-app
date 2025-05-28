@@ -22,9 +22,9 @@ const AdminPage = () => {
     <div className="">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-semibold">Events</h1>
-        <Button asChild>
-          <Link href="/admin/events/new">
-            <Plus className="w-4 h-4 mr-2" />
+        <Button variant={'default'} asChild>
+          <Link href="/admin/events/new" className="no-underline">
+            <Plus className="w-4 h-4" />
             Create New Event
           </Link>
         </Button>

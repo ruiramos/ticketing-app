@@ -34,7 +34,7 @@ const NewEventPage = () => {
   const [endsAt, setEndsAt] = useState('');
   const [enabled, setEnabled] = useState(true);
   const [variants, setVariants] = useState<Variant[]>([
-    { title: '', price: 0, stock: 0, displayOrder: 0 }
+    { title: '', price: 0, stock: 0, displayOrder: 0 },
   ]);
   const [extras, setExtras] = useState<EventExtra[]>([]);
 
@@ -47,7 +47,7 @@ const NewEventPage = () => {
   const addVariant = () => {
     setVariants([
       ...variants,
-      { title: '', price: 0, stock: 0, displayOrder: variants.length }
+      { title: '', price: 0, stock: 0, displayOrder: variants.length },
     ]);
   };
 
@@ -57,7 +57,11 @@ const NewEventPage = () => {
     }
   };
 
-  const updateVariant = (index: number, field: keyof Variant, value: string | number) => {
+  const updateVariant = (
+    index: number,
+    field: keyof Variant,
+    value: string | number,
+  ) => {
     const updated = [...variants];
     updated[index] = { ...updated[index], [field]: value };
     setVariants(updated);
@@ -71,7 +75,11 @@ const NewEventPage = () => {
     setExtras(extras.filter((_, i) => i !== index));
   };
 
-  const updateExtra = (index: number, field: keyof EventExtra, value: string | number) => {
+  const updateExtra = (
+    index: number,
+    field: keyof EventExtra,
+    value: string | number,
+  ) => {
     const updated = [...extras];
     updated[index] = { ...updated[index], [field]: value };
     setExtras(updated);
@@ -90,8 +98,8 @@ const NewEventPage = () => {
         startsAt: new Date(startsAt),
         endsAt: endsAt ? new Date(endsAt) : null,
         enabled,
-        variants: variants.filter(v => v.title && v.price > 0),
-        extras: extras.filter(e => e.title && e.price >= 0),
+        variants: variants.filter((v) => v.title && v.price > 0),
+        extras: extras.filter((e) => e.title && e.price >= 0),
       });
     } catch (error) {
       console.error('Failed to create event:', error);
@@ -102,13 +110,11 @@ const NewEventPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/admin">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Events
-          </Link>
-        </Button>
+      <div className="flex flex-col gap-2 mb-8">
+        <Link href="/admin" className="text-xs flex items-center">
+          <ArrowLeft className="w-3 h-3 mr-1 inline" />
+          Back to Events
+        </Link>
         <h1 className="text-3xl font-semibold">Create New Event</h1>
       </div>
 
@@ -201,7 +207,12 @@ const NewEventPage = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Ticket Variants</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={addVariant}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addVariant}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Variant
               </Button>
@@ -209,13 +220,18 @@ const NewEventPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {variants.map((variant, index) => (
-              <div key={index} className="flex items-end gap-4 p-4 border rounded">
+              <div
+                key={index}
+                className="flex items-end gap-4 p-4 border rounded"
+              >
                 <div className="flex-1">
                   <Label htmlFor={`variant-title-${index}`}>Title</Label>
                   <Input
                     id={`variant-title-${index}`}
                     value={variant.title}
-                    onChange={(e) => updateVariant(index, 'title', e.target.value)}
+                    onChange={(e) =>
+                      updateVariant(index, 'title', e.target.value)
+                    }
                     placeholder="e.g., Standard Ticket"
                   />
                 </div>
@@ -227,7 +243,13 @@ const NewEventPage = () => {
                     step="0.01"
                     min="0"
                     value={variant.price}
-                    onChange={(e) => updateVariant(index, 'price', parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      updateVariant(
+                        index,
+                        'price',
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
                   />
                 </div>
                 <div className="w-24">
@@ -237,7 +259,13 @@ const NewEventPage = () => {
                     type="number"
                     min="0"
                     value={variant.stock}
-                    onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value) || 0)}
+                    onChange={(e) =>
+                      updateVariant(
+                        index,
+                        'stock',
+                        parseInt(e.target.value) || 0,
+                      )
+                    }
                   />
                 </div>
                 {variants.length > 1 && (
@@ -259,7 +287,12 @@ const NewEventPage = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Add-ons (Optional)</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={addExtra}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addExtra}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Extra
               </Button>
@@ -270,13 +303,18 @@ const NewEventPage = () => {
               <p className="text-muted-foreground">No add-ons configured</p>
             ) : (
               extras.map((extra, index) => (
-                <div key={index} className="flex items-end gap-4 p-4 border rounded">
+                <div
+                  key={index}
+                  className="flex items-end gap-4 p-4 border rounded"
+                >
                   <div className="flex-1">
                     <Label htmlFor={`extra-title-${index}`}>Title</Label>
                     <Input
                       id={`extra-title-${index}`}
                       value={extra.title}
-                      onChange={(e) => updateExtra(index, 'title', e.target.value)}
+                      onChange={(e) =>
+                        updateExtra(index, 'title', e.target.value)
+                      }
                       placeholder="e.g., T-shirt, Meal voucher"
                     />
                   </div>
@@ -288,7 +326,13 @@ const NewEventPage = () => {
                       step="0.01"
                       min="0"
                       value={extra.price}
-                      onChange={(e) => updateExtra(index, 'price', parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateExtra(
+                          index,
+                          'price',
+                          parseFloat(e.target.value) || 0,
+                        )
+                      }
                     />
                   </div>
                   <Button
