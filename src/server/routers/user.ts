@@ -81,6 +81,9 @@ export const userRouter = router({
               },
             },
           },
+          orderBy: {
+            displayOrder: 'asc',
+          },
         },
         eventExtras: true,
       },

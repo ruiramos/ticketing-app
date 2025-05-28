@@ -10,6 +10,8 @@ import {
   TableRow,
 } from '~/components/ui/table';
 import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
+import { Plus } from 'lucide-react';
 const AdminPage = () => {
   const { data: user } = trpc.user.getUser.useQuery();
   const { data: events } = trpc.user.getUserEvents.useQuery();
@@ -18,7 +20,15 @@ const AdminPage = () => {
 
   return (
     <div className="">
-      <h1 className="text-3xl font-semibold mb-8">Events</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-semibold">Events</h1>
+        <Button asChild>
+          <Link href="/admin/events/new">
+            <Plus className="w-4 h-4 mr-2" />
+            Create New Event
+          </Link>
+        </Button>
+      </div>
       <div className="bg-white border border-gray-200 rounded-md overflow-auto">
         <Table>
           <TableHeader>

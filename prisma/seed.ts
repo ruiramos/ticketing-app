@@ -76,7 +76,7 @@ async function main() {
                 role: 'ADMIN',
               },
               {
-                email: 'comms@friendsofhped.com',
+                email: 'ruiramos@gmail.com',
                 name: 'Rui',
                 role: 'ADMIN',
               },

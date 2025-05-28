@@ -13,7 +13,8 @@ import {
 } from '~/components/ui/table';
 
 import { trpc } from '~/utils/trpc';
-import { Download } from 'lucide-react';
+import { Download, Edit, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
 import { Label } from '~/components/ui/label';
 
@@ -33,6 +34,15 @@ const EventAdminPage = () => {
 
   return (
     <div>
+      <div className="flex items-center gap-4 mb-8">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Events
+          </Link>
+        </Button>
+      </div>
+      
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -55,7 +65,13 @@ const EventAdminPage = () => {
             {event.endsAt ? ` - ${event.endsAt.toLocaleString()}` : ''}
           </p>
         </div>
-        <div className="flex flex-col items-end">
+        <div className="flex flex-col items-end gap-2">
+          <Button variant={'outline'} asChild>
+            <Link href={`/admin/events/edit/${id}`}>
+              <Edit className="-ms-1 opacity-60" size={16} />
+              <span>Edit Event</span>
+            </Link>
+          </Button>
           <Button variant={'outline'}>
             <Download className="-ms-1 opacity-60" size={16} />
             <span>Export Orders</span>

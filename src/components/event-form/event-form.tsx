@@ -147,7 +147,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
         </div>
       </div>
       <div>
-        <Label className="block font-medium text-base mb-2">Add-ons</Label>
+        <Label className="block font-medium text-sm mb-2">Add-ons</Label>
         {event.eventExtras.map((e) => (
           <div key={e.id}>
             <EventExtra
@@ -247,7 +247,7 @@ const EventExtra: React.FC<EventExtraProps> = ({
         checked={value}
         onCheckedChange={(checked) => onChange(checked)}
       />{' '}
-      <Label htmlFor={`extra-${id}`} className="font-normal text-sm">
+      <Label htmlFor={`extra-${id}`} className="font-light text-sm">
         {title}{' '}
         {price ? (
           <span className="text-gray-400">
