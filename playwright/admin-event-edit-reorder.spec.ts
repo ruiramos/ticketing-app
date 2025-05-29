@@ -85,7 +85,7 @@ async function setupMocks(page: Page, eventData: MockEvent | null) {
 
       await route.fulfill({
         contentType: 'application/json',
-        body: JSON.stringify(jsonResponse),
+        body: JSON.stringify(jsonResponsePayload),
       });
     },
   );
