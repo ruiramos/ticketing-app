@@ -745,21 +745,21 @@ describe('event.update', () => {
     });
 
     // Verify variants were updated
-    expect(updatedEvent.variants).toHaveLength(2);
-    expect(updatedEvent.variants[0]).toMatchObject({
+    expect(updatedEvent?.variants).toHaveLength(2);
+    expect(updatedEvent?.variants[0]).toMatchObject({
       title: 'Updated Ticket',
       price: 15.0,
       stock: 75,
     });
-    expect(updatedEvent.variants[1]).toMatchObject({
+    expect(updatedEvent?.variants[1]).toMatchObject({
       title: 'New Ticket Type',
       price: 25.0,
       stock: 25,
     });
 
     // Verify extras were updated
-    expect(updatedEvent.eventExtras).toHaveLength(1);
-    expect(updatedEvent.eventExtras[0]).toMatchObject({
+    expect(updatedEvent?.eventExtras).toHaveLength(1);
+    expect(updatedEvent?.eventExtras[0]).toMatchObject({
       title: 'Updated Extra',
       price: 8.0,
     });

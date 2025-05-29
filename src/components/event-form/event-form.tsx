@@ -61,7 +61,8 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
   useEffect(() => {
     if (selectedVariant) {
       setError(undefined); // Clear previous errors on variant change
-      if (selectTriggerRef.current) { // Clear red border from select if used
+      if (selectTriggerRef.current) {
+        // Clear red border from select if used
         selectTriggerRef.current.style.borderColor = '';
       }
 
@@ -82,7 +83,9 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
     }
   }, [selectedVariantId]); // Re-evaluate when selectedVariantId changes
 
-  const handleQuantityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQuantityInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const numValue = Number(e.target.value);
     if (selectedVariant && selectedVariant.stock > 0) {
       const boundedQuantity = Math.max(
@@ -103,7 +106,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
     // Ensure quantity doesn't exceed stock or general max
     setQuantity((q) => Math.min(maxQuantityForSelectedVariant, q + 1));
   };
-  
+
   const getVariantLabel = (variant: Variant) => {
     let label = `${variant.title} - £${variant.price.toFixed(2)}`;
     if (variant.stock === 0) {
@@ -123,12 +126,14 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
   const price = useMemo(() => {
     if (!selectedVariant || quantity === 0) return null;
 
-    return selectedVariant.price * quantity +
+    return (
+      selectedVariant.price * quantity +
       Object.keys(extrasState).reduce((acc, key) => {
         if (!extrasState[key]) return acc;
         const extraPrice = event.eventExtras.find((ex) => ex.id === key);
         return acc + (extraPrice?.price ?? 0);
-      }, 0);
+      }, 0)
+    );
   }, [selectedVariant, quantity, extrasState, event.eventExtras]);
 
   return (
@@ -144,7 +149,9 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
         </div>
       )}
       <div>
-        <Label htmlFor={typeId} className="block mb-1">Ticket type</Label>
+        <Label htmlFor={typeId} className="block mb-1">
+          Ticket type
+        </Label>
         {event.variants.length <= 3 ? (
           <RadioGroup
             value={selectedVariantId ?? undefined}
@@ -164,9 +171,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
                   htmlFor={`variant-${variant.id}`}
                   className={`font-normal ${
                     variant.stock === 0 ? 'text-gray-400 line-through' : ''
-                  } ${
-                    selectedVariantId === variant.id ? 'font-semibold' : ''
-                  }`}
+                  } ${selectedVariantId === variant.id ? 'font-semibold' : ''}`}
                 >
                   {getVariantLabel(variant)}
                 </Label>
@@ -209,7 +214,9 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
             type="button"
             variant={'outline'}
             onClick={decreaseQuantity}
-            disabled={isPurchaseDisabled || quantity <= 1 || currentVariantStock === 0}
+            disabled={
+              isPurchaseDisabled || quantity <= 1 || currentVariantStock === 0
+            }
           >
             -
           </Button>
@@ -229,7 +236,11 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
             type="button"
             variant={'outline'}
             onClick={increaseQuantity}
-            disabled={isPurchaseDisabled || quantity >= maxQuantityForSelectedVariant || currentVariantStock === 0}
+            disabled={
+              isPurchaseDisabled ||
+              quantity >= maxQuantityForSelectedVariant ||
+              currentVariantStock === 0
+            }
           >
             +
           </Button>
@@ -257,38 +268,57 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
       )}
       <div className="bg-gray-100 p-4 rounded">
         <p className="text-sm text-gray-500">Total</p>
-        <p className="text-xl font-bold">
-          £{(price ?? 0).toFixed(2)}
-        </p>
+        <p className="text-xl font-bold">£{(price ?? 0).toFixed(2)}</p>
       </div>
-      <ErrorBoundary fallbackRender={({ error }) => (
-        <div className="border-red-600 border-2 rounded p-4 w-full text-sm text-red-900">
-          <p className="font-semibold mb-2">An unexpected error occurred:</p>
-          <p>{error.message || "Please refresh and try again, or contact support if the issue persists."}</p>
-        </div>
-      )}>
+      <ErrorBoundary
+        fallbackRender={({ error }) => (
+          <div className="border-red-600 border-2 rounded p-4 w-full text-sm text-red-900">
+            <p className="font-semibold mb-2">An unexpected error occurred:</p>
+            <p>
+              {error.message ||
+                'Please refresh and try again, or contact support if the issue persists.'}
+            </p>
+          </div>
+        )}
+      >
         <PayPalButton
-          disabled={isPurchaseDisabled || quantity === 0 || createOrderMutation.isLoading || captureOrderMutation.isLoading}
+          disabled={
+            isPurchaseDisabled ||
+            quantity === 0 ||
+            createOrderMutation.isPending ||
+            captureOrderMutation.isPending
+          }
           onClick={async (_data, actions) => {
             // Custom validation before PayPal modal opens
             if (!selectedVariantId) {
               setError('Please select a ticket type.');
-              if (selectTriggerRef.current && event.variants.length > 3) { // Highlight select if used
-                 selectTriggerRef.current.focus();
-                 selectTriggerRef.current.style.borderColor = 'red';
+              if (selectTriggerRef.current && event.variants.length > 3) {
+                // Highlight select if used
+                selectTriggerRef.current.focus();
+                selectTriggerRef.current.style.borderColor = 'red';
               }
               return actions.reject();
             }
-            if (quantity === 0 && selectedVariant && selectedVariant.stock > 0) {
+            if (
+              quantity === 0 &&
+              selectedVariant &&
+              selectedVariant.stock > 0
+            ) {
               setError('Please select a quantity greater than 0.');
               return actions.reject();
             }
-             if (quantity === 0 && selectedVariant && selectedVariant.stock === 0) {
+            if (
+              quantity === 0 &&
+              selectedVariant &&
+              selectedVariant.stock === 0
+            ) {
               setError('This ticket type is sold out.');
               return actions.reject();
             }
             if (quantity > maxQuantityForSelectedVariant) {
-              setError(`You can only select up to ${maxQuantityForSelectedVariant} tickets for this type.`);
+              setError(
+                `You can only select up to ${maxQuantityForSelectedVariant} tickets for this type.`,
+              );
               return actions.reject();
             }
             setError(undefined); // Clear error if validation passes
@@ -296,8 +326,10 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
           }}
           createOrder={async () => {
             // This check is somewhat redundant if onClick validation is solid, but good as a safeguard
-            if (!selectedVariant || !price || quantity === 0) { 
-              setError('Cannot create order. Please check your selection and ensure the quantity is valid.');
+            if (!selectedVariant || !price || quantity === 0) {
+              setError(
+                'Cannot create order. Please check your selection and ensure the quantity is valid.',
+              );
               throw new Error('Invalid selection for order creation');
             }
             // setError(undefined); // Already called earlier on variant change or successful validation pass
@@ -316,15 +348,26 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
             } catch (err: any) {
               console.error('Order creation failed:', err);
               // More user-friendly error based on potential issues
-              if (err.message && (err.message.includes('stock') || err.message.includes('variant'))) {
-                 setError("There was an issue preparing your order. The selected ticket may have recently sold out or changed. Please refresh and try again.");
-              } else if (err.message === 'Order ID was not returned from the server.') {
-                setError("Failed to initiate the order with our server. Please try again shortly.");
+              if (
+                err.message &&
+                (err.message.includes('stock') ||
+                  err.message.includes('variant'))
+              ) {
+                setError(
+                  'There was an issue preparing your order. The selected ticket may have recently sold out or changed. Please refresh and try again.',
+                );
+              } else if (
+                err.message === 'Order ID was not returned from the server.'
+              ) {
+                setError(
+                  'Failed to initiate the order with our server. Please try again shortly.',
+                );
+              } else {
+                setError(
+                  'There was an issue preparing your order. Please double-check your selections and try again. If the problem persists, contact support.',
+                );
               }
-              else {
-                setError("There was an issue preparing your order. Please double-check your selections and try again. If the problem persists, contact support.");
-              }
-              throw err; 
+              throw err;
             }
           }}
           onApprove={async (data) => {
@@ -335,13 +378,17 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
               setOrderResult(order);
             } catch (err: any) {
               console.error('Order capture failed:', err);
-              setError("There was a problem finalizing your purchase. Please try again. If you continue to experience issues, please contact support.");
+              setError(
+                'There was a problem finalizing your purchase. Please try again. If you continue to experience issues, please contact support.',
+              );
             }
           }}
         />
-        {(createOrderMutation.isLoading || captureOrderMutation.isLoading) && (
+        {(createOrderMutation.isPending || captureOrderMutation.isPending) && (
           <p className="text-sm text-yellow-700 mt-2 text-center animate-pulse">
-            {createOrderMutation.isLoading ? "Preparing your order..." : "Finalizing your purchase..."}
+            {createOrderMutation.isPending
+              ? 'Preparing your order...'
+              : 'Finalizing your purchase...'}
           </p>
         )}
       </ErrorBoundary>
@@ -370,7 +417,9 @@ const EventExtra: React.FC<EventExtraProps> = ({
   const descId = description ? `extra-desc-${id}` : undefined;
 
   return (
-    <div className="flex items-start gap-2 my-2"> {/* Increased gap slightly, items-start for alignment */}
+    <div className="flex items-start gap-2 my-2">
+      {' '}
+      {/* Increased gap slightly, items-start for alignment */}
       <Checkbox
         id={`extra-${id}`}
         checked={value}
@@ -380,8 +429,14 @@ const EventExtra: React.FC<EventExtraProps> = ({
         aria-describedby={descId} // Link to description if it exists
         className="mt-0.5" // Adjust checkbox position slightly if label/desc is taller
       />
-      <div className="grid gap-0.5"> {/* Use grid for tight spacing between label and desc */}
-        <Label htmlFor={`extra-${id}`} id={labelId} className={`font-light text-sm ${disabled ? 'text-gray-400' : ''}`}>
+      <div className="grid gap-0.5">
+        {' '}
+        {/* Use grid for tight spacing between label and desc */}
+        <Label
+          htmlFor={`extra-${id}`}
+          id={labelId}
+          className={`font-light text-sm ${disabled ? 'text-gray-400' : ''}`}
+        >
           {title}{' '}
           {price && price > 0 ? (
             <span className="text-gray-400">
@@ -390,7 +445,10 @@ const EventExtra: React.FC<EventExtraProps> = ({
           ) : null}
         </Label>
         {description && (
-          <p id={descId} className={`text-xs text-muted-foreground ${disabled ? 'text-gray-400' : ''}`}>
+          <p
+            id={descId}
+            className={`text-xs text-muted-foreground ${disabled ? 'text-gray-400' : ''}`}
+          >
             {description}
           </p>
         )}

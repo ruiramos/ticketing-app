@@ -1,17 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { AdminLayout } from '~/components/AdminLayout';
-import { Button, buttonVariants } from '~/components/ui/button';
+import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
 import { Switch } from '~/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { trpc } from '~/utils/trpc';
-import { ArrowLeft, Plus, Trash2, AlertTriangle, ArrowUp, ArrowDown } from 'lucide-react';
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  AlertTriangle,
+  ArrowUp,
+  ArrowDown,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Alert, AlertDescription } from '~/components/ui/alert';
-import { cn } from '~/utils/cn';
+import { cn } from '~/lib/utils';
 
 interface Variant {
   id?: string;
@@ -96,7 +103,8 @@ const EditEventPage = () => {
             }
             return orderA - orderB;
           })
-          .map((variant) => ({ // Map back to the structure expected by setVariants
+          .map((variant) => ({
+            // Map back to the structure expected by setVariants
             id: variant.id,
             title: variant.title,
             price: variant.price,
@@ -401,7 +409,7 @@ const EditEventPage = () => {
                       </div>
                     )}
                     <div className="flex flex-col gap-1 self-stretch justify-center">
-                       <Button
+                      <Button
                         type="button"
                         variant="outline"
                         size="icon"
@@ -478,15 +486,19 @@ const EditEventPage = () => {
                       variant="destructive"
                       size="icon"
                       onClick={() => removeVariant(index)}
-                      disabled={hasOrders || variants.length <= 1}
+                      disabled={!!hasOrders || variants.length <= 1}
                       title={
                         hasOrders
                           ? 'Cannot delete - variant has existing orders'
                           : variants.length <= 1
-                          ? 'Cannot delete last variant'
-                          : 'Delete variant'
+                            ? 'Cannot delete last variant'
+                            : 'Delete variant'
                       }
-                      className={cn("h-8 w-8", (hasOrders || variants.length <=1) && "cursor-not-allowed")}
+                      className={cn(
+                        'h-8 w-8',
+                        (hasOrders || variants.length <= 1) &&
+                          'cursor-not-allowed',
+                      )}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
