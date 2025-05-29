@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { AdminLayout } from '~/components/AdminLayout';
-import { Button } from '~/components/ui/button';
+import { Button, buttonVariants } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
 import { Switch } from '~/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { trpc } from '~/utils/trpc';
-import { ArrowLeft, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, AlertTriangle, ArrowUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
 import { Alert, AlertDescription } from '~/components/ui/alert';
+import { cn } from '~/utils/cn';
 
 interface Variant {
   id?: string;
@@ -77,15 +78,33 @@ const EditEventPage = () => {
 
       // Set variants
       if (event.variants) {
-        setVariants(
-          event.variants.map((variant, index) => ({
+        const sortedVariants = event.variants
+          .map((variant, index) => ({
             id: variant.id,
             title: variant.title,
             price: variant.price,
             stock: variant.stock,
-            displayOrder: variant.displayOrder || index,
-          })),
-        );
+            displayOrder: variant.displayOrder, // Keep original displayOrder or undefined
+            originalIndex: index, // Preserve original index for stable sort if displayOrder is missing
+          }))
+          .sort((a, b) => {
+            const orderA = a.displayOrder ?? Infinity;
+            const orderB = b.displayOrder ?? Infinity;
+            if (orderA === orderB) {
+              // If displayOrder is the same or both are null/undefined, sort by original position
+              return a.originalIndex - b.originalIndex;
+            }
+            return orderA - orderB;
+          })
+          .map((variant) => ({ // Map back to the structure expected by setVariants
+            id: variant.id,
+            title: variant.title,
+            price: variant.price,
+            stock: variant.stock,
+            // Ensure displayOrder is a number; fall back to originalIndex if it was initially undefined/null
+            displayOrder: variant.displayOrder ?? variant.originalIndex,
+          }));
+        setVariants(sortedVariants);
       }
 
       // Set extras
@@ -109,23 +128,33 @@ const EditEventPage = () => {
   };
 
   const removeVariant = (index: number) => {
-    if (variants.length > 1) {
-      const variant = variants[index];
-      const hasOrders =
-        variant.id &&
-        eventWithOrders?.variants.find(
-          (v) => v.id === variant.id && v.orders && v.orders.length > 0,
-        );
-
-      if (hasOrders) {
-        alert(
-          'Cannot delete this variant as it has existing orders. You can only edit its details.',
-        );
-        return;
-      }
-
-      setVariants(variants.filter((_, i) => i !== index));
+    if (variants.length <= 1) {
+      alert('You must have at least one ticket variant.');
+      return;
     }
+
+    const variant = variants[index];
+    const hasOrders =
+      variant.id &&
+      eventWithOrders?.variants.find(
+        (v) => v.id === variant.id && v.orders && v.orders.length > 0,
+      );
+
+    if (hasOrders) {
+      alert(
+        'Cannot delete this variant as it has existing orders. You can only edit its details.',
+      );
+      return;
+    }
+
+    // Filter out the variant and then re-assign displayOrder
+    const updatedVariants = variants
+      .filter((_, i) => i !== index)
+      .map((v, i) => ({
+        ...v,
+        displayOrder: i,
+      }));
+    setVariants(updatedVariants);
   };
 
   const updateVariant = (
@@ -136,6 +165,28 @@ const EditEventPage = () => {
     const updated = [...variants];
     updated[index] = { ...updated[index], [field]: value };
     setVariants(updated);
+  };
+
+  const moveVariant = (index: number, direction: 'up' | 'down') => {
+    const newVariants = [...variants];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= newVariants.length) {
+      return; // Invalid move
+    }
+
+    // Swap elements
+    const temp = newVariants[index];
+    newVariants[index] = newVariants[targetIndex];
+    newVariants[targetIndex] = temp;
+
+    // Update displayOrder for all variants
+    const updatedVariantsWithOrder = newVariants.map((variant, i) => ({
+      ...variant,
+      displayOrder: i,
+    }));
+
+    setVariants(updatedVariantsWithOrder);
   };
 
   const addExtra = () => {
@@ -336,11 +387,11 @@ const EditEventPage = () => {
                 return (
                   <div
                     key={index}
-                    className="flex items-end gap-4 p-4 border rounded"
+                    className="relative flex items-end gap-2 p-4 border rounded"
                   >
                     {hasOrders && (
-                      <div className="absolute -mt-8 mb-2">
-                        <Alert className="border-orange-200 bg-orange-50">
+                      <div className="absolute -top-3 left-2 right-2">
+                        <Alert className="border-orange-200 bg-orange-50 py-1 px-2">
                           <AlertTriangle className="h-4 w-4 text-orange-600" />
                           <AlertDescription className="text-orange-800 text-xs">
                             This variant has existing orders and cannot be
@@ -349,8 +400,32 @@ const EditEventPage = () => {
                         </Alert>
                       </div>
                     )}
+                    <div className="flex flex-col gap-1 self-stretch justify-center">
+                       <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => moveVariant(index, 'up')}
+                        disabled={index === 0}
+                        className="h-8 w-8"
+                        title="Move variant up"
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => moveVariant(index, 'down')}
+                        disabled={index === variants.length - 1}
+                        className="h-8 w-8"
+                        title="Move variant down"
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </Button>
+                    </div>
                     <div className="flex-1">
-                      <Label htmlFor={`variant-title-${index}`}>Title</Label>
+                      <Label htmlFor={`variant-title-${index}`}>Title *</Label>
                       <Input
                         id={`variant-title-${index}`}
                         value={variant.title}
@@ -358,11 +433,12 @@ const EditEventPage = () => {
                           updateVariant(index, 'title', e.target.value)
                         }
                         placeholder="e.g., Standard Ticket"
+                        required
                       />
                     </div>
                     <div className="w-24">
                       <Label htmlFor={`variant-price-${index}`}>
-                        Price (£)
+                        Price (£) *
                       </Label>
                       <Input
                         id={`variant-price-${index}`}
@@ -377,10 +453,11 @@ const EditEventPage = () => {
                             parseFloat(e.target.value) || 0,
                           )
                         }
+                        required
                       />
                     </div>
                     <div className="w-24">
-                      <Label htmlFor={`variant-stock-${index}`}>Stock</Label>
+                      <Label htmlFor={`variant-stock-${index}`}>Stock *</Label>
                       <Input
                         id={`variant-stock-${index}`}
                         type="number"
@@ -393,24 +470,26 @@ const EditEventPage = () => {
                             parseInt(e.target.value) || 0,
                           )
                         }
+                        required
                       />
                     </div>
-                    {variants.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeVariant(index)}
-                        disabled={hasOrders}
-                        title={
-                          hasOrders
-                            ? 'Cannot delete - variant has existing orders'
-                            : 'Delete variant'
-                        }
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => removeVariant(index)}
+                      disabled={hasOrders || variants.length <= 1}
+                      title={
+                        hasOrders
+                          ? 'Cannot delete - variant has existing orders'
+                          : variants.length <= 1
+                          ? 'Cannot delete last variant'
+                          : 'Delete variant'
+                      }
+                      className={cn("h-8 w-8", (hasOrders || variants.length <=1) && "cursor-not-allowed")}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 );
               })}
