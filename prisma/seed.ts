@@ -7,10 +7,10 @@ import { Prisma, PrismaClient } from '~/generated/prisma/client';
 
 const prisma = new PrismaClient();
 
-async function main() {
-  const id = 'c0cb00ae-fd1a-45ff-985f-38950f605a56';
-  const firstEvent: Prisma.EventCreateInput = {
-    id: id,
+export async function seedSummerFairEvent(prismaInstance: PrismaClient) {
+  const eventId = 'c0cb00ae-fd1a-45ff-985f-38950f605a56';
+  const summerFairEventData: Prisma.EventCreateInput = {
+    id: eventId,
     title: 'Summer fair',
     text: 'A very summer fair',
     enabled: true,
@@ -86,20 +86,30 @@ async function main() {
       },
     },
   };
-  await prisma.event.upsert({
+
+  await prismaInstance.event.upsert({
     where: {
-      id: firstEvent.id,
+      id: summerFairEventData.id,
     },
-    create: { ...firstEvent },
-    update: {},
+    create: { ...summerFairEventData },
+    update: {}, // No specific update logic, just ensure it exists
   });
+  console.log(`Event "${summerFairEventData.title}" with ID ${eventId} seeded/updated.`);
+}
+
+async function main() {
+  console.log('Starting database seeding...');
+  await seedSummerFairEvent(prisma); // Call the extracted function
+  // If there were other events or generic seeding logic, it would go here.
+  console.log('Database seeding finished.');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('Error during database seeding:', e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
+    console.log('Prisma client disconnected.');
   });
