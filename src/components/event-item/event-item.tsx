@@ -1,25 +1,86 @@
 import { useState } from 'react';
-
 import { Order } from '@paypal/paypal-server-sdk';
 import { trpc, type RouterOutput } from '~/utils/trpc';
 import EventForm from '../event-form/event-form';
+import { CalendarDays, Clock, MapPin } from 'lucide-react';
 
 type EventByIdOutput = RouterOutput['event']['byId'];
 
 const EventItem = ({ event }: { event: EventByIdOutput }) => {
   const [orderResult, setOrderResult] = useState<Order>();
 
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return null;
+    return new Date(dateString).toLocaleDateString([], {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatTime = (dateString: string | null | undefined) => {
+    if (!dateString) return null;
+    return new Date(dateString).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const startsAtDate = formatDate(event.startsAt);
+  const startsAtTime = formatTime(event.startsAt);
+  const endsAtDate = formatDate(event.endsAt);
+  const endsAtTime = formatTime(event.endsAt);
+
   return (
-    <div className="">
-      <h1 className="text-2xl lg:text-4xl font-bold mt-2 mb-2">
-        {event.title}
-      </h1>
-      <p className="text-sm lg:text-md mb-8 text-gray-500">{event.text}</p>
-      {orderResult ? (
-        <OrderConfirmation order={orderResult} />
-      ) : (
-        <EventForm event={event} setOrderResult={setOrderResult} />
-      )}
+    <div className="flex flex-col md:flex-row gap-8 py-8">
+      {/* Left Column: Event Details */}
+      <div className="md:w-1/2 space-y-4">
+        <h1 className="text-3xl lg:text-4xl font-bold">{event.title}</h1>
+        
+        <div className="space-y-2 text-gray-700">
+          {startsAtDate && (
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-gray-500" />
+              <span>{startsAtDate}</span>
+            </div>
+          )}
+          {startsAtTime && (
+             <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-gray-500" />
+              <span>
+                {startsAtTime}
+                {endsAtTime && endsAtDate === startsAtDate && ` - ${endsAtTime}`}
+              </span>
+            </div>
+          )}
+          {endsAtDate && endsAtDate !== startsAtDate && (
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-gray-500" />
+              <span>Ends: {endsAtDate} {endsAtTime && `at ${endsAtTime}`}</span>
+            </div>
+          )}
+          {event.location && (
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-gray-500" />
+              <span>{event.location}</span>
+            </div>
+          )}
+        </div>
+
+        <p className="text-md lg:text-lg text-gray-600 whitespace-pre-wrap">
+          {event.text}
+        </p>
+      </div>
+
+      {/* Right Column: Form or Order Confirmation */}
+      <div className="md:w-1/2">
+        {orderResult ? (
+          <OrderConfirmation order={orderResult} />
+        ) : (
+          <EventForm event={event} setOrderResult={setOrderResult} />
+        )}
+      </div>
     </div>
   );
 };
