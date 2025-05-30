@@ -217,8 +217,30 @@ const EditEventPage = () => {
         startsAt: new Date(startsAt),
         endsAt: endsAt ? new Date(endsAt) : null,
         enabled,
-        variants: variants.filter((v) => v.title && v.price >= 0),
-        extras: extras.filter((e) => e.title && e.price >= 0),
+        variants: variants
+          .filter(
+            (v) =>
+              v.title &&
+              v.price !== undefined &&
+              v.price >= 0 &&
+              v.stock !== undefined &&
+              v.displayOrder !== undefined,
+          )
+          .map((v) => ({
+            id: v.id,
+            title: v.title!,
+            price: v.price!,
+            stock: v.stock!,
+            displayOrder: v.displayOrder!,
+          })),
+        extras: extras
+          .filter((e) => e.title && e.price! >= 0)
+          .map((e) => ({
+            id: e.id,
+            title: e.title!,
+            price: e.price!,
+            description: e.description || '',
+          })),
       });
     } catch (error) {
       console.error('Failed to update event:', error);

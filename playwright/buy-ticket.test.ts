@@ -4,7 +4,7 @@ import { PrismaClient } from '~/generated/prisma/client'; // Path based on seed.
 import { seedSummerFairEvent } from '../prisma/seed'; // Corrected relative path
 
 test.skip('Buy Ticket Flow', () => {
-  test.beforeAll(async () => {
+  test.beforeAll('Setup test database', async () => {
     console.log('Setting up test database programmatically...');
     const prisma = new PrismaClient();
     try {
@@ -32,7 +32,7 @@ test.skip('Buy Ticket Flow', () => {
       await prisma.$disconnect();
       console.log('Prisma client disconnected after database setup.');
     }
-  }, /* Optional: Add a timeout for beforeAll if DB operations are very long */ 60000); // e.g., 60 seconds timeout for beforeAll
+  }); // e.g., 60 seconds timeout for beforeAll
 
   test('should allow a user to buy a ticket for an event', async ({ page }) => {
     const paypalUserEmail = process.env.PAYPAL_USER_EMAIL;
@@ -69,7 +69,7 @@ test.skip('Buy Ticket Flow', () => {
       const popup = await page.waitForEvent('popup', { timeout: 15000 });
       paypalPage = popup;
       await paypalPage.waitForLoadState('domcontentloaded', { timeout: 20000 });
-    } catch (e) {
+    } catch {
       console.log(
         'No PayPal popup detected, assuming iframe or error. Test will likely fail if login is in a separate window.',
       );
