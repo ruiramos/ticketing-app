@@ -1,4 +1,8 @@
 import { PlaywrightTestConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+// Load .env.test file
+dotenv.config({ path: '.env.test' });
 
 const opts = {
   // launch headless on CI, in browser locally
@@ -19,7 +23,7 @@ const config: PlaywrightTestConfig = {
   },
   retries: process.env.CI ? 3 : 0,
   webServer: {
-    command: process.env.CI ? 'npm run start' : 'npm run dev',
+    command: process.env.CI ? 'pnpm start' : 'pnpm dev',
     reuseExistingServer: Boolean(process.env.TEST_LOCAL === '1'),
     port: 3000,
   },
