@@ -12,7 +12,9 @@ export const DefaultLayout = ({ children }: DefaultLayoutProps) => {
       </Head>
 
       <main className="min-h-screen p-3 lg:p-6 bg-gray-100">
-        <div className="bg-white p-3 lg:p-6">{children}</div>
+        <div className="bg-white p-3 lg:p-6 lg:max-w-screen-xl lg:mx-auto">
+          {children}
+        </div>
       </main>
     </>
   );
