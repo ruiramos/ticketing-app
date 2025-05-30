@@ -109,20 +109,25 @@ export const eventRouter = router({
         startsAt: z.date(),
         endsAt: z.date().nullable().optional(),
         enabled: z.boolean().default(true),
-        variants: z.array(
-          z.object({
-            title: z.string().min(1),
-            price: z.number().min(0),
-            stock: z.number().int().min(0),
-            displayOrder: z.number().int().min(0),
-          })
-        ).min(1),
-        extras: z.array(
-          z.object({
-            title: z.string().min(1),
-            price: z.number().min(0),
-          })
-        ).optional().default([]),
+        variants: z
+          .array(
+            z.object({
+              title: z.string().min(1),
+              price: z.number().min(0),
+              stock: z.number().int().min(0),
+              displayOrder: z.number().int().min(0),
+            }),
+          )
+          .min(1),
+        extras: z
+          .array(
+            z.object({
+              title: z.string().min(1),
+              price: z.number().min(0),
+            }),
+          )
+          .optional()
+          .default([]),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -137,7 +142,8 @@ export const eventRouter = router({
       if (!user?.organization) {
         throw new TRPCError({
           code: 'FORBIDDEN',
-          message: 'User must be associated with an organization to create events',
+          message:
+            'User must be associated with an organization to create events',
         });
       }
 
@@ -184,22 +190,28 @@ export const eventRouter = router({
         startsAt: z.date(),
         endsAt: z.date().nullable().optional(),
         enabled: z.boolean().default(true),
-        variants: z.array(
-          z.object({
-            id: z.string().optional(),
-            title: z.string().min(1),
-            price: z.number().min(0),
-            stock: z.number().int().min(0),
-            displayOrder: z.number().int().min(0),
-          })
-        ).min(1),
-        extras: z.array(
-          z.object({
-            id: z.string().optional(),
-            title: z.string().min(1),
-            price: z.number().min(0),
-          })
-        ).optional().default([]),
+        variants: z
+          .array(
+            z.object({
+              id: z.string().optional(),
+              title: z.string().min(1),
+              price: z.number().min(0),
+              stock: z.number().int().min(0),
+              displayOrder: z.number().int().min(0),
+            }),
+          )
+          .min(1),
+        extras: z
+          .array(
+            z.object({
+              id: z.string().optional(),
+              title: z.string().min(1),
+              price: z.number().min(0),
+              description: z.string().optional(),
+            }),
+          )
+          .optional()
+          .default([]),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -214,13 +226,14 @@ export const eventRouter = router({
       if (!user?.organization) {
         throw new TRPCError({
           code: 'FORBIDDEN',
-          message: 'User must be associated with an organization to update events',
+          message:
+            'User must be associated with an organization to update events',
         });
       }
 
       // Check if user has access to this event
       const existingEvent = await prisma.event.findFirst({
-        where: { 
+        where: {
           id: input.id,
           organizationId: user.organization.id,
         },
@@ -258,8 +271,12 @@ export const eventRouter = router({
         });
 
         // Check which variants have orders (cannot be deleted)
-        const variantsWithOrders = existingVariants.filter(v => v.orders.length > 0);
-        const variantIdsWithOrders = new Set(variantsWithOrders.map(v => v.id));
+        const variantsWithOrders = existingVariants.filter(
+          (v) => v.orders.length > 0,
+        );
+        const variantIdsWithOrders = new Set(
+          variantsWithOrders.map((v) => v.id),
+        );
 
         // Process input variants
         for (const inputVariant of input.variants) {
@@ -301,15 +318,17 @@ export const eventRouter = router({
         }
 
         // Delete variants that are no longer needed (only those without orders)
-        const inputVariantIds = new Set(input.variants.map(v => v.id).filter(Boolean));
-        const variantsToDelete = existingVariants.filter(
-          v => !inputVariantIds.has(v.id) && v.orders.length === 0
+        const inputVariantIds = new Set(
+          input.variants.map((v) => v.id).filter(Boolean),
         );
-        
+        const variantsToDelete = existingVariants.filter(
+          (v) => !inputVariantIds.has(v.id) && v.orders.length === 0,
+        );
+
         if (variantsToDelete.length > 0) {
           await tx.variant.deleteMany({
             where: {
-              id: { in: variantsToDelete.map(v => v.id) },
+              id: { in: variantsToDelete.map((v) => v.id) },
             },
           });
         }
@@ -328,6 +347,7 @@ export const eventRouter = router({
               data: {
                 title: inputExtra.title,
                 price: inputExtra.price,
+                description: inputExtra.description,
               },
             });
           } else {
@@ -337,6 +357,7 @@ export const eventRouter = router({
                 eventId: input.id,
                 title: inputExtra.title,
                 price: inputExtra.price,
+                description: inputExtra.description,
                 currency: 'GBP',
               },
             });
@@ -344,15 +365,17 @@ export const eventRouter = router({
         }
 
         // Delete extras that are no longer needed
-        const inputExtraIds = new Set(input.extras.map(e => e.id).filter(Boolean));
-        const extrasToDelete = existingExtras.filter(
-          e => !inputExtraIds.has(e.id)
+        const inputExtraIds = new Set(
+          input.extras.map((e) => e.id).filter(Boolean),
         );
-        
+        const extrasToDelete = existingExtras.filter(
+          (e) => !inputExtraIds.has(e.id),
+        );
+
         if (extrasToDelete.length > 0) {
           await tx.eventExtras.deleteMany({
             where: {
-              id: { in: extrasToDelete.map(e => e.id) },
+              id: { in: extrasToDelete.map((e) => e.id) },
             },
           });
         }

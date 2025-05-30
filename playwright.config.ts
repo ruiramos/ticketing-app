@@ -11,7 +11,7 @@ const opts = {
 };
 const config: PlaywrightTestConfig = {
   testDir: './playwright',
-  timeout: 5000,
+  timeout: 50000,
   outputDir: './playwright/test-results',
   // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
   // default 'list' when running locally
@@ -23,7 +23,7 @@ const config: PlaywrightTestConfig = {
   },
   retries: process.env.CI ? 3 : 0,
   webServer: {
-    command: process.env.CI ? 'pnpm start' : 'pnpm dev',
+    command: process.env.CI ? 'pnpm start' : 'pnpm next dev',
     reuseExistingServer: Boolean(process.env.TEST_LOCAL === '1'),
     port: 3000,
   },

@@ -19,20 +19,7 @@ import {
 import Link from 'next/link';
 import { Alert, AlertDescription } from '~/components/ui/alert';
 import { cn } from '~/lib/utils';
-
-interface Variant {
-  id?: string;
-  title: string;
-  price: number;
-  stock: number;
-  displayOrder: number;
-}
-
-interface EventExtra {
-  id?: string;
-  title: string;
-  price: number;
-}
+import { EventExtras, Variant } from '~/generated/prisma/client';
 
 const EditEventPage = () => {
   const router = useRouter();
@@ -47,8 +34,8 @@ const EditEventPage = () => {
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [enabled, setEnabled] = useState(true);
-  const [variants, setVariants] = useState<Variant[]>([]);
-  const [extras, setExtras] = useState<EventExtra[]>([]);
+  const [variants, setVariants] = useState<Partial<Variant>[]>([]);
+  const [extras, setExtras] = useState<Partial<EventExtras>[]>([]);
 
   const { data: event, isLoading } = trpc.event.byId.useQuery(
     { id: eventId },
@@ -122,6 +109,7 @@ const EditEventPage = () => {
             id: extra.id,
             title: extra.title,
             price: extra.price || 0,
+            description: extra.description || '',
           })),
         );
       }
@@ -207,7 +195,7 @@ const EditEventPage = () => {
 
   const updateExtra = (
     index: number,
-    field: keyof EventExtra,
+    field: keyof EventExtras,
     value: string | number,
   ) => {
     const updated = [...extras];
@@ -530,44 +518,57 @@ const EditEventPage = () => {
                 extras.map((extra, index) => (
                   <div
                     key={index}
-                    className="flex items-end gap-4 p-4 border rounded"
+                    className="flex flex-col gap-4 p-4 border rounded"
                   >
-                    <div className="flex-1">
-                      <Label htmlFor={`extra-title-${index}`}>Title</Label>
+                    <div className="flex items-end gap-4">
+                      <div className="flex-1">
+                        <Label htmlFor={`extra-title-${index}`}>Title</Label>
+                        <Input
+                          id={`extra-title-${index}`}
+                          value={extra.title}
+                          onChange={(e) =>
+                            updateExtra(index, 'title', e.target.value)
+                          }
+                          placeholder="e.g., T-shirt, Meal voucher"
+                        />
+                      </div>
+                      <div className="w-32">
+                        <Label htmlFor={`extra-price-${index}`}>
+                          Price (£)
+                        </Label>
+                        <Input
+                          id={`extra-price-${index}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={extra.price || ''}
+                          onChange={(e) =>
+                            updateExtra(
+                              index,
+                              'price',
+                              parseFloat(e.target.value) || 0,
+                            )
+                          }
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeExtra(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div>
+                      <Label>Description:</Label>
                       <Input
-                        id={`extra-title-${index}`}
-                        value={extra.title}
+                        value={extra.description || ''}
                         onChange={(e) =>
-                          updateExtra(index, 'title', e.target.value)
+                          updateExtra(index, 'description', e.target.value)
                         }
-                        placeholder="e.g., T-shirt, Meal voucher"
                       />
                     </div>
-                    <div className="w-32">
-                      <Label htmlFor={`extra-price-${index}`}>Price (£)</Label>
-                      <Input
-                        id={`extra-price-${index}`}
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={extra.price}
-                        onChange={(e) =>
-                          updateExtra(
-                            index,
-                            'price',
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeExtra(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
                 ))
               )}

@@ -114,6 +114,40 @@ const EventAdminPage = () => {
         </TableBody>
       </Table>
 
+      <h2 className="text-xl font-semibold mt-8 mb-4">Extras</h2>
+
+      <Table className="bg-white">
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Name</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Confirmed Orders</TableHead>
+            <TableHead>Description</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {(event.eventExtras || []).map((extra) => (
+            <TableRow key={extra.id}>
+              <TableCell className="font-medium">{extra.title}</TableCell>
+              <TableCell>
+                {extra.currency} {extra.price}
+              </TableCell>
+              <TableCell>
+                {orders
+                  .filter((order) => order.status === 'CONFIRMED')
+                  .reduce((total, order) => {
+                    const selectedExtra = (
+                      (order.selectedExtras as any[]) || []
+                    ).find((sel) => sel.id === extra.id);
+                    return total + (selectedExtra?.quantity || 0);
+                  }, 0)}
+              </TableCell>
+              <TableCell>{extra.description}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
       <div className="flex items-center justify-between mt-8 mb-4">
         <h2 className="text-xl font-semibold">Orders</h2>
         <div>
