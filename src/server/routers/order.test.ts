@@ -1,45 +1,55 @@
 /**
  * Integration test for the `order` router
- * 
+ *
  * This test suite covers the order-related TRPC mutations and functionality.
- * 
+ *
  * Test Coverage:
  * - order.createOrder mutation (database operations)
  * - Stock management and validation
  * - Error handling for various scenarios
  * - Basic order flow testing
- * 
+ *
  * Note: PayPal integration is mocked to focus on core business logic
  */
 import { createContextInner } from '../context';
 import { createCaller } from './_app';
 import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
-import { vi, beforeEach, afterEach, afterAll, describe, test, expect } from 'vitest';
+import {
+  vi,
+  beforeEach,
+  afterEach,
+  afterAll,
+  describe,
+  test,
+  expect,
+} from 'vitest';
 
 // Mock PayPal SDK completely to isolate business logic
 vi.mock('@paypal/paypal-server-sdk', () => ({
   Client: vi.fn(),
   OrdersController: vi.fn(() => ({
-    createOrder: vi.fn().mockResolvedValue({ 
-      result: { id: 'MOCK_PAYPAL_ORDER', status: 'CREATED' }
+    createOrder: vi.fn().mockResolvedValue({
+      result: { id: 'MOCK_PAYPAL_ORDER', status: 'CREATED' },
     }),
-    captureOrder: vi.fn().mockResolvedValue({ 
-      result: { 
-        id: 'MOCK_PAYPAL_ORDER', 
-        status: 'COMPLETED',
-        purchaseUnits: [{ 
-          referenceId: 'mock-order-id',
-          payments: { captures: [{ id: 'CAPTURE_123' }] }
-        }],
-        payer: { emailAddress: 'test@example.com' }
-      }
-    }),
-    getOrder: vi.fn().mockResolvedValue({ 
-      result: { 
+    captureOrder: vi.fn().mockResolvedValue({
+      result: {
         id: 'MOCK_PAYPAL_ORDER',
-        purchaseUnits: [{ referenceId: 'mock-order-id' }]
-      }
+        status: 'COMPLETED',
+        purchaseUnits: [
+          {
+            referenceId: 'mock-order-id',
+            payments: { captures: [{ id: 'CAPTURE_123' }] },
+          },
+        ],
+        payer: { emailAddress: 'test@example.com' },
+      },
+    }),
+    getOrder: vi.fn().mockResolvedValue({
+      result: {
+        id: 'MOCK_PAYPAL_ORDER',
+        purchaseUnits: [{ referenceId: 'mock-order-id' }],
+      },
     }),
   })),
   Environment: { Sandbox: 'sandbox', Live: 'live' },
@@ -52,7 +62,9 @@ vi.mock('@paypal/paypal-server-sdk', () => ({
 // Mock email utility
 vi.mock('~/utils/email', () => ({
   sendEmail: vi.fn(),
-  generateMailContent: vi.fn().mockReturnValue('<html>Mock email content</html>'),
+  generateMailContent: vi
+    .fn()
+    .mockReturnValue('<html>Mock email content</html>'),
 }));
 
 // Clean up database before and after tests
@@ -102,7 +114,7 @@ describe('order.createOrder', () => {
         eventExtras: {
           create: {
             title: 'T-shirt',
-            price: 15.00,
+            price: 15.0,
             currency: 'GBP',
           },
         },
@@ -147,7 +159,7 @@ describe('order.createOrder', () => {
       variantId: variant!.id,
       quantity: 2,
       status: 'RESERVED',
-      amount: 25.99 * 2 + 15.00, // variant price * quantity + extra price
+      amount: 25.99 * 2 + 15.0, // variant price * quantity + extra price
       currency: 'GBP',
       externalId: 'MOCK_PAYPAL_ORDER',
     });
@@ -277,7 +289,8 @@ describe('order.createOrder', () => {
     await expect(caller.order.createOrder(input)).rejects.toThrow(TRPCError);
     await expect(caller.order.createOrder(input)).rejects.toMatchObject({
       code: 'UNPROCESSABLE_CONTENT',
-      message: 'There are not enough tickets to fulfill the request (2 left)',
+      message:
+        'Sorry, there are not enough tickets of the selected type to fulfill the request. (2 left)',
     });
   });
 
@@ -337,7 +350,7 @@ describe('order.createOrder', () => {
         variants: {
           create: {
             title: 'Standard Ticket',
-            price: 10.50,
+            price: 10.5,
             currency: 'GBP',
             stock: 100,
             displayOrder: 0,
@@ -353,7 +366,7 @@ describe('order.createOrder', () => {
               },
               {
                 title: 'Meal',
-                price: 8.50,
+                price: 8.5,
                 currency: 'GBP',
               },
             ],
@@ -421,7 +434,7 @@ describe('order business logic', () => {
         variants: {
           create: {
             title: 'Last Few Tickets',
-            price: 50.00,
+            price: 50.0,
             currency: 'GBP',
             stock: 3,
             displayOrder: 0,
@@ -472,7 +485,7 @@ describe('order business logic', () => {
         variantId: variant!.id,
         quantity: 1,
         extras: null,
-      })
+      }),
     ).rejects.toThrow('The selected option is out of stock');
   });
 });

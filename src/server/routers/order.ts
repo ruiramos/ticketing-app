@@ -141,7 +141,7 @@ export const orderRouter = router({
           code: 'UNPROCESSABLE_CONTENT',
           message: !variant?.stock
             ? 'The selected option is out of stock'
-            : `There are not enough tickets to fulfill the request (${variant.stock} left)`,
+            : `Sorry, there are not enough tickets of the selected type to fulfill the request. (${variant.stock} left)`,
         });
       }
 
@@ -274,7 +274,12 @@ export const orderRouter = router({
           });
         });
 
-        throw new Error(error.message);
+        if (error.body) {
+          const jsonErrorBody = JSON.parse(error.body);
+          throw new Error(`${jsonErrorBody.message} (${jsonErrorBody.name})`);
+        } else {
+          throw new Error(error);
+        }
       }
 
       // update order info after capture

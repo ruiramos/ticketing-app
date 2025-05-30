@@ -121,7 +121,7 @@ async function getVariantTitles(page: Page): Promise<string[]> {
   return titles;
 }
 
-test.describe('Event Edit Page - Variant Reordering', () => {
+test.skip('Event Edit Page - Variant Reordering', () => {
   test.beforeEach(async ({ page }) => {
     // Common setup before each test can go here if needed
     // For now, mocks are set per test

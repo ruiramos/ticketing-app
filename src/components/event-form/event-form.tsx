@@ -38,7 +38,6 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
   const [quantity, setQuantity] = useState<number>(1);
   const [extrasState, setExtrasState] = useState<Record<string, any>>({});
   const [error, setError] = useState<string | undefined>();
-  const [isPurchaseDisabled, setIsPurchaseDisabled] = useState<boolean>(true);
 
   const typeId = useId(); // For radio group label or select label
   const quantityId = useId();
@@ -51,51 +50,17 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
     return event.variants.find((v) => v.id === selectedVariantId) ?? null;
   }, [selectedVariantId, event.variants]);
 
-  const maxTicketsPerOrder = EVENT_MAX_TICKETS;
-  const currentVariantStock = selectedVariant?.stock ?? 0;
-  const maxQuantityForSelectedVariant = Math.min(
-    currentVariantStock,
-    maxTicketsPerOrder,
-  );
-
   useEffect(() => {
-    if (selectedVariant) {
-      setError(undefined); // Clear previous errors on variant change
-      if (selectTriggerRef.current) {
-        // Clear red border from select if used
-        selectTriggerRef.current.style.borderColor = '';
-      }
-
-      if (selectedVariant.stock === 0) {
-        setQuantity(0);
-        setIsPurchaseDisabled(true);
-      } else {
-        setIsPurchaseDisabled(false);
-        if (quantity > maxQuantityForSelectedVariant) {
-          setQuantity(maxQuantityForSelectedVariant);
-        } else if (quantity === 0 && maxQuantityForSelectedVariant > 0) {
-          setQuantity(1);
-        }
-      }
-    } else {
-      setQuantity(1);
-      setIsPurchaseDisabled(true);
+    if (selectTriggerRef.current) {
+      selectTriggerRef.current.style = '';
+      setError(undefined);
     }
-  }, [selectedVariantId]); // Re-evaluate when selectedVariantId changes
+  }, [selectedVariantId]);
 
   const handleQuantityInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const numValue = Number(e.target.value);
-    if (selectedVariant && selectedVariant.stock > 0) {
-      const boundedQuantity = Math.max(
-        1,
-        Math.min(numValue, maxQuantityForSelectedVariant),
-      );
-      setQuantity(boundedQuantity);
-    } else {
-      setQuantity(0); // Or handle as error, but effectively disabled
-    }
+    setQuantity(+e.target.value.substring(0, 2));
   };
 
   const decreaseQuantity = () => {
@@ -104,7 +69,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
 
   const increaseQuantity = () => {
     // Ensure quantity doesn't exceed stock or general max
-    setQuantity((q) => Math.min(maxQuantityForSelectedVariant, q + 1));
+    setQuantity((q) => Math.min(EVENT_MAX_TICKETS, q + 1));
   };
 
   const getVariantLabel = (variant: Variant) => {
@@ -112,9 +77,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
     if (variant.stock === 0) {
       label += ' (Sold out)';
     } else if (variant.stock <= LAST_FEW_STOCK_WARNING) {
-      label += ` (Last few! Stock: ${variant.stock})`;
-    } else {
-      label += ` (Stock: ${variant.stock})`;
+      label += ` (Last few!)`;
     }
     return label;
   };
@@ -136,9 +99,10 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
     );
   }, [selectedVariant, quantity, extrasState, event.eventExtras]);
 
+  const isPurchaseDisabled = !selectedVariant;
+
   return (
     <form
-      method="get" // Should probably be method="dialog" or removed if not submitting traditionally
       ref={formRef}
       className="flex flex-col gap-4 md:min-w-80" // Adjusted min width for form
       onSubmit={handleFormSubmit}
@@ -170,7 +134,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
                 <Label
                   htmlFor={`variant-${variant.id}`}
                   className={`font-normal ${
-                    variant.stock === 0 ? 'text-gray-400 line-through' : ''
+                    variant.stock === 0 ? 'text-gray-400' : ''
                   } ${selectedVariantId === variant.id ? 'font-semibold' : ''}`}
                 >
                   {getVariantLabel(variant)}
@@ -199,6 +163,9 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
                   key={variant.id}
                   value={variant.id}
                   disabled={variant.stock === 0}
+                  className={
+                    !variant.stock ? 'text-gray-400 cursor-no-drop' : ''
+                  }
                 >
                   {getVariantLabel(variant)}
                 </SelectItem>
@@ -214,9 +181,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
             type="button"
             variant={'outline'}
             onClick={decreaseQuantity}
-            disabled={
-              isPurchaseDisabled || quantity <= 1 || currentVariantStock === 0
-            }
+            disabled={isPurchaseDisabled || quantity <= 1}
           >
             -
           </Button>
@@ -225,22 +190,17 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
             placeholder="Qty"
             type="number"
             value={quantity}
-            max={maxQuantityForSelectedVariant}
-            min={currentVariantStock > 0 ? 1 : 0} // Min is 0 if sold out, else 1
-            className="invalid:border-red-500 text-center w-16" // Made input smaller
+            max={EVENT_MAX_TICKETS}
+            min={1}
+            className="invalid:border-red-500 text-center w-20"
             onChange={handleQuantityInputChange}
-            disabled={isPurchaseDisabled || currentVariantStock === 0}
-            readOnly={isPurchaseDisabled || currentVariantStock === 0} // Make it truly uneditable
+            disabled={isPurchaseDisabled}
           />
           <Button
             type="button"
             variant={'outline'}
             onClick={increaseQuantity}
-            disabled={
-              isPurchaseDisabled ||
-              quantity >= maxQuantityForSelectedVariant ||
-              currentVariantStock === 0
-            }
+            disabled={isPurchaseDisabled || quantity >= EVENT_MAX_TICKETS}
           >
             +
           </Button>
@@ -260,7 +220,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
                     [e.id]: value,
                   }));
                 }}
-                disabled={isPurchaseDisabled || currentVariantStock === 0}
+                disabled={isPurchaseDisabled}
               />
             </div>
           ))}
@@ -299,28 +259,6 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
               }
               return actions.reject();
             }
-            if (
-              quantity === 0 &&
-              selectedVariant &&
-              selectedVariant.stock > 0
-            ) {
-              setError('Please select a quantity greater than 0.');
-              return actions.reject();
-            }
-            if (
-              quantity === 0 &&
-              selectedVariant &&
-              selectedVariant.stock === 0
-            ) {
-              setError('This ticket type is sold out.');
-              return actions.reject();
-            }
-            if (quantity > maxQuantityForSelectedVariant) {
-              setError(
-                `You can only select up to ${maxQuantityForSelectedVariant} tickets for this type.`,
-              );
-              return actions.reject();
-            }
             setError(undefined); // Clear error if validation passes
             return actions.resolve();
           }}
@@ -332,7 +270,6 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
               );
               throw new Error('Invalid selection for order creation');
             }
-            // setError(undefined); // Already called earlier on variant change or successful validation pass
             try {
               const order = await createOrderMutation.mutateAsync({
                 id: event.id,
@@ -348,25 +285,11 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
             } catch (err: any) {
               console.error('Order creation failed:', err);
               // More user-friendly error based on potential issues
-              if (
-                err.message &&
-                (err.message.includes('stock') ||
-                  err.message.includes('variant'))
-              ) {
-                setError(
-                  'There was an issue preparing your order. The selected ticket may have recently sold out or changed. Please refresh and try again.',
-                );
-              } else if (
-                err.message === 'Order ID was not returned from the server.'
-              ) {
-                setError(
-                  'Failed to initiate the order with our server. Please try again shortly.',
-                );
-              } else {
-                setError(
+              setError(
+                err.message ||
                   'There was an issue preparing your order. Please double-check your selections and try again. If the problem persists, contact support.',
-                );
-              }
+              );
+
               throw err;
             }
           }}
