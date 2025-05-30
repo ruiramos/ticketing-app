@@ -30,6 +30,7 @@ import { Checkbox } from '../ui/checkbox';
 import { LAST_FEW_STOCK_WARNING, EVENT_MAX_TICKETS } from '~/utils/contants';
 import { Button } from '../ui/button';
 import { useEffect, useMemo } from 'react'; // Added useEffect and useMemo
+import { cn } from '~/lib/utils';
 
 const EventForm = ({ event, setOrderResult }: EventFormProps) => {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
@@ -167,7 +168,18 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
                     !variant.stock ? 'text-gray-400 cursor-no-drop' : ''
                   }
                 >
-                  {getVariantLabel(variant)}
+                  <div className="flex items-center">
+                    <span
+                      className={cn(
+                        'size-1.5 rounded-full bg-emerald-500 inline-block mr-2 ml-1',
+                        variant.stock <= LAST_FEW_STOCK_WARNING &&
+                          'bg-orange-500',
+                        !variant.stock && 'bg-gray-400',
+                      )}
+                      aria-hidden="true"
+                    ></span>
+                    {getVariantLabel(variant)}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
