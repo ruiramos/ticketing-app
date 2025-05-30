@@ -38,7 +38,7 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
       <div className="md:w-1/2 space-y-4">
         <h1 className="text-3xl lg:text-4xl font-bold">{event.title}</h1>
 
-        <div className="text-gray-700 flex items-center gap-4 lg:flex-col lg:items-start lg:gap-2">
+        <div className="text-gray-700 flex items-center gap-4 md:flex-col md:items-start md:gap-2 text-sm md:text-base">
           {startsAtDate && (
             <div className="flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-gray-500" />
