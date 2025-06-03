@@ -253,72 +253,74 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
           </div>
         )}
       >
-        <PayPalButton
-          disabled={
-            isPurchaseDisabled ||
-            quantity === 0 ||
-            createOrderMutation.isPending ||
-            captureOrderMutation.isPending
-          }
-          onClick={async (_data, actions) => {
-            // Custom validation before PayPal modal opens
-            if (!selectedVariantId) {
-              setError('Please select a ticket type.');
-              if (selectTriggerRef.current && event.variants.length > 3) {
-                // Highlight select if used
-                selectTriggerRef.current.focus();
-                selectTriggerRef.current.style.borderColor = 'red';
-              }
-              return actions.reject();
+        <div className="relative z-10">
+          <PayPalButton
+            disabled={
+              isPurchaseDisabled ||
+              quantity === 0 ||
+              createOrderMutation.isPending ||
+              captureOrderMutation.isPending
             }
-            setError(undefined); // Clear error if validation passes
-            return actions.resolve();
-          }}
-          createOrder={async () => {
-            // This check is somewhat redundant if onClick validation is solid, but good as a safeguard
-            if (!selectedVariant || !price || quantity === 0) {
-              setError(
-                'Cannot create order. Please check your selection and ensure the quantity is valid.',
-              );
-              throw new Error('Invalid selection for order creation');
-            }
-            try {
-              const order = await createOrderMutation.mutateAsync({
-                id: event.id,
-                variantId: selectedVariant.id, // selectedVariant is guaranteed here by checks
-                quantity,
-                extras: extrasState,
-              });
-              if (!order.id) {
-                // This case should ideally not happen if backend is robust
-                throw new Error('Order ID was not returned from the server.');
+            onClick={async (_data, actions) => {
+              // Custom validation before PayPal modal opens
+              if (!selectedVariantId) {
+                setError('Please select a ticket type.');
+                if (selectTriggerRef.current && event.variants.length > 3) {
+                  // Highlight select if used
+                  selectTriggerRef.current.focus();
+                  selectTriggerRef.current.style.borderColor = 'red';
+                }
+                return actions.reject();
               }
-              return order.id;
-            } catch (err: any) {
-              console.error('Order creation failed:', err);
-              // More user-friendly error based on potential issues
-              setError(
-                err.message ||
-                  'There was an issue preparing your order. Please double-check your selections and try again. If the problem persists, contact support.',
-              );
+              setError(undefined); // Clear error if validation passes
+              return actions.resolve();
+            }}
+            createOrder={async () => {
+              // This check is somewhat redundant if onClick validation is solid, but good as a safeguard
+              if (!selectedVariant || !price || quantity === 0) {
+                setError(
+                  'Cannot create order. Please check your selection and ensure the quantity is valid.',
+                );
+                throw new Error('Invalid selection for order creation');
+              }
+              try {
+                const order = await createOrderMutation.mutateAsync({
+                  id: event.id,
+                  variantId: selectedVariant.id, // selectedVariant is guaranteed here by checks
+                  quantity,
+                  extras: extrasState,
+                });
+                if (!order.id) {
+                  // This case should ideally not happen if backend is robust
+                  throw new Error('Order ID was not returned from the server.');
+                }
+                return order.id;
+              } catch (err: any) {
+                console.error('Order creation failed:', err);
+                // More user-friendly error based on potential issues
+                setError(
+                  err.message ||
+                    'There was an issue preparing your order. Please double-check your selections and try again. If the problem persists, contact support.',
+                );
 
-              throw err;
-            }
-          }}
-          onApprove={async (data) => {
-            try {
-              const order = await captureOrderMutation.mutateAsync({
-                id: data.orderID,
-              });
-              setOrderResult(order);
-            } catch (err: any) {
-              console.error('Order capture failed:', err);
-              setError(
-                'There was a problem finalizing your purchase. Please try again. If you continue to experience issues, please contact support.',
-              );
-            }
-          }}
-        />
+                throw err;
+              }
+            }}
+            onApprove={async (data) => {
+              try {
+                const order = await captureOrderMutation.mutateAsync({
+                  id: data.orderID,
+                });
+                setOrderResult(order);
+              } catch (err: any) {
+                console.error('Order capture failed:', err);
+                setError(
+                  'There was a problem finalizing your purchase. Please try again. If you continue to experience issues, please contact support.',
+                );
+              }
+            }}
+          />
+        </div>
         {(createOrderMutation.isPending || captureOrderMutation.isPending) && (
           <p className="text-sm text-yellow-700 mt-2 text-center animate-pulse">
             {createOrderMutation.isPending

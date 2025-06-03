@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { format, parse } from 'date-fns';
 import { AdminLayout } from '~/components/AdminLayout';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -62,12 +63,12 @@ const EditEventPage = () => {
       setLink(event.link || '');
       setEnabled(event.enabled);
 
-      // Format dates for datetime-local input
+      // Format dates for datetime-local input using date-fns
       if (event.startsAt) {
-        setStartsAt(new Date(event.startsAt).toISOString().slice(0, 16));
+        setStartsAt(format(event.startsAt, "yyyy-MM-dd'T'HH:mm"));
       }
       if (event.endsAt) {
-        setEndsAt(new Date(event.endsAt).toISOString().slice(0, 16));
+        setEndsAt(format(event.endsAt, "yyyy-MM-dd'T'HH:mm"));
       }
 
       // Set variants
@@ -208,14 +209,20 @@ const EditEventPage = () => {
     setIsSubmitting(true);
 
     try {
+      // Convert local datetime-local string to JS Date using date-fns
+      function toDateFromLocal(dt: string) {
+        // dt: "yyyy-MM-dd'T'HH:mm" (browser local)
+        return parse(dt, "yyyy-MM-dd'T'HH:mm", new Date());
+      }
+
       await updateEventMutation.mutateAsync({
         id: eventId,
         title,
         text,
         location,
         link,
-        startsAt: new Date(startsAt),
-        endsAt: endsAt ? new Date(endsAt) : null,
+        startsAt: toDateFromLocal(startsAt),
+        endsAt: endsAt ? toDateFromLocal(endsAt) : null,
         enabled,
         variants: variants
           .filter(

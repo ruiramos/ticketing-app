@@ -18,7 +18,11 @@ const IndexPage: NextPageWithLayout = () => {
           <h2 className="text-xl">
             <Link href={`/events/${event.id}`}>{event.title}</Link>
           </h2>
-          <p>{event.text}</p>
+          <p>
+            {event.startsAt.toLocaleDateString()}
+            {' - '}
+            {event.startsAt.toLocaleTimeString()}
+          </p>
         </div>
       ))}
     </div>
