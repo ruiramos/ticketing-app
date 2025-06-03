@@ -13,7 +13,14 @@ import {
 } from '~/components/ui/table';
 
 import { trpc } from '~/utils/trpc';
-import { Download, Edit, ArrowLeft } from 'lucide-react';
+import {
+  Download,
+  Edit,
+  ArrowLeft,
+  View,
+  SquareArrowUpRight,
+  SquareArrowOutUpRight,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
 import { Label } from '~/components/ui/label';
@@ -41,40 +48,48 @@ const EventAdminPage = () => {
         </Link>
       </div>
 
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-semibold inline-block">
-              {event.title}
-            </h1>
-            <Badge variant={'outline'}>
-              <span
-                className="size-1.5 rounded-full bg-emerald-500 mx-0.5"
-                aria-hidden="true"
-              ></span>
-              {event.enabled ? 'Live' : 'Disabled'}
-            </Badge>
+      <div className="">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-semibold inline-block">
+                {event.title}
+              </h1>
+              <Badge variant={'outline'}>
+                <span
+                  className="size-1.5 rounded-full bg-emerald-500 mx-0.5"
+                  aria-hidden="true"
+                ></span>
+                {event.enabled ? 'Live' : 'Disabled'}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground font-medium text-sm">
+              {event.startsAt.toLocaleString()}
+              {event.endsAt ? ` - ${event.endsAt.toLocaleString()}` : ''}
+            </p>
           </div>
-          <p className="text-muted-foreground font-medium text-sm">
-            {event.text}
-          </p>
-          <p className="text-muted-foreground font-medium text-sm">
-            {event.startsAt.toLocaleString()}
-            {event.endsAt ? ` - ${event.endsAt.toLocaleString()}` : ''}
-          </p>
+          <div className="flex items-end gap-2">
+            <Button variant={'link'} asChild>
+              <Link href={`/events/${id}`} className="no-underline">
+                <SquareArrowOutUpRight className="-ms-1 opacity-60" size={16} />
+                <span>View Event</span>
+              </Link>
+            </Button>
+            <Button variant={'outline'} asChild>
+              <Link href={`/admin/events/edit/${id}`} className="no-underline">
+                <Edit className="-ms-1 opacity-60" size={16} />
+                <span>Edit Event</span>
+              </Link>
+            </Button>
+            <Button variant={'outline'}>
+              <Download className="-ms-1 opacity-60" size={16} />
+              <span>Export Orders</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <Button variant={'outline'} asChild>
-            <Link href={`/admin/events/edit/${id}`} className="no-underline">
-              <Edit className="-ms-1 opacity-60" size={16} />
-              <span>Edit Event</span>
-            </Link>
-          </Button>
-          <Button variant={'outline'}>
-            <Download className="-ms-1 opacity-60" size={16} />
-            <span>Export Orders</span>
-          </Button>
-        </div>
+        <p className="text-muted-foreground font-medium text-sm whitespace-pre-wrap mt-4">
+          {event.text}
+        </p>
       </div>
 
       <h2 className="text-xl font-semibold mt-8 mb-4">Variants</h2>

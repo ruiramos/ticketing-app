@@ -39,7 +39,7 @@ const EditEventPage = () => {
 
   const { data: event, isLoading } = trpc.event.byId.useQuery(
     { id: eventId },
-    { enabled: !!eventId },
+    { enabled: !!eventId, refetchOnWindowFocus: false },
   );
 
   const { data: eventWithOrders } = trpc.user.getUserEvent.useQuery(
@@ -281,7 +281,7 @@ const EditEventPage = () => {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto">
+      <div className="">
         <div className="flex flex-col gap-2 mb-8">
           <Link
             href={`/admin/events/${eventId}`}

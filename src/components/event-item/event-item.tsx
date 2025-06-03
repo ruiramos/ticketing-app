@@ -33,12 +33,12 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
   const endsAtTime = formatTime(event.endsAt);
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 py-8">
+    <div className="flex flex-col md:flex-row gap-10">
       {/* Left Column: Event Details */}
       <div className="md:w-1/2 space-y-4">
         <h1 className="text-3xl lg:text-4xl font-bold">{event.title}</h1>
 
-        <div className="text-gray-700 flex items-center gap-4 md:flex-col md:items-start md:gap-2 text-sm md:text-base">
+        <div className="text-gray-700 flex gap-2 flex-col items-start text-sm">
           {startsAtDate && (
             <div className="flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-gray-500" />
@@ -72,7 +72,7 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
           )}
         </div>
 
-        <p className="text-md lg:text-lg text-gray-600 whitespace-pre-wrap">
+        <p className="text-sm lg:text-base text-gray-600 whitespace-pre-wrap">
           {event.text}
         </p>
       </div>
