@@ -13,14 +13,7 @@ import {
 } from '~/components/ui/table';
 
 import { trpc } from '~/utils/trpc';
-import {
-  Download,
-  Edit,
-  ArrowLeft,
-  View,
-  SquareArrowUpRight,
-  SquareArrowOutUpRight,
-} from 'lucide-react';
+import { Download, Edit, ArrowLeft, SquareArrowOutUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
 import { Label } from '~/components/ui/label';
