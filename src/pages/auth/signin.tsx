@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 
 const SignInPage = () => {
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/' });
+    signIn('google', { callbackUrl: '/admin' });
   };
 
   return (
