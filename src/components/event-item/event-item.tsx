@@ -36,7 +36,7 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
     <div className="flex flex-col md:flex-row gap-10">
       {/* Left Column: Event Details */}
       <div className="md:w-1/2 space-y-4">
-        <h1 className="text-3xl lg:text-4xl font-bold">{event.title}</h1>
+        <h1 className="text-2xl lg:text-4xl font-bold">{event.title}</h1>
 
         <div className="text-gray-700 flex gap-2 flex-col items-start text-sm">
           {startsAtDate && (
