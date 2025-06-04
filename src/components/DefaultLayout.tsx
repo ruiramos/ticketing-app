@@ -20,13 +20,15 @@ export const DefaultLayout = ({ children }: DefaultLayoutProps) => {
       <main
         className={cn(
           'min-h-screen lg:p-6 ',
-          embed ? 'md:p-3 md:bg-gray-100' : 'p-2 bg-gray-100',
+          embed ? 'md:p-3 md:bg-gray-100 overflow-hidden' : 'p-2 bg-gray-100',
         )}
       >
         <div
           className={cn(
             'bg-white lg:p-8 lg:max-w-screen-xl lg:mx-auto',
-            embed ? 'md:p-4 md:rounded md:shadow-sm' : 'p-4 rounded shadow-sm',
+            embed
+              ? 'md:p-4 md:rounded md:shadow-sm overflow-hidden'
+              : 'p-4 rounded shadow-sm',
           )}
         >
           {children}
