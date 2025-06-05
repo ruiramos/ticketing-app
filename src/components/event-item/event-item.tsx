@@ -3,11 +3,16 @@ import { Order } from '@paypal/paypal-server-sdk';
 import { trpc, type RouterOutput } from '~/utils/trpc';
 import EventForm from '../event-form/event-form';
 import { CalendarDays, Clock, MapPin } from 'lucide-react';
+import { cn } from '~/lib/utils';
+import { useRouter } from 'next/router';
 
 type EventByIdOutput = RouterOutput['event']['byId'];
 
 const EventItem = ({ event }: { event: EventByIdOutput }) => {
   const [orderResult, setOrderResult] = useState<Order>();
+  const router = useRouter();
+  // embed can be "true", "false", true, false, or undefined in query
+  const embed = router.query.embed === 'true' || 'embed' in router.query;
 
   const formatDate = (date: Date | null | undefined) => {
     if (!date) return null;
@@ -38,7 +43,7 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
       <div className="md:w-1/2 space-y-4">
         <h1 className="text-2xl lg:text-4xl font-bold">{event.title}</h1>
 
-        <div className="text-gray-700 flex gap-2 flex-col items-start text-xs lg:text-sm">
+        <div className="text-gray-700 flex gap-1.5 flex-col items-start text-xs lg:text-sm">
           {startsAtDate && (
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-gray-500" />
@@ -58,7 +63,7 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
           )}
           {endsAtDate && endsAtDate !== startsAtDate && (
             <div className="flex items-center gap-2">
-              <CalendarDays className="w-5 h-5 text-gray-500" />
+              <CalendarDays className="w-4 h-4 text-gray-500" />
               <span>
                 Ends: {endsAtDate} {endsAtTime && `at ${endsAtTime}`}
               </span>
@@ -66,13 +71,18 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
           )}
           {event.location && (
             <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-gray-500" />
+              <MapPin className="w-4 h-4 text-gray-500" />
               <span>{event.location}</span>
             </div>
           )}
         </div>
 
-        <p className="text-sm lg:text-sm text-gray-600 whitespace-pre-wrap">
+        <p
+          className={cn(
+            'lg:text-sm text-gray-600 whitespace-pre-wrap',
+            embed ? 'text-xs' : 'text-sm',
+          )}
+        >
           {event.text}
         </p>
       </div>
