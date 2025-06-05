@@ -80,7 +80,7 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
         <p
           className={cn(
             'lg:text-sm text-gray-600 whitespace-pre-wrap',
-            embed ? 'text-xs' : 'text-sm',
+            embed ? 'text-[13px]' : 'text-sm',
           )}
         >
           {event.text}
