@@ -42,7 +42,7 @@ const EventAdminPage = () => {
       </div>
 
       <div className="">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-3xl font-semibold inline-block">
@@ -62,19 +62,23 @@ const EventAdminPage = () => {
             </p>
           </div>
           <div className="flex items-end gap-2">
-            <Button variant={'link'} asChild>
-              <Link href={`/events/${id}`} className="no-underline">
+            <Button variant={'link'} asChild size={'sm'}>
+              <Link
+                href={`/events/${id}`}
+                target="_blank"
+                className="underline"
+              >
                 <SquareArrowOutUpRight className="-ms-1 opacity-60" size={16} />
                 <span>View Event</span>
               </Link>
             </Button>
-            <Button variant={'outline'} asChild>
+            <Button variant={'outline'} asChild size={'sm'}>
               <Link href={`/admin/events/edit/${id}`} className="no-underline">
                 <Edit className="-ms-1 opacity-60" size={16} />
                 <span>Edit Event</span>
               </Link>
             </Button>
-            <Button variant={'outline'}>
+            <Button variant={'outline'} size={'sm'}>
               <Download className="-ms-1 opacity-60" size={16} />
               <span>Export Orders</span>
             </Button>

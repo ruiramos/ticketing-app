@@ -27,7 +27,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
       <main className="min-h-screen bg-gray-100">
         {!!user && <AdminHeader user={user} />}
-        <div className="max-w-4xl mx-auto py-12">{children}</div>
+        <div className="max-w-7xl mx-auto py-12 px-4">{children}</div>
       </main>
     </>
   );
