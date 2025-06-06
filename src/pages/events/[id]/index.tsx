@@ -2,7 +2,7 @@
 
 import NextError from 'next/error';
 import { useRouter } from 'next/router';
-import EventItem from '~/components/event-item/event-item';
+import EventItem2 from '~/components/event-item2/event-item2';
 
 import type { NextPageWithLayout } from '~/pages/_app';
 import { trpc } from '~/utils/trpc';
@@ -24,7 +24,7 @@ const EventViewPage: NextPageWithLayout = () => {
     return <div>Loading...</div>;
   }
   const { data } = eventQuery;
-  return <EventItem event={data} />;
+  return <EventItem2 event={data} />;
 };
 
 export default EventViewPage;

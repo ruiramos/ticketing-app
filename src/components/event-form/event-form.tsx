@@ -9,7 +9,7 @@ interface EventFormProps {
     variants: Variant[];
     eventExtras: EventExtras[];
   };
-  setOrderResult: (order: Order) => void;
+  _setOrderResult: (order: Order) => void;
 }
 
 import { FormEventHandler, useId, useRef, useState } from 'react';
@@ -32,7 +32,7 @@ import { Button } from '../ui/button';
 import { useEffect, useMemo } from 'react'; // Added useEffect and useMemo
 import { cn } from '~/lib/utils';
 
-const EventForm = ({ event, setOrderResult }: EventFormProps) => {
+const EventForm = ({ event, _setOrderResult }: EventFormProps) => {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     null,
   );
@@ -115,7 +115,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
       )}
       <div>
         <Label htmlFor={typeId} className="block mb-1">
-          Ticket type
+          <span className="">1.</span> Select a time slot
         </Label>
         {event.variants.length <= 3 ? (
           <RadioGroup
@@ -187,7 +187,7 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
         )}
       </div>
       <div className="">
-        <Label htmlFor={quantityId}>Quantity</Label>
+        <Label htmlFor={quantityId}>2. Choose how many tickets</Label>
         <div className="flex items-center gap-1">
           <Button
             type="button"
@@ -220,7 +220,9 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
       </div>
       {event.eventExtras.length > 0 && (
         <div>
-          <Label className="block font-medium text-sm mb-2">Add-ons</Label>
+          <Label className="block font-medium text-sm mb-2">
+            3. Select any optional add-ons
+          </Label>
           {event.eventExtras.map((e) => (
             <div key={e.id}>
               <EventExtra
@@ -308,10 +310,10 @@ const EventForm = ({ event, setOrderResult }: EventFormProps) => {
             }}
             onApprove={async (data) => {
               try {
-                const order = await captureOrderMutation.mutateAsync({
+                const _order = await captureOrderMutation.mutateAsync({
                   id: data.orderID,
                 });
-                setOrderResult(order);
+                //setOrderResult(order);
               } catch (err: any) {
                 console.error('Order capture failed:', err);
                 setError(

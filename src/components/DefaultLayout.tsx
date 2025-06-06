@@ -1,22 +1,26 @@
 import Head from 'next/head';
 import type { ReactNode } from 'react';
-import { useRouter } from 'next/router';
+
 import { cn } from '~/lib/utils';
 
 type DefaultLayoutProps = { children: ReactNode };
 
 export const DefaultLayout = ({ children }: DefaultLayoutProps) => {
-  const router = useRouter();
-  // embed can be "true", "false", true, false, or undefined in query
-  const embed = router.query.embed === 'true' || 'embed' in router.query;
-
   return (
     <>
       <Head>
         <title>Prisma Starter</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
+      <main
+        className={cn(
+          'min-h-screen p-4',
+          'bg-gradient-to-br from-purple-50 to-violet-100',
+        )}
+      >
+        <div className="max-w-6xl mx-auto">{children}</div>
+      </main>
+      {/*
       <main
         className={cn(
           'min-h-screen lg:p-6 ',
@@ -34,6 +38,7 @@ export const DefaultLayout = ({ children }: DefaultLayoutProps) => {
           {children}
         </div>
       </main>
+       */}
     </>
   );
 };

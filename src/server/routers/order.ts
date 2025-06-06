@@ -312,18 +312,42 @@ export const orderRouter = router({
         });
       }
 
-      return capturedOrder;
+      return await prisma.order.findFirstOrThrow({
+        include: {
+          variant: true,
+          event: {
+            include: {
+              organization: true,
+            },
+          },
+        },
+        where: { id: ourOrderId },
+      });
     }),
   byId: publicProcedure
     .input(
       z.object({
-        id: z.string(),
+        id: z.string().uuid(),
+        eventId: z.string().uuid(),
       }),
     )
     .query(async ({ input }) => {
-      const { result: order } = await ordersController.getOrder({
-        id: input.id,
+      const ourOrder = await prisma.order.findFirst({
+        include: {
+          variant: true,
+          event: {
+            include: {
+              organization: true,
+            },
+          },
+        },
+        where: { id: input.id, eventId: input.eventId },
       });
-      return order;
+
+      // const { result: paypalOrder } = await ordersController.getOrder({
+      //   id: ourOrder.externalTransactionId,
+      // });
+
+      return ourOrder;
     }),
 });

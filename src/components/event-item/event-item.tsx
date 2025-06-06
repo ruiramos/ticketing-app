@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Order } from '@paypal/paypal-server-sdk';
-import { trpc, type RouterOutput } from '~/utils/trpc';
+import { type RouterOutput } from '~/utils/trpc';
 import EventForm from '../event-form/event-form';
 import { CalendarDays, Clock, MapPin } from 'lucide-react';
 import { cn } from '~/lib/utils';
@@ -38,7 +38,7 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
   const endsAtTime = formatTime(event.endsAt);
 
   return (
-    <div className="flex flex-col md:flex-row gap-10">
+    <div className="bg-white lg:p-8 p-4 rounded shadow-md lg:mt-8 mt-4 flex flex-col md:flex-row gap-10">
       {/* Left Column: Event Details */}
       <div className="md:w-1/2 space-y-4">
         <h1 className="text-2xl lg:text-4xl font-bold">{event.title}</h1>
@@ -92,7 +92,7 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
         {orderResult ? (
           <OrderConfirmation order={orderResult} />
         ) : (
-          <EventForm event={event} setOrderResult={setOrderResult} />
+          <EventForm event={event} _setOrderResult={setOrderResult} />
         )}
       </div>
     </div>
@@ -100,7 +100,7 @@ const EventItem = ({ event }: { event: EventByIdOutput }) => {
 };
 
 const OrderConfirmation = ({ order }: { order: Order }) => {
-  const { data } = trpc.order.byId.useQuery({ id: order.id! });
+  // const { data } = trpc.order.byId.useQuery({ id: order.id!, eventId: '' });
 
   switch (order.status as string | undefined) {
     case 'COMPLETED':
@@ -109,7 +109,7 @@ const OrderConfirmation = ({ order }: { order: Order }) => {
           <p>Thank you, your order is now confirmed!</p>
 
           <hr className="my-8" />
-          <div className="text-sm">
+          {/* <div className="text-sm">
             <p>
               <span className="font-semibold">Order ID:</span> {data?.id}
             </p>
@@ -129,7 +129,7 @@ const OrderConfirmation = ({ order }: { order: Order }) => {
               <span className="font-semibold">Total:</span> £
               {data?.purchaseUnits?.[0].amount?.value}
             </p>
-          </div>
+          </div> */}
         </>
       );
     default:

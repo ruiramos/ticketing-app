@@ -1,5 +1,4 @@
-import { test, expect, Page, Locator } from '@playwright/test';
-import { URL } from 'url';
+import { test, expect, Page } from '@playwright/test';
 
 const MOCK_EVENT_ID = 'clxtestevent1';
 const EVENT_PAGE_URL = `/events/${MOCK_EVENT_ID}`;
