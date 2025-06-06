@@ -6,11 +6,9 @@ import {
   Clock,
   MapPin,
   Users,
-  Gift,
   Minus,
   Plus,
   Star,
-  Lock,
   Shield,
 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
