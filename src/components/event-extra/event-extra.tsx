@@ -37,7 +37,7 @@ export default function EventExtra({
         <Label
           htmlFor={`extra-${id}`}
           id={labelId}
-          className={`font-normal text-sm ${disabled ? 'text-gray-400' : ''}`}
+          className={`font-medium ${disabled ? 'text-gray-400' : ''}`}
         >
           {title}{' '}
           {price && price > 0 ? (

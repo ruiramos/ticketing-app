@@ -18,7 +18,7 @@ export const DefaultLayout = ({ children }: DefaultLayoutProps) => {
           'bg-gradient-to-br from-purple-50 to-violet-100',
         )}
       >
-        <div className="max-w-6xl mx-auto">{children}</div>
+        <div className="max-w-7xl mx-auto">{children}</div>
       </main>
       {/*
       <main

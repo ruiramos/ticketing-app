@@ -11,6 +11,7 @@ import {
   Plus,
   Star,
   Lock,
+  Shield,
 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import {
@@ -105,18 +106,18 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
       {/* Header */}
       <div className="lg:mb-8"></div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-2 gap-4 lg:gap-12">
         {/* Event Details */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className=" space-y-4 lg:space-y-6">
           {/* Hero Section */}
           <Card className="overflow-hidden border-purple-200">
             <div className="relative h-40 lg:h-64 bg-gradient-to-r from-purple-500 to-violet-600">
               <div className="absolute inset-0 bg-black/20" />
               <div className="absolute bottom-4 left-4 text-white right-1">
-                <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+                <h1 className="text-2xl md:text-4xl font-bold mb-2">
                   {event.title}
                 </h1>
-                <div className="flex items-center gap-4 text-xs lg:text-sm">
+                <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-6 text-xs md:text-sm">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     {format(event.startsAt, 'dd MMM yyyy')}
@@ -221,7 +222,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                   onValueChange={setSelectedVariantId}
                 >
                   <SelectTrigger
-                    className="border-purple-200 focus:ring-purple-500"
+                    className="border-gray-200 focus:ring-gray-500"
                     id={typeId}
                   >
                     <SelectValue placeholder="Choose your preferred time" />
@@ -256,11 +257,11 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
 
               {/* Ticket Quantity */}
               <div className="space-y-3">
-                <Label>2. Number of tickets</Label>
-                <div className="flex items-center justify-between bg-purple-50 rounded-lg p-3 border border-purple-100">
+                <Label>2. Choose how many tickets</Label>
+                <div className="flex items-center justify-between rounded-lg p-3 border border-gray-200">
                   <div className="flex items-center gap-3">
-                    <Users className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm">Tickets</span>
+                    <Users className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm">Number of tickets</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Button
@@ -268,13 +269,13 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                       size="sm"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       disabled={isPurchaseDisabled || quantity <= 1}
-                      className="border-purple-200 hover:bg-purple-50"
+                      className="border-gray-200 hover:bg-gray-50"
                     >
                       <Minus className="w-3 h-3" />
                     </Button>
                     <span
                       className={cn(
-                        'w-8 text-center font-medium',
+                        'w-8 text-center font-semibold text-lg',
                         isPurchaseDisabled ? 'text-gray-400' : '',
                       )}
                     >
@@ -289,7 +290,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                       onClick={() =>
                         setQuantity(Math.min(quantity + 1, EVENT_MAX_TICKETS))
                       }
-                      className="border-purple-200 hover:bg-purple-50"
+                      className="border-gray-200 hover:bg-gray-50"
                     >
                       <Plus className="w-3 h-3" />
                     </Button>
@@ -300,7 +301,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
               {/* Add-ons */}
               <div className="space-y-3">
                 <label className="text-sm font-medium">
-                  3. Optional add-ons
+                  3. Select any optional add-ons
                 </label>
                 <div className="flex items-center space-x-2 bg-amber-50 p-3 rounded-lg border border-amber-200">
                   {event.eventExtras.map((e) => (
@@ -321,7 +322,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                 </div>
               </div>
 
-              <Separator className="bg-purple-200" />
+              <Separator className="bg-gray-200" />
 
               {/* Total */}
               <div className="space-y-2">
@@ -348,7 +349,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                     <span>£{value.price?.toFixed(2)}</span>
                   </div>
                 ))}
-                <Separator className="bg-purple-200" />
+                <Separator className="bg-gray-300" />
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
                   <span>£{price?.toFixed(2) || ' - '}</span>
@@ -430,23 +431,18 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                   }}
                 />
               </div>
-            </CardFooter>
-          </Card>
-
-          {/* Trust Indicators */}
-          <Card className="border-purple-200">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-2">
-                <div className="flex justify-center items-center gap-2 text-sm text-gray-600">
-                  <Gift className="w-4 h-4 text-purple-500" />
-                  <span>Instant booking confirmation</span>
+              {/* Trust Indicators */}
+              <div className="flex items-center justify-center space-x-4 pt-4 text-xs text-slate-500">
+                <div className="flex items-center space-x-1">
+                  <Shield className="h-4 w-4" />
+                  <span>Secure Payment</span>
                 </div>
-                <div className="flex justify-center items-center gap-2 text-sm text-gray-600">
-                  <Lock className="w-4 h-4 text-purple-500" />
-                  <span>Secure payment powered by PayPal</span>
+                <div className="flex items-center space-x-1">
+                  <Users className="h-4 w-4" />
+                  <span>Instant Confirmation</span>
                 </div>
               </div>
-            </CardContent>
+            </CardFooter>
           </Card>
         </div>
       </div>
