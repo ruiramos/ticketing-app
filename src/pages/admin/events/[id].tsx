@@ -13,7 +13,13 @@ import {
 } from '~/components/ui/table';
 
 import { trpc } from '~/utils/trpc';
-import { Download, Edit, ArrowLeft, SquareArrowOutUpRight } from 'lucide-react';
+import {
+  Download,
+  Edit,
+  ArrowLeft,
+  SquareArrowOutUpRight,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
 import { Label } from '~/components/ui/label';
@@ -21,14 +27,32 @@ import { Label } from '~/components/ui/label';
 const EventAdminPage = () => {
   const id = useRouter().query.id as string;
   const [showExpiredOrders, setShowExpiredOrders] = useState(false);
-  const { data: event } = trpc.user.getUserEvent.useQuery(
-    { eventId: id },
-    { enabled: !!id },
-  );
-  const { data: orders } = trpc.user.getUserEventOrders.useQuery(
-    { eventId: id },
-    { enabled: !!id },
-  );
+  const { data: event, refetch: refetchEvent } =
+    trpc.user.getUserEvent.useQuery({ eventId: id }, { enabled: !!id });
+  const { data: orders, refetch: refetchOrders } =
+    trpc.user.getUserEventOrders.useQuery({ eventId: id }, { enabled: !!id });
+
+  const cancelOrderMutation = trpc.order.cancelOrder.useMutation({
+    onSuccess: () => {
+      refetchOrders();
+      refetchEvent();
+    },
+  });
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (
+      confirm(
+        'Are you sure you want to cancel this order? This action cannot be undone.',
+      )
+    ) {
+      try {
+        await cancelOrderMutation.mutateAsync({ orderId });
+      } catch (error) {
+        console.error('Failed to cancel order:', error);
+        alert('Failed to cancel order. Please try again.');
+      }
+    }
+  };
 
   if (!event || !orders) return null;
 
@@ -188,6 +212,7 @@ const EventAdminPage = () => {
             <TableHead>Currency</TableHead>
             <TableHead>Customer name</TableHead>
             <TableHead>Customer email</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -226,6 +251,19 @@ const EventAdminPage = () => {
                   {(order.customer as any)?.name?.surname}
                 </TableCell>
                 <TableCell>{(order.customer as any)?.emailAddress}</TableCell>
+                <TableCell>
+                  {order.status === 'CONFIRMED' && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleCancelOrder(order.id)}
+                      disabled={cancelOrderMutation.isPending}
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Cancel
+                    </Button>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
         </TableBody>

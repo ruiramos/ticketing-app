@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../trpc';
+import { router, publicProcedure, authedProcedure } from '../trpc';
 import {
   CheckoutPaymentIntent,
   Client,
@@ -323,6 +323,51 @@ export const orderRouter = router({
         },
         where: { id: ourOrderId },
       });
+    }),
+  cancelOrder: authedProcedure
+    .input(
+      z.object({
+        orderId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const order = await prisma.order.findUnique({
+        where: { id: input.orderId },
+        include: { variant: true },
+      });
+
+      if (!order) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Order not found',
+        });
+      }
+
+      if (order.status !== 'CONFIRMED') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Only confirmed orders can be cancelled',
+        });
+      }
+
+      // Cancel order and release stock in a transaction
+      await prisma.$transaction(async (tx) => {
+        await tx.order.update({
+          where: { id: input.orderId },
+          data: { status: 'CANCELLED' },
+        });
+
+        await tx.variant.update({
+          where: { id: order.variantId },
+          data: {
+            stock: {
+              increment: order.quantity,
+            },
+          },
+        });
+      });
+
+      return { success: true };
     }),
   byId: publicProcedure
     .input(
