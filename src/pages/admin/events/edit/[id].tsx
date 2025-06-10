@@ -425,7 +425,7 @@ const EditEventPage = () => {
                         </Alert>
                       </div>
                     )}
-                    <div className="flex items-end gap-2">
+                    <div className="flex  gap-2 items-start">
                       <div className="flex flex-col gap-1 self-stretch justify-center">
                         <Button
                           type="button"
@@ -503,27 +503,30 @@ const EditEventPage = () => {
                           required
                         />
                       </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => removeVariant(index)}
-                        disabled={!!hasOrders || variants.length <= 1}
-                        title={
-                          hasOrders
-                            ? 'Cannot delete - variant has existing orders'
-                            : variants.length <= 1
-                              ? 'Cannot delete last variant'
-                              : 'Delete variant'
-                        }
-                        className={cn(
-                          'h-8 w-8',
-                          (hasOrders || variants.length <= 1) &&
-                            'cursor-not-allowed',
-                        )}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div>
+                        <Label>&nbsp;</Label>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => removeVariant(index)}
+                          disabled={!!hasOrders || variants.length <= 1}
+                          title={
+                            hasOrders
+                              ? 'Cannot delete - variant has existing orders'
+                              : variants.length <= 1
+                                ? 'Cannot delete last variant'
+                                : 'Delete variant'
+                          }
+                          className={cn(
+                            'h-9 w-9 flex',
+                            (hasOrders || variants.length <= 1) &&
+                              'cursor-not-allowed',
+                          )}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );
