@@ -1,6 +1,7 @@
 'use client';
 
 import NextError from 'next/error';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import EventItem2 from '~/components/event-item2/event-item2';
 
@@ -24,7 +25,15 @@ const EventViewPage: NextPageWithLayout = () => {
     return <div>Loading...</div>;
   }
   const { data } = eventQuery;
-  return <EventItem2 event={data} />;
+  return (
+    <>
+      <Head>
+        <title>{data.title} - Ticketing Platform</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <EventItem2 event={data} />
+    </>
+  );
 };
 
 export default EventViewPage;
