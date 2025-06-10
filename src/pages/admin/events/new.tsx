@@ -109,7 +109,7 @@ const NewEventPage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto">
       <div className="flex flex-col gap-2 mb-8">
         <Link href="/admin" className="text-xs flex items-center">
           <ArrowLeft className="w-3 h-3 mr-1 inline" />

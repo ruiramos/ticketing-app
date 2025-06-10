@@ -18,7 +18,7 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Alert, AlertDescription } from '~/components/ui/alert';
+import { Alert, AlertTitle } from '~/components/ui/alert';
 import { cn } from '~/lib/utils';
 import { EventExtras, Variant } from '~/generated/prisma/client';
 
@@ -410,115 +410,121 @@ const EditEventPage = () => {
                   );
 
                 return (
-                  <div
-                    key={index}
-                    className="relative flex items-end gap-2 p-4 border rounded"
-                  >
+                  <div key={index} className="relative p-4 border rounded">
                     {hasOrders && (
-                      <div className="absolute -top-3 left-2 right-2">
-                        <Alert className="border-orange-200 bg-orange-50 py-1 px-2">
-                          <AlertTriangle className="h-4 w-4 text-orange-600" />
-                          <AlertDescription className="text-orange-800 text-xs">
+                      <div className="">
+                        <Alert
+                          className="border-orange-200 bg-orange-50 mb-2"
+                          variant={'thin'}
+                        >
+                          <AlertTriangle className="stroke-orange-800" />
+                          <AlertTitle className="text-orange-800">
                             This variant has existing orders and cannot be
                             deleted
-                          </AlertDescription>
+                          </AlertTitle>
                         </Alert>
                       </div>
                     )}
-                    <div className="flex flex-col gap-1 self-stretch justify-center">
+                    <div className="flex items-end gap-2">
+                      <div className="flex flex-col gap-1 self-stretch justify-center">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => moveVariant(index, 'up')}
+                          disabled={index === 0}
+                          className="h-8 w-8"
+                          title="Move variant up"
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => moveVariant(index, 'down')}
+                          disabled={index === variants.length - 1}
+                          className="h-8 w-8"
+                          title="Move variant down"
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="flex-1">
+                        <Label htmlFor={`variant-title-${index}`}>
+                          Title *
+                        </Label>
+                        <Input
+                          id={`variant-title-${index}`}
+                          value={variant.title}
+                          onChange={(e) =>
+                            updateVariant(index, 'title', e.target.value)
+                          }
+                          placeholder="e.g., Standard Ticket"
+                          required
+                        />
+                      </div>
+                      <div className="w-24">
+                        <Label htmlFor={`variant-price-${index}`}>
+                          Price (£) *
+                        </Label>
+                        <Input
+                          id={`variant-price-${index}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={variant.price}
+                          onChange={(e) =>
+                            updateVariant(
+                              index,
+                              'price',
+                              parseFloat(e.target.value) || 0,
+                            )
+                          }
+                          required
+                        />
+                      </div>
+                      <div className="w-24">
+                        <Label htmlFor={`variant-stock-${index}`}>
+                          Stock *
+                        </Label>
+                        <Input
+                          id={`variant-stock-${index}`}
+                          type="number"
+                          min="0"
+                          value={variant.stock}
+                          onChange={(e) =>
+                            updateVariant(
+                              index,
+                              'stock',
+                              parseInt(e.target.value) || 0,
+                            )
+                          }
+                          required
+                        />
+                      </div>
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="destructive"
                         size="icon"
-                        onClick={() => moveVariant(index, 'up')}
-                        disabled={index === 0}
-                        className="h-8 w-8"
-                        title="Move variant up"
+                        onClick={() => removeVariant(index)}
+                        disabled={!!hasOrders || variants.length <= 1}
+                        title={
+                          hasOrders
+                            ? 'Cannot delete - variant has existing orders'
+                            : variants.length <= 1
+                              ? 'Cannot delete last variant'
+                              : 'Delete variant'
+                        }
+                        className={cn(
+                          'h-8 w-8',
+                          (hasOrders || variants.length <= 1) &&
+                            'cursor-not-allowed',
+                        )}
                       >
-                        <ArrowUp className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => moveVariant(index, 'down')}
-                        disabled={index === variants.length - 1}
-                        className="h-8 w-8"
-                        title="Move variant down"
-                      >
-                        <ArrowDown className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                    <div className="flex-1">
-                      <Label htmlFor={`variant-title-${index}`}>Title *</Label>
-                      <Input
-                        id={`variant-title-${index}`}
-                        value={variant.title}
-                        onChange={(e) =>
-                          updateVariant(index, 'title', e.target.value)
-                        }
-                        placeholder="e.g., Standard Ticket"
-                        required
-                      />
-                    </div>
-                    <div className="w-24">
-                      <Label htmlFor={`variant-price-${index}`}>
-                        Price (£) *
-                      </Label>
-                      <Input
-                        id={`variant-price-${index}`}
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={variant.price}
-                        onChange={(e) =>
-                          updateVariant(
-                            index,
-                            'price',
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="w-24">
-                      <Label htmlFor={`variant-stock-${index}`}>Stock *</Label>
-                      <Input
-                        id={`variant-stock-${index}`}
-                        type="number"
-                        min="0"
-                        value={variant.stock}
-                        onChange={(e) =>
-                          updateVariant(
-                            index,
-                            'stock',
-                            parseInt(e.target.value) || 0,
-                          )
-                        }
-                        required
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => removeVariant(index)}
-                      disabled={!!hasOrders || variants.length <= 1}
-                      title={
-                        hasOrders
-                          ? 'Cannot delete - variant has existing orders'
-                          : variants.length <= 1
-                            ? 'Cannot delete last variant'
-                            : 'Delete variant'
-                      }
-                      className={cn(
-                        'h-8 w-8',
-                        (hasOrders || variants.length <= 1) &&
-                          'cursor-not-allowed',
-                      )}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
                 );
               })}
