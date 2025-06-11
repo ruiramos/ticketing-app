@@ -1,5 +1,6 @@
 import { router, authedProcedure, authedProcedureWithEventId } from '../trpc';
 import type { Prisma } from '~/generated/prisma/client';
+import { z } from 'zod';
 
 import { prisma } from '~/server/prisma';
 
@@ -93,7 +94,39 @@ export const userRouter = router({
 
     return event;
   }),
-  getUserEventOrders: authedProcedureWithEventId.query(async ({ input }) => {
+  getUserEventOrders: authedProcedureWithEventId
+    .input(
+      z.object({
+        eventId: z.string().uuid(),
+        limit: z.number().min(1).max(100).default(50),
+        cursor: z.string().uuid().optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { eventId, limit, cursor } = input;
+      
+      const orders = await prisma.order.findMany({
+        take: limit + 1, // Take one extra to determine if there are more results
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0, // Skip the cursor itself
+        include: { variant: { select: { title: true, price: true } } },
+        where: { eventId },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      let nextCursor: string | undefined = undefined;
+      if (orders.length > limit) {
+        const nextItem = orders.pop(); // Remove the extra item
+        nextCursor = nextItem!.id;
+      }
+
+      return {
+        orders,
+        nextCursor,
+        hasMore: !!nextCursor,
+      };
+    }),
+  getAllUserEventOrders: authedProcedureWithEventId.query(async ({ input }) => {
     const orders = await prisma.order.findMany({
       include: { variant: { select: { title: true, price: true } } },
       where: { eventId: input.eventId },

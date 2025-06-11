@@ -29,11 +29,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 
 const EventAdminPage = () => {
   const id = useRouter().query.id as string;
+  const utils = trpc.useContext();
   const [showExpiredOrders, setShowExpiredOrders] = useState(false);
   const { data: event, refetch: refetchEvent } =
     trpc.user.getUserEvent.useQuery({ eventId: id }, { enabled: !!id });
-  const { data: orders, refetch: refetchOrders } =
-    trpc.user.getUserEventOrders.useQuery({ eventId: id }, { enabled: !!id });
+  const {
+    data: ordersData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchOrders,
+  } = trpc.user.getUserEventOrders.useInfiniteQuery(
+    { eventId: id, limit: 25 },
+    {
+      enabled: !!id,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    },
+  );
+
+  const orders = ordersData?.pages.flatMap((page) => page.orders) ?? [];
 
   const cancelOrderMutation = trpc.order.cancelOrder.useMutation({
     onSuccess: () => {
@@ -57,7 +71,92 @@ const EventAdminPage = () => {
     }
   };
 
-  if (!event || !orders) return null;
+  const handleExportOrders = async () => {
+    try {
+      // Fetch all orders for export using tRPC utils
+      const allOrdersData = await utils.user.getAllUserEventOrders.fetch({
+        eventId: id,
+      });
+
+      // Filter out expired orders
+      const exportOrders = allOrdersData.filter(
+        (order) => order.status !== 'EXPIRED',
+      );
+
+      // Define CSV headers
+      const headers = [
+        'Date',
+        'Status',
+        'External ID',
+        'Transaction ID',
+        'Variant',
+        'Quantity',
+        'Extras',
+        'Grand Total',
+        'Currency',
+        'Customer Name',
+        'Customer Email',
+      ];
+
+      // Convert orders to CSV rows
+      const csvRows = exportOrders.map((order: any) => {
+        const customerName =
+          `${order.customer?.name?.givenName || ''} ${order.customer?.name?.surname || ''}`.trim();
+        const customerEmail = order.customer?.emailAddress || '';
+        const extras = (order.selectedExtras || [])
+          .map((extra: any) => `${extra.title} (${extra.quantity})`)
+          .join('; ');
+
+        return [
+          order.createdAt.toLocaleString(),
+          order.status,
+          order.externalId || '',
+          order.externalTransactionId || '',
+          order.variant.title,
+          order.quantity.toString(),
+          extras,
+          order.amount.toString(),
+          order.currency,
+          customerName,
+          customerEmail,
+        ];
+      });
+
+      // Create CSV content
+      const csvContent = [
+        headers.join(','),
+        ...csvRows.map((row: string[]) =>
+          row
+            .map((cell: string) =>
+              // Escape quotes and wrap in quotes if cell contains comma, quote, or newline
+              cell.includes(',') || cell.includes('"') || cell.includes('\n')
+                ? `"${cell.replace(/"/g, '""')}"`
+                : cell,
+            )
+            .join(','),
+        ),
+      ].join('\n');
+
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute(
+        'download',
+        `${event?.title}-orders-${new Date().toISOString().split('T')[0]}.csv`,
+      );
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Failed to export orders:', error);
+      alert('Failed to export orders. Please try again.');
+    }
+  };
+
+  if (!event) return null;
 
   // Calculate order summary statistics
   const confirmedOrders = orders.filter(
@@ -140,7 +239,11 @@ const EventAdminPage = () => {
                 <span>Edit Event</span>
               </Link>
             </Button>
-            <Button variant={'outline'} size={'sm'}>
+            <Button
+              variant={'outline'}
+              size={'sm'}
+              onClick={handleExportOrders}
+            >
               <Download className="-ms-1 opacity-60" size={16} />
               <span>Export Orders</span>
             </Button>
@@ -155,7 +258,7 @@ const EventAdminPage = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Orders
+              Total Orders Confirmed
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
@@ -166,7 +269,7 @@ const EventAdminPage = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Tickets
+              Tickets sold
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
@@ -369,6 +472,18 @@ const EventAdminPage = () => {
             ))}
         </TableBody>
       </Table>
+
+      {hasNextPage && (
+        <div className="mt-4 text-center">
+          <Button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            variant="outline"
+          >
+            {isFetchingNextPage ? 'Loading more...' : 'Load more orders'}
+          </Button>
+        </div>
+      )}
 
       {/* <h3 className="mt-4 font-semibold">Variant info</h3>
       {event.variants.map((variant) => {
