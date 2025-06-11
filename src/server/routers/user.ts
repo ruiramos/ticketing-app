@@ -78,6 +78,7 @@ export const userRouter = router({
             orders: {
               select: {
                 status: true,
+                quantity: true,
               },
             },
           },

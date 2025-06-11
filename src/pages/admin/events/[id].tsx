@@ -212,6 +212,7 @@ const EventAdminPage = () => {
             <TableHead>Name</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Stock left</TableHead>
+            <TableHead>Tickets sold</TableHead>
             <TableHead>Confirmed Orders</TableHead>
             <TableHead>Pending Orders</TableHead>
           </TableRow>
@@ -225,6 +226,13 @@ const EventAdminPage = () => {
                 {variant.price}
               </TableCell>
               <TableCell>{variant.stock}</TableCell>
+              <TableCell>
+                {variant.orders.reduce((acc, order) => {
+                  return (
+                    acc + (order.status === 'CONFIRMED' ? order.quantity : 0)
+                  );
+                }, 0)}
+              </TableCell>
               <TableCell>
                 {
                   variant.orders.filter((order) => order.status === 'CONFIRMED')
