@@ -247,9 +247,9 @@ const EventAdminPage = () => {
       <Table className="bg-white">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead>Name</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Confirmed Orders</TableHead>
+            <TableHead className="w-1/6">Name</TableHead>
+            <TableHead className="w-1/6">Price</TableHead>
+            <TableHead className="w-1/6">Confirmed Orders</TableHead>
             <TableHead>Description</TableHead>
           </TableRow>
         </TableHeader>
