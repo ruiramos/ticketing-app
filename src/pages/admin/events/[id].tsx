@@ -19,10 +19,13 @@ import {
   ArrowLeft,
   SquareArrowOutUpRight,
   X,
+  Calendar,
+  MapPin,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
 import { Label } from '~/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 
 const EventAdminPage = () => {
   const id = useRouter().query.id as string;
@@ -56,6 +59,36 @@ const EventAdminPage = () => {
 
   if (!event || !orders) return null;
 
+  // Calculate order summary statistics
+  const confirmedOrders = orders.filter(
+    (order) => order.status === 'CONFIRMED',
+  );
+  const totalOrders = confirmedOrders.length;
+  const totalTickets = confirmedOrders.reduce(
+    (sum, order) => sum + order.quantity,
+    0,
+  );
+
+  // Calculate ticket revenue (from variants)
+  const ticketRevenue = confirmedOrders.reduce((sum, order) => {
+    return sum + order.variant.price * order.quantity;
+  }, 0);
+
+  // Calculate addon revenue (from extras)
+  const addonRevenue = confirmedOrders.reduce((sum, order) => {
+    const extrasTotal = ((order.selectedExtras as any[]) || []).reduce(
+      (extraSum, extra) => {
+        return extraSum + extra.price * extra.quantity;
+      },
+      0,
+    );
+    return sum + extrasTotal;
+  }, 0);
+
+  const totalRevenue = ticketRevenue + addonRevenue;
+
+  const currencySymbol = '£';
+
   return (
     <div>
       <div className="flex flex-col gap-2 mb-2">
@@ -67,8 +100,8 @@ const EventAdminPage = () => {
 
       <div className="">
         <div className="flex flex-col md:flex-row gap-4 justify-between items-start">
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2  mb-2">
               <h1 className="text-3xl font-semibold inline-block">
                 {event.title}
               </h1>
@@ -80,9 +113,14 @@ const EventAdminPage = () => {
                 {event.enabled ? 'Live' : 'Disabled'}
               </Badge>
             </div>
-            <p className="text-muted-foreground font-medium text-sm">
+            <p className="text-muted-foreground font-medium text-sm flex gap-2">
+              <Calendar className="w-4 h-4" />
               {event.startsAt.toLocaleString()}
               {event.endsAt ? ` - ${event.endsAt.toLocaleString()}` : ''}
+            </p>
+            <p className="text-muted-foreground font-medium text-sm flex gap-2">
+              <MapPin className="w-4 h-4" />
+              {event.location}
             </p>
           </div>
           <div className="flex items-end gap-2">
@@ -108,9 +146,62 @@ const EventAdminPage = () => {
             </Button>
           </div>
         </div>
-        <p className="text-muted-foreground font-medium text-sm whitespace-pre-wrap mt-4">
+        {/* <p className="text-muted-foreground font-medium text-sm whitespace-pre-wrap mt-4">
           {event.text}
-        </p>
+        </p> */}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Orders
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-2xl font-bold">{totalOrders}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Tickets
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-2xl font-bold">{totalTickets}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Ticket Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-2xl font-bold">
+              {currencySymbol}
+              {ticketRevenue.toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-2xl font-bold">£{totalRevenue.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Including {currencySymbol}
+              {addonRevenue.toFixed(2)} from add-ons.
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <h2 className="text-xl font-semibold mt-8 mb-4">Variants</h2>
@@ -130,7 +221,8 @@ const EventAdminPage = () => {
             <TableRow key={variant.id}>
               <TableCell className="font-medium">{variant.title}</TableCell>
               <TableCell>
-                {variant.currency} {variant.price}
+                {currencySymbol}
+                {variant.price}
               </TableCell>
               <TableCell>{variant.stock}</TableCell>
               <TableCell>
@@ -166,7 +258,8 @@ const EventAdminPage = () => {
             <TableRow key={extra.id}>
               <TableCell className="font-medium">{extra.title}</TableCell>
               <TableCell>
-                {extra.currency} {extra.price}
+                {currencySymbol}
+                {extra.price}
               </TableCell>
               <TableCell>
                 {orders

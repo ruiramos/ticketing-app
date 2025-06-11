@@ -94,7 +94,7 @@ export const userRouter = router({
   }),
   getUserEventOrders: authedProcedureWithEventId.query(async ({ input }) => {
     const orders = await prisma.order.findMany({
-      include: { variant: { select: { title: true } } },
+      include: { variant: { select: { title: true, price: true } } },
       where: { eventId: input.eventId },
       orderBy: { createdAt: 'desc' },
     });
