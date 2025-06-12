@@ -32,6 +32,134 @@ export const userRouter = router({
 
     return user;
   }),
+  getOrganization: authedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.email) throw new Error('Could not get email from user');
+
+    const user = await prisma.user.findFirstOrThrow({
+      select: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            address: true,
+            city: true,
+            postCode: true,
+            website: true,
+            users: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+      },
+      where: { email: ctx.user.email },
+    });
+
+    if (!user.organization) {
+      throw new Error('User does not belong to an organization');
+    }
+
+    return user.organization;
+  }),
+  addOrganizationMember: authedProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        name: z.string().min(1),
+        role: z.string().default('USER'),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user.email) throw new Error('Could not get email from user');
+
+      // Get current user's organization
+      const currentUser = await prisma.user.findFirstOrThrow({
+        select: { organizationId: true },
+        where: { email: ctx.user.email },
+      });
+
+      if (!currentUser.organizationId) {
+        throw new Error('User does not belong to an organization');
+      }
+
+      // Check if user already exists
+      const existingUser = await prisma.user.findFirst({
+        where: { email: input.email },
+      });
+
+      if (existingUser) {
+        throw new Error('User with this email already exists');
+      }
+
+      // Create new user
+      const newUser = await prisma.user.create({
+        data: {
+          email: input.email,
+          name: input.name,
+          role: input.role,
+          organizationId: currentUser.organizationId,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+
+      return newUser;
+    }),
+  removeOrganizationMember: authedProcedure
+    .input(
+      z.object({
+        userId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user.email) throw new Error('Could not get email from user');
+
+      // Get current user's organization
+      const currentUser = await prisma.user.findFirstOrThrow({
+        select: { organizationId: true, id: true },
+        where: { email: ctx.user.email },
+      });
+
+      if (!currentUser.organizationId) {
+        throw new Error('User does not belong to an organization');
+      }
+
+      // Check if trying to remove self
+      if (currentUser.id === input.userId) {
+        throw new Error('Cannot remove yourself from the organization');
+      }
+
+      // Verify the user to be removed belongs to the same organization
+      const userToRemove = await prisma.user.findFirst({
+        where: {
+          id: input.userId,
+          organizationId: currentUser.organizationId,
+        },
+      });
+
+      if (!userToRemove) {
+        throw new Error('User not found in your organization');
+      }
+
+      // Remove user from organization
+      await prisma.user.delete({
+        where: { id: input.userId },
+      });
+
+      return { success: true };
+    }),
   getUserEvents: authedProcedure.query(async ({ ctx }) => {
     if (!ctx.user.email) throw new Error('Could not get email from user');
 
@@ -104,7 +232,7 @@ export const userRouter = router({
     )
     .query(async ({ input }) => {
       const { eventId, limit, cursor } = input;
-      
+
       const orders = await prisma.order.findMany({
         take: limit + 1, // Take one extra to determine if there are more results
         cursor: cursor ? { id: cursor } : undefined,

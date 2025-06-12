@@ -236,6 +236,11 @@ exports.OrderStatus = exports.$Enums.OrderStatus = {
   EXPIRED: 'EXPIRED'
 };
 
+exports.Role = exports.$Enums.Role = {
+  USER: 'USER',
+  ADMIN: 'ADMIN'
+};
+
 exports.Prisma.ModelName = {
   Event: 'Event',
   Variant: 'Variant',
