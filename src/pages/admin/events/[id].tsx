@@ -44,10 +44,15 @@ const EventAdminPage = () => {
     {
       enabled: !!id,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
-    },
+    }
   );
 
   const orders = ordersData?.pages.flatMap((page) => page.orders) ?? [];
+
+  const { data: ordersSummary } = trpc.user.getUserEventOrdersSummary.useQuery(
+    { eventId: id },
+    { enabled: !!id }
+  );
 
   const cancelOrderMutation = trpc.order.cancelOrder.useMutation({
     onSuccess: () => {
@@ -158,33 +163,12 @@ const EventAdminPage = () => {
 
   if (!event) return null;
 
-  // Calculate order summary statistics
-  const confirmedOrders = orders.filter(
-    (order) => order.status === 'CONFIRMED',
-  );
-  const totalOrders = confirmedOrders.length;
-  const totalTickets = confirmedOrders.reduce(
-    (sum, order) => sum + order.quantity,
-    0,
-  );
-
-  // Calculate ticket revenue (from variants)
-  const ticketRevenue = confirmedOrders.reduce((sum, order) => {
-    return sum + order.variant.price * order.quantity;
-  }, 0);
-
-  // Calculate addon revenue (from extras)
-  const addonRevenue = confirmedOrders.reduce((sum, order) => {
-    const extrasTotal = ((order.selectedExtras as any[]) || []).reduce(
-      (extraSum, extra) => {
-        return extraSum + extra.price * extra.quantity;
-      },
-      0,
-    );
-    return sum + extrasTotal;
-  }, 0);
-
-  const totalRevenue = ticketRevenue + addonRevenue;
+  // Use summary data from the dedicated query
+  const totalOrders = ordersSummary?.totalOrders ?? 0;
+  const totalTickets = ordersSummary?.totalTickets ?? 0;
+  const ticketRevenue = ordersSummary?.ticketRevenue ?? 0;
+  const addonRevenue = ordersSummary?.addonRevenue ?? 0;
+  const totalRevenue = ordersSummary?.totalRevenue ?? 0;
 
   const currencySymbol = '£';
 
