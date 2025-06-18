@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { AdminLayout } from '~/components/AdminLayout';
+import { useState } from 'react';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -21,6 +21,7 @@ import {
 } from '~/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { trpc } from '~/utils/trpc';
+import { RoleEnum, type Role } from '~/lib/schemas';
 import {
   Building2,
   Mail,
@@ -36,17 +37,27 @@ const OrganisationDashboard = () => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
-  const [newMemberRole, setNewMemberRole] = useState('USER');
+  const [newMemberRole, setNewMemberRole] = useState<Role>('USER');
 
   const { data: organization, refetch } = trpc.user.getOrganization.useQuery();
 
-  const addMemberMutation = trpc.user.addOrganizationMember.useMutation({
+  const { data: invitations, refetch: refetchInvitations } =
+    trpc.user.getOrganizationInvitations.useQuery();
+
+  const inviteMemberMutation = trpc.user.inviteOrganizationMember.useMutation({
     onSuccess: () => {
       refetch();
+      refetchInvitations();
       setIsAddMemberOpen(false);
       setNewMemberEmail('');
       setNewMemberName('');
       setNewMemberRole('USER');
+    },
+  });
+
+  const cancelInvitationMutation = trpc.user.cancelInvitation.useMutation({
+    onSuccess: () => {
+      refetchInvitations();
     },
   });
 
@@ -56,17 +67,36 @@ const OrganisationDashboard = () => {
     },
   });
 
-  const handleAddMember = async (e: React.FormEvent) => {
+  const handleInviteMember = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addMemberMutation.mutateAsync({
+      await inviteMemberMutation.mutateAsync({
         email: newMemberEmail,
         name: newMemberName,
         role: newMemberRole,
       });
+      alert(
+        'Invitation sent successfully! The user will receive an email to join the organization.',
+      );
     } catch (error) {
-      console.error('Failed to add member:', error);
-      alert('Failed to add member. Please try again.');
+      console.error('Failed to send invitation:', error);
+      alert(`Failed to send invitation: ${(error as Error).message}.`);
+    }
+  };
+
+  const handleCancelInvitation = async (
+    invitationId: string,
+    email: string,
+  ) => {
+    if (
+      confirm(`Are you sure you want to cancel the invitation for ${email}?`)
+    ) {
+      try {
+        await cancelInvitationMutation.mutateAsync({ invitationId });
+      } catch (error) {
+        console.error('Failed to cancel invitation:', error);
+        alert('Failed to cancel invitation. Please try again.');
+      }
     }
   };
 
@@ -175,8 +205,8 @@ const OrganisationDashboard = () => {
 
       {/* Team Members */}
       <div className="p-0">
-        <div className="flex items-center justify-between mb-4 p-6 pb-0">
-          <h2 className="text-xl font-semibold mt-8 mb-4 flex items-center gap-2">
+        <div className="flex items-center justify-between mb-4 px-6 pb-0">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
             <Users className="w-5 h-5" />
             Team Members
           </h2>
@@ -190,9 +220,9 @@ const OrganisationDashboard = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Member</DialogTitle>
+                <DialogTitle>Invite New Member</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleAddMember} className="space-y-4">
+              <form onSubmit={handleInviteMember} className="space-y-4">
                 <div>
                   <Label htmlFor="memberEmail">Email Address *</Label>
                   <Input
@@ -219,11 +249,16 @@ const OrganisationDashboard = () => {
                   <select
                     id="memberRole"
                     value={newMemberRole}
-                    onChange={(e) => setNewMemberRole(e.target.value)}
+                    onChange={(e) => {
+                      setNewMemberRole(RoleEnum.parse(e.target.value));
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="USER">User</option>
-                    <option value="ADMIN">Admin</option>
+                    {RoleEnum.options.map((role) => (
+                      <option key={role} value={role}>
+                        {role.charAt(0) + role.slice(1).toLowerCase()}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -234,8 +269,13 @@ const OrganisationDashboard = () => {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={addMemberMutation.isPending}>
-                    {addMemberMutation.isPending ? 'Adding...' : 'Add Member'}
+                  <Button
+                    type="submit"
+                    disabled={inviteMemberMutation.isPending}
+                  >
+                    {inviteMemberMutation.isPending
+                      ? 'Sending Invitation...'
+                      : 'Send Invitation'}
                   </Button>
                 </div>
               </form>
@@ -286,6 +326,69 @@ const OrganisationDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pending Invitations */}
+      {invitations &&
+        invitations.filter((inv) => inv.status === 'PENDING').length > 0 && (
+          <div className="p-0">
+            <h2 className="text-xl font-semibold flex items-center gap-2 px-6 mb-4">
+              <Mail className="w-5 h-5" />
+              Pending Invitations
+            </h2>
+
+            <Table className="bg-white p-0">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Invited</TableHead>
+                  <TableHead>Expires</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invitations
+                  .filter((invitation) => invitation.status === 'PENDING')
+                  .map((invitation) => (
+                    <TableRow key={invitation.id}>
+                      <TableCell className="font-medium">
+                        {invitation.name}
+                      </TableCell>
+                      <TableCell>{invitation.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {invitation.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(invitation.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(invitation.expiresAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleCancelInvitation(
+                              invitation.id,
+                              invitation.email,
+                            )
+                          }
+                          disabled={cancelInvitationMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Cancel
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
     </div>
   );
 };

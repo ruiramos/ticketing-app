@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Custom Sign-in Page', () => {
   test('accessing a protected route should redirect to custom sign-in page', async ({

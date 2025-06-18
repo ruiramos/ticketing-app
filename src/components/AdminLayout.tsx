@@ -15,7 +15,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      void signIn();
+      void signIn(undefined, { callbackUrl: window.location.href });
     }
   }, [status]);
 
@@ -36,16 +36,20 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
 const AdminHeader = ({ user }: { user: GetUserOutput }) => {
   const router = useRouter();
-  
-  const isEventsActive = router.pathname.startsWith('/admin') && !router.pathname.startsWith('/admin/organisation');
-  const isOrganisationActive = router.pathname.startsWith('/admin/organisation');
+
+  const isEventsActive =
+    router.pathname.startsWith('/admin') &&
+    !router.pathname.startsWith('/admin/organisation');
+  const isOrganisationActive = router.pathname.startsWith(
+    '/admin/organisation',
+  );
 
   return (
     <div className="bg-white flex justify-between py-2 px-4 text-sm border-b border-gray-200 items-center">
       <div className="w-1/4">Ticketing Admin</div>
       <div className="flex gap-2 font-medium text-gray-400 items-center">
-        <Link 
-          href="/admin" 
+        <Link
+          href="/admin"
           className={`no-underline ${isEventsActive ? 'text-primary' : 'hover:text-gray-500'}`}
         >
           Events

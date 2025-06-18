@@ -110,11 +110,37 @@ model Organization {
   website  String?
   logoUrl  String?
 
-  events Event[]
+  events      Event[]
+  invitations OrganizationInvitation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   users     User[]
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+model OrganizationInvitation {
+  id     String           @id @default(uuid())
+  email  String
+  name   String
+  role   Role             @default(USER)
+  token  String           @unique
+  status InvitationStatus @default(PENDING)
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+
+  invitedBy   User   @relation(fields: [invitedById], references: [id])
+  invitedById String
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model User {
@@ -128,6 +154,8 @@ model User {
   orders         Order[]
   organization   Organization? @relation(fields: [organizationId], references: [id])
   organizationId String?
+
+  sentInvitations OrganizationInvitation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
