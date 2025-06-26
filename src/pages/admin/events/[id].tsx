@@ -44,14 +44,14 @@ const EventAdminPage = () => {
     {
       enabled: !!id,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
-    }
+    },
   );
 
   const orders = ordersData?.pages.flatMap((page) => page.orders) ?? [];
 
   const { data: ordersSummary } = trpc.user.getUserEventOrdersSummary.useQuery(
     { eventId: id },
-    { enabled: !!id }
+    { enabled: !!id },
   );
 
   const cancelOrderMutation = trpc.order.cancelOrder.useMutation({
@@ -164,11 +164,20 @@ const EventAdminPage = () => {
   if (!event) return null;
 
   // Use summary data from the dedicated query
-  const totalOrders = ordersSummary?.totalOrders ?? 0;
-  const totalTickets = ordersSummary?.totalTickets ?? 0;
-  const ticketRevenue = ordersSummary?.ticketRevenue ?? 0;
-  const addonRevenue = ordersSummary?.addonRevenue ?? 0;
-  const totalRevenue = ordersSummary?.totalRevenue ?? 0;
+  const totalOrders = (ordersSummary?.totalOrders ?? 0).toLocaleString();
+  const totalTickets = (ordersSummary?.totalTickets ?? 0).toLocaleString();
+  const ticketRevenue = (ordersSummary?.ticketRevenue ?? 0).toLocaleString(
+    undefined,
+    { minimumFractionDigits: 2 },
+  );
+  const addonRevenue = (ordersSummary?.addonRevenue ?? 0).toLocaleString(
+    undefined,
+    { minimumFractionDigits: 2 },
+  );
+  const totalRevenue = (ordersSummary?.totalRevenue ?? 0).toLocaleString(
+    undefined,
+    { minimumFractionDigits: 2 },
+  );
 
   const currencySymbol = '£';
 
@@ -270,7 +279,7 @@ const EventAdminPage = () => {
           <CardContent className="pt-0">
             <div className="text-2xl font-bold">
               {currencySymbol}
-              {ticketRevenue.toFixed(2)}
+              {ticketRevenue}
             </div>
           </CardContent>
         </Card>
@@ -282,10 +291,10 @@ const EventAdminPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-2xl font-bold">£{totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">£{totalRevenue}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Including {currencySymbol}
-              {addonRevenue.toFixed(2)} from add-ons.
+              {addonRevenue} from add-ons.
             </p>
           </CardContent>
         </Card>
@@ -344,7 +353,7 @@ const EventAdminPage = () => {
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-1/6">Name</TableHead>
             <TableHead className="w-1/6">Price</TableHead>
-            <TableHead className="w-1/6">Confirmed Orders</TableHead>
+            <TableHead className="w-1/6">Confirmed Ordered</TableHead>
             <TableHead>Description</TableHead>
           </TableRow>
         </TableHeader>
@@ -357,14 +366,7 @@ const EventAdminPage = () => {
                 {extra.price}
               </TableCell>
               <TableCell>
-                {orders
-                  .filter((order) => order.status === 'CONFIRMED')
-                  .reduce((total, order) => {
-                    const selectedExtra = (
-                      (order.selectedExtras as any[]) || []
-                    ).find((sel) => sel.id === extra.id);
-                    return total + (selectedExtra?.quantity || 0);
-                  }, 0)}
+                {ordersSummary?.extrasSold[extra.id] ?? 0}.toLocaleString()
               </TableCell>
               <TableCell>{extra.description}</TableCell>
             </TableRow>

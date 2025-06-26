@@ -520,12 +520,27 @@ export const userRouter = router({
 
       const totalRevenue = ticketRevenue + addonRevenue;
 
+      const extrasSold = confirmedOrders.reduce(
+        (acc, order) => {
+          if (!order.selectedExtras) return acc;
+          (order.selectedExtras as { id: string; quantity: number }[]).forEach(
+            (extra) => {
+              if (!acc[extra.id]) acc[extra.id] = extra.quantity;
+              acc[extra.id] += extra.quantity;
+            },
+          );
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
       return {
         totalOrders,
         totalTickets,
         ticketRevenue,
         addonRevenue,
         totalRevenue,
+        extrasSold,
       };
     },
   ),
