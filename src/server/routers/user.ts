@@ -525,8 +525,7 @@ export const userRouter = router({
           if (!order.selectedExtras) return acc;
           (order.selectedExtras as { id: string; quantity: number }[]).forEach(
             (extra) => {
-              if (!acc[extra.id]) acc[extra.id] = extra.quantity;
-              acc[extra.id] += extra.quantity;
+              acc[extra.id] = (acc[extra.id] ?? 0) + extra.quantity;
             },
           );
           return acc;

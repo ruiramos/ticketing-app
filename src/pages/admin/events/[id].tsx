@@ -366,7 +366,7 @@ const EventAdminPage = () => {
                 {extra.price}
               </TableCell>
               <TableCell>
-                {ordersSummary?.extrasSold[extra.id] ?? 0}.toLocaleString()
+                {(ordersSummary?.extrasSold[extra.id] ?? 0).toLocaleString()}
               </TableCell>
               <TableCell>{extra.description}</TableCell>
             </TableRow>
