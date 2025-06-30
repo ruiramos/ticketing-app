@@ -499,6 +499,36 @@ describe('event.byId', () => {
     });
   });
 
+  test('should return disabled event (UI will handle disabled state)', async () => {
+    const organization = await prisma.organization.create({
+      data: {
+        name: 'Test Org',
+        email: 'test@org.com',
+      },
+    });
+
+    const event = await prisma.event.create({
+      data: {
+        title: 'Disabled Event',
+        text: 'This event is disabled',
+        organizationId: organization.id,
+        enabled: false,
+      },
+    });
+
+    const ctx = await createContextInner({ session: null });
+    const caller = createCaller(ctx);
+
+    const result = await caller.event.byId({ id: event.id });
+
+    expect(result).toMatchObject({
+      id: event.id,
+      title: 'Disabled Event',
+      text: 'This event is disabled',
+      enabled: false,
+    });
+  });
+
   test('should preserve variants with existing orders during update', async () => {
     // Create test organization and user
     const organization = await prisma.organization.create({

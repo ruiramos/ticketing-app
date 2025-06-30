@@ -26,6 +26,7 @@ import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
 import { Label } from '~/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { cx } from 'class-variance-authority';
 
 const EventAdminPage = () => {
   const id = useRouter().query.id as string;
@@ -199,7 +200,10 @@ const EventAdminPage = () => {
               </h1>
               <Badge variant={'outline'}>
                 <span
-                  className="size-1.5 rounded-full bg-emerald-500 mx-0.5"
+                  className={cx(
+                    'size-1.5 rounded-full mx-0.5',
+                    event.enabled ? 'bg-emerald-500' : 'bg-gray-500',
+                  )}
                   aria-hidden="true"
                 ></span>
                 {event.enabled ? 'Live' : 'Disabled'}

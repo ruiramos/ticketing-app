@@ -97,7 +97,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
     return label;
   };
 
-  const isPurchaseDisabled = !selectedVariant;
+  const isPurchaseDisabled = !selectedVariant || !event.enabled;
 
   return (
     <>
@@ -195,8 +195,8 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
           <Card className="lg:sticky top-4 border-purple-200">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Book Your Experience
-                {areAllVariantsSamePrice ? (
+                {event.enabled ? 'Book Your Experience' : 'Event Information'}
+                {areAllVariantsSamePrice && event.enabled ? (
                   <Badge
                     variant="secondary"
                     className="bg-purple-100 text-purple-800"
@@ -207,30 +207,52 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {!event.enabled && (
+                <div className="border-amber-400 border-2 rounded p-4 w-full text-sm text-amber-800 bg-amber-50">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span className="font-semibold">
+                      Event Currently Unavailable
+                    </span>
+                  </div>
+                  <p className="mt-1">
+                    This event is currently disabled and tickets are not
+                    available for purchase. Please check back later or contact
+                    us for more information.
+                  </p>
+                </div>
+              )}
               {error && ( // Simplified error display
                 <div className="border-red-600 border-2 rounded p-4 w-full text-sm text-red-900">
                   {error}
                 </div>
               )}
               {/* Time Slot Selection */}
-              <div className="space-y-3">
+              <div className={cn('space-y-3', !event.enabled && 'opacity-50')}>
                 <Label htmlFor={typeId}>1. Select a time slot</Label>
                 <Select
                   value={selectedVariantId ?? undefined}
                   onValueChange={setSelectedVariantId}
+                  disabled={!event.enabled}
                 >
                   <SelectTrigger
                     className="border-gray-200 focus:ring-gray-500"
                     id={typeId}
                   >
-                    <SelectValue placeholder="Choose your preferred time" />
+                    <SelectValue
+                      placeholder={
+                        event.enabled
+                          ? 'Choose your preferred time'
+                          : 'Event unavailable'
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {event.variants.map((variant) => (
                       <SelectItem
                         key={variant.id}
                         value={variant.id}
-                        disabled={variant.stock === 0}
+                        disabled={variant.stock === 0 || !event.enabled}
                         className={
                           !variant.stock ? 'text-gray-400 cursor-no-drop' : ''
                         }
@@ -241,7 +263,8 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                               'size-1.5 rounded-full bg-emerald-500 inline-block mr-2 ml-1',
                               variant.stock <= LAST_FEW_STOCK_WARNING &&
                                 'bg-orange-400',
-                              !variant.stock && 'bg-gray-400',
+                              (!variant.stock || !event.enabled) &&
+                                'bg-gray-400',
                             )}
                             aria-hidden="true"
                           ></span>
@@ -254,7 +277,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
               </div>
 
               {/* Ticket Quantity */}
-              <div className="space-y-3">
+              <div className={cn('space-y-3', !event.enabled && 'opacity-50')}>
                 <Label>2. Choose how many tickets</Label>
                 <div className="flex items-center justify-between rounded-lg p-3 border border-gray-200">
                   <div className="flex items-center gap-3">
@@ -297,7 +320,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
               </div>
 
               {/* Add-ons */}
-              <div className="space-y-3">
+              <div className={cn('space-y-3', !event.enabled && 'opacity-50')}>
                 <label className="text-sm font-medium">
                   3. Select any optional add-ons
                 </label>
@@ -320,126 +343,136 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                 </div>
               </div>
 
-              <Separator className="bg-gray-200" />
-
               {/* Total */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  {selectedVariant ? (
-                    <>
-                      <span>
-                        Tickets ({quantity}x - {selectedVariant.title})
-                      </span>
-                      <span>
-                        £{(quantity * selectedVariant?.price).toFixed(2)}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Tickets</span>
-                      <span>£-</span>
-                    </>
-                  )}
-                </div>
-                {selectedExtras?.map((value: EventExtras) => (
-                  <div className="flex justify-between text-sm">
-                    <span>{value.title}</span>
-                    <span>£{value.price?.toFixed(2)}</span>
+              {event.enabled && (
+                <>
+                  <Separator className="bg-gray-200" />
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      {selectedVariant ? (
+                        <>
+                          <span>
+                            Tickets ({quantity}x - {selectedVariant.title})
+                          </span>
+                          <span>
+                            £{(quantity * selectedVariant?.price).toFixed(2)}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Tickets</span>
+                          <span>£-</span>
+                        </>
+                      )}
+                    </div>
+                    {selectedExtras?.map((value: EventExtras) => (
+                      <div className="flex justify-between text-sm">
+                        <span>{value.title}</span>
+                        <span>£{value.price?.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    <Separator className="bg-gray-300" />
+                    <div className="flex justify-between font-semibold text-lg">
+                      <span>Total</span>
+                      <span>£{price?.toFixed(2) || ' - '}</span>
+                    </div>
                   </div>
-                ))}
-                <Separator className="bg-gray-300" />
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
-                  <span>£{price?.toFixed(2) || ' - '}</span>
-                </div>
-              </div>
+                </>
+              )}
             </CardContent>
             <CardFooter className="space-y-3 block">
-              <div className="relative z-10">
-                <PayPalButton
-                  disabled={
-                    isPurchaseDisabled ||
-                    quantity === 0 ||
-                    createOrderMutation.isPending ||
-                    captureOrderMutation.isPending
-                  }
-                  onClick={async (_data, actions) => {
-                    // Custom validation before PayPal modal opens
-                    if (!selectedVariantId) {
-                      setError('Please select a time slot first.');
-                      if (
-                        selectTriggerRef.current &&
-                        event.variants.length > 3
-                      ) {
-                        // Highlight select if used
-                        selectTriggerRef.current.focus();
-                        selectTriggerRef.current.style.borderColor = 'red';
+              {event.enabled && (
+                <>
+                  <div className="relative z-10">
+                    <PayPalButton
+                      disabled={
+                        isPurchaseDisabled ||
+                        quantity === 0 ||
+                        createOrderMutation.isPending ||
+                        captureOrderMutation.isPending
                       }
-                      return actions.reject();
-                    }
-                    setError(undefined); // Clear error if validation passes
-                    return actions.resolve();
-                  }}
-                  createOrder={async () => {
-                    // This check is somewhat redundant if onClick validation is solid, but good as a safeguard
-                    if (!selectedVariant || !price || quantity === 0) {
-                      setError(
-                        'Cannot create order. Please check your selection and ensure the quantity is valid.',
-                      );
-                      throw new Error('Invalid selection for order creation');
-                    }
-                    try {
-                      const order = await createOrderMutation.mutateAsync({
-                        id: event.id,
-                        variantId: selectedVariant.id, // selectedVariant is guaranteed here by checks
-                        quantity,
-                        extras: extrasState,
-                      });
-                      if (!order.id) {
-                        // This case should ideally not happen if backend is robust
-                        throw new Error(
-                          'Order ID was not returned from the server.',
-                        );
-                      }
-                      return order.id;
-                    } catch (err: any) {
-                      console.error('Order creation failed:', err);
-                      // More user-friendly error based on potential issues
-                      setError(
-                        err.message ||
-                          'There was an issue preparing your order. Please double-check your selections and try again. If the problem persists, contact support.',
-                      );
+                      onClick={async (_data, actions) => {
+                        // Custom validation before PayPal modal opens
+                        if (!selectedVariantId) {
+                          setError('Please select a time slot first.');
+                          if (
+                            selectTriggerRef.current &&
+                            event.variants.length > 3
+                          ) {
+                            // Highlight select if used
+                            selectTriggerRef.current.focus();
+                            selectTriggerRef.current.style.borderColor = 'red';
+                          }
+                          return actions.reject();
+                        }
+                        setError(undefined); // Clear error if validation passes
+                        return actions.resolve();
+                      }}
+                      createOrder={async () => {
+                        // This check is somewhat redundant if onClick validation is solid, but good as a safeguard
+                        if (!selectedVariant || !price || quantity === 0) {
+                          setError(
+                            'Cannot create order. Please check your selection and ensure the quantity is valid.',
+                          );
+                          throw new Error(
+                            'Invalid selection for order creation',
+                          );
+                        }
+                        try {
+                          const order = await createOrderMutation.mutateAsync({
+                            id: event.id,
+                            variantId: selectedVariant.id, // selectedVariant is guaranteed here by checks
+                            quantity,
+                            extras: extrasState,
+                          });
+                          if (!order.id) {
+                            // This case should ideally not happen if backend is robust
+                            throw new Error(
+                              'Order ID was not returned from the server.',
+                            );
+                          }
+                          return order.id;
+                        } catch (err: any) {
+                          console.error('Order creation failed:', err);
+                          // More user-friendly error based on potential issues
+                          setError(
+                            err.message ||
+                              'There was an issue preparing your order. Please double-check your selections and try again. If the problem persists, contact support.',
+                          );
 
-                      throw err;
-                    }
-                  }}
-                  onApprove={async (data) => {
-                    try {
-                      const order = await captureOrderMutation.mutateAsync({
-                        id: data.orderID,
-                      });
+                          throw err;
+                        }
+                      }}
+                      onApprove={async (data) => {
+                        try {
+                          const order = await captureOrderMutation.mutateAsync({
+                            id: data.orderID,
+                          });
 
-                      router.push(`/events/${event.id}/orders/${order.id}`);
-                    } catch (err: any) {
-                      console.error('Order capture failed:', err);
-                      setError(
-                        'There was a problem finalizing your purchase. Please try again. If you continue to experience issues, please contact support.',
-                      );
-                    }
-                  }}
-                />
-              </div>
-              {/* Trust Indicators */}
-              <div className="flex items-center justify-center space-x-4 pt-4 text-xs text-slate-500">
-                <div className="flex items-center space-x-1">
-                  <Shield className="h-4 w-4" />
-                  <span>Secure Payment</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Users className="h-4 w-4" />
-                  <span>Instant Confirmation</span>
-                </div>
-              </div>
+                          router.push(`/events/${event.id}/orders/${order.id}`);
+                        } catch (err: any) {
+                          console.error('Order capture failed:', err);
+                          setError(
+                            'There was a problem finalizing your purchase. Please try again. If you continue to experience issues, please contact support.',
+                          );
+                        }
+                      }}
+                    />
+                  </div>
+                  {/* Trust Indicators */}
+                  <div className="flex items-center justify-center space-x-4 pt-4 text-xs text-slate-500">
+                    <div className="flex items-center space-x-1">
+                      <Shield className="h-4 w-4" />
+                      <span>Secure Payment</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Users className="h-4 w-4" />
+                      <span>Instant Confirmation</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardFooter>
           </Card>
         </div>

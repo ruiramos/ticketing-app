@@ -94,12 +94,84 @@ export async function seedSummerFairEvent(prismaInstance: PrismaClient) {
     create: { ...summerFairEventData },
     update: {}, // No specific update logic, just ensure it exists
   });
-  console.log(`Event "${summerFairEventData.title}" with ID ${eventId} seeded/updated.`);
+  console.log(
+    `Event "${summerFairEventData.title}" with ID ${eventId} seeded/updated.`,
+  );
+}
+
+export async function seedDisabledEvent(prismaInstance: PrismaClient) {
+  const eventId = 'disabled-event-12345';
+
+  // First, find the existing organization
+  const organization = await prismaInstance.organization.findFirst({
+    where: { name: 'FOHPED' },
+  });
+
+  if (!organization) {
+    throw new Error(
+      'FOHPED organization not found. Make sure to run seedSummerFairEvent first.',
+    );
+  }
+
+  const disabledEventData: Prisma.EventCreateInput = {
+    id: eventId,
+    title: 'Winter Workshop (Currently Unavailable)',
+    text: 'Join us for an exciting winter workshop experience!\n\nThis hands-on workshop will include:\n• Interactive learning sessions\n• Take-home craft projects\n• Refreshments and snacks\n• Fun activities for all ages\n\n• Please arrive 10 minutes early\n• Suitable for ages 5-12\n• Parents must accompany children under 8',
+    location: 'Community Center, Main Hall',
+    enabled: false, // This event is disabled
+    eventExtras: {
+      createMany: {
+        data: {
+          title: 'Take-home kit',
+          description: 'Additional craft materials to take home',
+          price: 3,
+          currency: 'GBP',
+        },
+      },
+    },
+    variants: {
+      createMany: {
+        data: [
+          {
+            title: '2:00pm - 3:00pm',
+            stock: 15,
+            price: 12,
+            displayOrder: 1,
+            currency: 'GBP',
+          },
+          {
+            title: '3:30pm - 4:30pm',
+            stock: 15,
+            price: 12,
+            displayOrder: 2,
+            currency: 'GBP',
+          },
+        ],
+      },
+    },
+    organization: {
+      connect: {
+        id: organization.id, // Connect using the organization ID
+      },
+    },
+  };
+
+  await prismaInstance.event.upsert({
+    where: {
+      id: disabledEventData.id,
+    },
+    create: { ...disabledEventData },
+    update: {}, // No specific update logic, just ensure it exists
+  });
+  console.log(
+    `Disabled event "${disabledEventData.title}" with ID ${eventId} seeded/updated.`,
+  );
 }
 
 async function main() {
   console.log('Starting database seeding...');
   await seedSummerFairEvent(prisma); // Call the extracted function
+  await seedDisabledEvent(prisma); // Add the disabled event
   // If there were other events or generic seeding logic, it would go here.
   console.log('Database seeding finished.');
 }

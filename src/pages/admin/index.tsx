@@ -12,6 +12,7 @@ import {
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Plus } from 'lucide-react';
+import { cx } from 'class-variance-authority';
 const AdminPage = () => {
   const { data: user } = trpc.user.getUser.useQuery();
   const { data: events } = trpc.user.getUserEvents.useQuery();
@@ -51,7 +52,10 @@ const AdminPage = () => {
                 <TableCell>
                   <Badge variant="outline">
                     <span
-                      className="size-1.5 rounded-full bg-emerald-500"
+                      className={cx(
+                        'size-1.5 rounded-full mx-0.5',
+                        event.enabled ? 'bg-emerald-500' : 'bg-gray-500',
+                      )}
                       aria-hidden="true"
                     ></span>
                     {event.enabled ? 'Live' : 'Disabled'}
