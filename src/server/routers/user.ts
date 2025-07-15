@@ -1,7 +1,7 @@
 import { router, authedProcedure, authedProcedureWithEventId } from '../trpc';
 import type { Prisma } from '~/generated/prisma/client';
 import { z } from 'zod';
-import { InviteOrganizationMemberSchema } from '~/lib/schemas';
+import { InviteOrganizationMemberSchema, CreateOrganizationSchema } from '~/lib/schemas';
 
 import { prisma } from '~/server/prisma';
 import { sendEmail } from '~/utils/email';
@@ -27,10 +27,23 @@ export const userRouter = router({
   getUser: authedProcedure.query(async ({ ctx }) => {
     if (!ctx.user.email) throw new Error('Could not get email from user');
 
-    const user = await prisma.user.findFirstOrThrow({
+    // Try to find existing user first
+    let user = await prisma.user.findFirst({
       select: defaultUserSelect,
       where: { email: ctx.user.email },
     });
+
+    // If user doesn't exist, create them
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: ctx.user.email,
+          name: ctx.user.name,
+          role: 'USER',
+        },
+        select: defaultUserSelect,
+      });
+    }
 
     return user;
   }),
@@ -70,6 +83,57 @@ export const userRouter = router({
 
     return user.organization;
   }),
+  createOrganization: authedProcedure
+    .input(CreateOrganizationSchema)
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user.email) throw new Error('Could not get email from user');
+
+      // Check if user already belongs to an organization
+      const existingUser = await prisma.user.findFirst({
+        where: { email: ctx.user.email },
+        select: { organizationId: true, id: true },
+      });
+
+      if (existingUser?.organizationId) {
+        throw new Error('User already belongs to an organization');
+      }
+
+      // Create the organization
+      const organization = await prisma.organization.create({
+        data: {
+          name: input.name,
+          email: input.email,
+          phone: input.phone,
+          address: input.address,
+          city: input.city,
+          postCode: input.postCode,
+          website: input.website,
+        },
+      });
+
+      // Update or create user and link to organization
+      if (existingUser) {
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            organizationId: organization.id,
+            role: 'ADMIN',
+            name: ctx.user.name,
+          },
+        });
+      } else {
+        await prisma.user.create({
+          data: {
+            email: ctx.user.email,
+            name: ctx.user.name,
+            role: 'ADMIN',
+            organizationId: organization.id,
+          },
+        });
+      }
+
+      return organization;
+    }),
   inviteOrganizationMember: authedProcedure
     .input(InviteOrganizationMemberSchema)
     .mutation(async ({ ctx, input }) => {

@@ -13,3 +13,15 @@ export const InviteOrganizationMemberSchema = z.object({
 export type InviteOrganizationMemberInput = z.infer<
   typeof InviteOrganizationMemberSchema
 >;
+
+export const CreateOrganizationSchema = z.object({
+  name: z.string().min(1, 'Organization name is required'),
+  email: z.string().email('Valid email is required'),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postCode: z.string().optional(),
+  website: z.string().optional(),
+});
+
+export type CreateOrganizationInput = z.infer<typeof CreateOrganizationSchema>;

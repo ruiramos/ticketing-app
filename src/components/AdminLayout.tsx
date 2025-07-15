@@ -5,6 +5,7 @@ import { useEffect, type ReactNode } from 'react';
 import { trpc, type RouterOutput } from '~/utils/trpc';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { Button } from './ui/button';
+import { WelcomeScreen } from './WelcomeScreen';
 
 type AdminLayoutProps = { children: ReactNode };
 type GetUserOutput = RouterOutput['user']['getUser'];
@@ -18,6 +19,11 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       void signIn(undefined, { callbackUrl: window.location.href });
     }
   }, [status]);
+
+  // Show welcome screen if user has no organization
+  if (user && !user.organization) {
+    return <WelcomeScreen />;
+  }
 
   return (
     <>

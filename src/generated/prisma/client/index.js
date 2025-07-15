@@ -286,7 +286,7 @@ const config = {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": "postgresql://postgres:example@localhost:5432/ticketing_test"
+        "value": "postgresql://postgres:example@localhost:5432/ticketing"
       }
     }
   },
