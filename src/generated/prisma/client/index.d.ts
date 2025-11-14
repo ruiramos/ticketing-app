@@ -5202,6 +5202,8 @@ export namespace Prisma {
     variantId: string | null
     quantity: number | null
     status: $Enums.OrderStatus | null
+    checkedIn: boolean | null
+    checkedInAt: Date | null
     amount: number | null
     currency: string | null
     createdAt: Date | null
@@ -5217,6 +5219,8 @@ export namespace Prisma {
     variantId: string | null
     quantity: number | null
     status: $Enums.OrderStatus | null
+    checkedIn: boolean | null
+    checkedInAt: Date | null
     amount: number | null
     currency: string | null
     createdAt: Date | null
@@ -5236,6 +5240,8 @@ export namespace Prisma {
     items: number
     customer: number
     error: number
+    checkedIn: number
+    checkedInAt: number
     amount: number
     currency: number
     createdAt: number
@@ -5263,6 +5269,8 @@ export namespace Prisma {
     variantId?: true
     quantity?: true
     status?: true
+    checkedIn?: true
+    checkedInAt?: true
     amount?: true
     currency?: true
     createdAt?: true
@@ -5278,6 +5286,8 @@ export namespace Prisma {
     variantId?: true
     quantity?: true
     status?: true
+    checkedIn?: true
+    checkedInAt?: true
     amount?: true
     currency?: true
     createdAt?: true
@@ -5297,6 +5307,8 @@ export namespace Prisma {
     items?: true
     customer?: true
     error?: true
+    checkedIn?: true
+    checkedInAt?: true
     amount?: true
     currency?: true
     createdAt?: true
@@ -5403,6 +5415,8 @@ export namespace Prisma {
     items: JsonValue
     customer: JsonValue
     error: JsonValue | null
+    checkedIn: boolean | null
+    checkedInAt: Date | null
     amount: number
     currency: string
     createdAt: Date
@@ -5441,6 +5455,8 @@ export namespace Prisma {
     items?: boolean
     customer?: boolean
     error?: boolean
+    checkedIn?: boolean
+    checkedInAt?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5463,6 +5479,8 @@ export namespace Prisma {
     items?: boolean
     customer?: boolean
     error?: boolean
+    checkedIn?: boolean
+    checkedInAt?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5485,6 +5503,8 @@ export namespace Prisma {
     items?: boolean
     customer?: boolean
     error?: boolean
+    checkedIn?: boolean
+    checkedInAt?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5507,6 +5527,8 @@ export namespace Prisma {
     items?: boolean
     customer?: boolean
     error?: boolean
+    checkedIn?: boolean
+    checkedInAt?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5514,7 +5536,7 @@ export namespace Prisma {
     userId?: boolean
   }
 
-  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "externalId" | "externalTransactionId" | "eventId" | "variantId" | "quantity" | "status" | "selectedExtras" | "items" | "customer" | "error" | "amount" | "currency" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["order"]>
+  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "externalId" | "externalTransactionId" | "eventId" | "variantId" | "quantity" | "status" | "selectedExtras" | "items" | "customer" | "error" | "checkedIn" | "checkedInAt" | "amount" | "currency" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["order"]>
   export type OrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     event?: boolean | EventDefaultArgs<ExtArgs>
     variant?: boolean | VariantDefaultArgs<ExtArgs>
@@ -5550,6 +5572,8 @@ export namespace Prisma {
       items: Prisma.JsonValue
       customer: Prisma.JsonValue
       error: Prisma.JsonValue | null
+      checkedIn: boolean | null
+      checkedInAt: Date | null
       amount: number
       currency: string
       createdAt: Date
@@ -5992,6 +6016,8 @@ export namespace Prisma {
     readonly items: FieldRef<"Order", 'Json'>
     readonly customer: FieldRef<"Order", 'Json'>
     readonly error: FieldRef<"Order", 'Json'>
+    readonly checkedIn: FieldRef<"Order", 'Boolean'>
+    readonly checkedInAt: FieldRef<"Order", 'DateTime'>
     readonly amount: FieldRef<"Order", 'Float'>
     readonly currency: FieldRef<"Order", 'String'>
     readonly createdAt: FieldRef<"Order", 'DateTime'>
@@ -10036,6 +10062,8 @@ export namespace Prisma {
     items: 'items',
     customer: 'customer',
     error: 'error',
+    checkedIn: 'checkedIn',
+    checkedInAt: 'checkedInAt',
     amount: 'amount',
     currency: 'currency',
     createdAt: 'createdAt',
@@ -10526,6 +10554,8 @@ export namespace Prisma {
     items?: JsonFilter<"Order">
     customer?: JsonFilter<"Order">
     error?: JsonNullableFilter<"Order">
+    checkedIn?: BoolNullableFilter<"Order"> | boolean | null
+    checkedInAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     amount?: FloatFilter<"Order"> | number
     currency?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -10548,6 +10578,8 @@ export namespace Prisma {
     items?: SortOrder
     customer?: SortOrder
     error?: SortOrderInput | SortOrder
+    checkedIn?: SortOrderInput | SortOrder
+    checkedInAt?: SortOrderInput | SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -10573,6 +10605,8 @@ export namespace Prisma {
     items?: JsonFilter<"Order">
     customer?: JsonFilter<"Order">
     error?: JsonNullableFilter<"Order">
+    checkedIn?: BoolNullableFilter<"Order"> | boolean | null
+    checkedInAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     amount?: FloatFilter<"Order"> | number
     currency?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -10595,6 +10629,8 @@ export namespace Prisma {
     items?: SortOrder
     customer?: SortOrder
     error?: SortOrderInput | SortOrder
+    checkedIn?: SortOrderInput | SortOrder
+    checkedInAt?: SortOrderInput | SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -10622,6 +10658,8 @@ export namespace Prisma {
     items?: JsonWithAggregatesFilter<"Order">
     customer?: JsonWithAggregatesFilter<"Order">
     error?: JsonNullableWithAggregatesFilter<"Order">
+    checkedIn?: BoolNullableWithAggregatesFilter<"Order"> | boolean | null
+    checkedInAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
     amount?: FloatWithAggregatesFilter<"Order"> | number
     currency?: StringWithAggregatesFilter<"Order"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
@@ -11164,6 +11202,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -11185,6 +11225,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -11202,6 +11244,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11223,6 +11267,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11242,6 +11288,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -11259,6 +11307,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11277,6 +11327,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12046,6 +12098,11 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type BoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+  }
+
   export type VariantScalarRelationFilter = {
     is?: VariantWhereInput
     isNot?: VariantWhereInput
@@ -12068,6 +12125,8 @@ export namespace Prisma {
     items?: SortOrder
     customer?: SortOrder
     error?: SortOrder
+    checkedIn?: SortOrder
+    checkedInAt?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -12088,6 +12147,8 @@ export namespace Prisma {
     variantId?: SortOrder
     quantity?: SortOrder
     status?: SortOrder
+    checkedIn?: SortOrder
+    checkedInAt?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -12103,6 +12164,8 @@ export namespace Prisma {
     variantId?: SortOrder
     quantity?: SortOrder
     status?: SortOrder
+    checkedIn?: SortOrder
+    checkedInAt?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -12175,6 +12238,14 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedJsonNullableFilter<$PrismaModel>
     _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
+  export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
   }
 
   export type EventListRelationFilter = {
@@ -12655,6 +12726,10 @@ export namespace Prisma {
 
   export type EnumOrderStatusFieldUpdateOperationsInput = {
     set?: $Enums.OrderStatus
+  }
+
+  export type NullableBoolFieldUpdateOperationsInput = {
+    set?: boolean | null
   }
 
   export type EventUpdateOneRequiredWithoutOrdersNestedInput = {
@@ -13185,6 +13260,11 @@ export namespace Prisma {
     not?: NestedEnumOrderStatusFilter<$PrismaModel> | $Enums.OrderStatus
   }
 
+  export type NestedBoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+  }
+
   export type NestedEnumOrderStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.OrderStatus | EnumOrderStatusFieldRefInput<$PrismaModel>
     in?: $Enums.OrderStatus[] | ListEnumOrderStatusFieldRefInput<$PrismaModel>
@@ -13239,6 +13319,14 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumRoleFilter<$PrismaModel = never> = {
@@ -13345,6 +13433,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -13364,6 +13454,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -13508,6 +13600,8 @@ export namespace Prisma {
     items?: JsonFilter<"Order">
     customer?: JsonFilter<"Order">
     error?: JsonNullableFilter<"Order">
+    checkedIn?: BoolNullableFilter<"Order"> | boolean | null
+    checkedInAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     amount?: FloatFilter<"Order"> | number
     currency?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -13607,6 +13701,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -13626,6 +13722,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14368,6 +14466,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14388,6 +14488,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14582,6 +14684,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14658,6 +14762,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14677,6 +14783,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14695,6 +14803,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14713,6 +14823,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14730,6 +14842,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14749,6 +14863,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14767,6 +14883,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14948,6 +15066,8 @@ export namespace Prisma {
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: boolean | null
+    checkedInAt?: Date | string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14977,6 +15097,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14997,6 +15119,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15015,6 +15139,8 @@ export namespace Prisma {
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
+    checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

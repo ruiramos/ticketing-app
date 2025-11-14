@@ -91,6 +91,9 @@ model Order {
   customer       Json
   error          Json?
 
+  checkedIn   Boolean?  @default(false)
+  checkedInAt DateTime?
+
   amount   Float
   currency String
 

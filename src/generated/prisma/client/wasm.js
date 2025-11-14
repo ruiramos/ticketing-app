@@ -168,6 +168,8 @@ exports.Prisma.OrderScalarFieldEnum = {
   items: 'items',
   customer: 'customer',
   error: 'error',
+  checkedIn: 'checkedIn',
+  checkedInAt: 'checkedInAt',
   amount: 'amount',
   currency: 'currency',
   createdAt: 'createdAt',

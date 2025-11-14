@@ -11,7 +11,7 @@ import {
 } from '@paypal/paypal-server-sdk';
 import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
-import { Order, Prisma } from '@prisma/client';
+import { Order, Prisma } from '~/generated/prisma/client';
 import { env } from '../env';
 import { generateMailContent, sendEmail } from '~/utils/email';
 
@@ -394,5 +394,106 @@ export const orderRouter = router({
       // });
 
       return ourOrder;
+    }),
+  getOrdersForCheckin: authedProcedure
+    .input(
+      z.object({
+        eventId: z.string().uuid(),
+        search: z.string().optional(),
+        variantId: z.string().uuid().optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const where: Prisma.OrderWhereInput = {
+        eventId: input.eventId,
+        status: 'CONFIRMED',
+      };
+
+      if (input.variantId) {
+        where.variantId = input.variantId;
+      }
+
+      if (input.search) {
+        where.OR = [
+          {
+            customer: {
+              path: ['name', 'givenName'],
+              string_contains: input.search,
+              mode: 'insensitive',
+            },
+          },
+          {
+            customer: {
+              path: ['name', 'surname'],
+              string_contains: input.search,
+              mode: 'insensitive',
+            },
+          },
+          {
+            customer: {
+              path: ['emailAddress'],
+              string_contains: input.search,
+              mode: 'insensitive',
+            },
+          },
+        ];
+      }
+
+      return await prisma.order.findMany({
+        where: {},
+        include: {
+          variant: true,
+          event: {
+            select: {
+              title: true,
+            },
+          },
+        },
+        orderBy: [{ checkedIn: 'asc' }, { createdAt: 'desc' }],
+      });
+    }),
+  toggleCheckin: authedProcedure
+    .input(
+      z.object({
+        orderId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const order = await prisma.order.findUnique({
+        where: { id: input.orderId },
+        select: { checkedIn: true, status: true },
+      });
+
+      if (!order) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Order not found',
+        });
+      }
+
+      if (order.status !== 'CONFIRMED') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Only confirmed orders can be checked in',
+        });
+      }
+
+      const newCheckedInStatus = !order.checkedIn;
+
+      return await prisma.order.update({
+        where: { id: input.orderId },
+        data: {
+          checkedIn: newCheckedInStatus,
+          checkedInAt: newCheckedInStatus ? new Date() : null,
+        },
+        include: {
+          variant: true,
+          event: {
+            select: {
+              title: true,
+            },
+          },
+        },
+      });
     }),
 });

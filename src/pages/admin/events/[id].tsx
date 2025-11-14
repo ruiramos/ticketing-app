@@ -21,6 +21,7 @@ import {
   X,
   Calendar,
   MapPin,
+  UserCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
@@ -234,6 +235,12 @@ const EventAdminPage = () => {
               <Link href={`/admin/events/edit/${id}`} className="no-underline">
                 <Edit className="-ms-1 opacity-60" size={16} />
                 <span>Edit Event</span>
+              </Link>
+            </Button>
+            <Button variant={'outline'} asChild size={'sm'}>
+              <Link href={`/admin/events/checkin/${id}`} className="no-underline">
+                <UserCheck className="-ms-1 opacity-60" size={16} />
+                <span>Check-in</span>
               </Link>
             </Button>
             <Button
