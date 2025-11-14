@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
-import { CustomField, validateCustomFieldResponse } from '~/types/customFields';
+import { CustomField } from '~/types/customFields';
 import { cn } from '~/lib/utils';
 
 interface CustomFieldRendererProps {
@@ -40,7 +40,13 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
         return (
           <Input
             id={fieldId}
-            type={field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
+            type={
+              field.type === 'email'
+                ? 'email'
+                : field.type === 'phone'
+                  ? 'tel'
+                  : 'text'
+            }
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
@@ -57,7 +63,9 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
             id={fieldId}
             type="number"
             value={value || ''}
-            onChange={(e) => onChange(e.target.value ? Number(e.target.value) : '')}
+            onChange={(e) =>
+              onChange(e.target.value ? Number(e.target.value) : '')
+            }
             placeholder={field.placeholder}
             disabled={disabled}
             className={cn(error && 'border-red-500')}
@@ -98,7 +106,11 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
               className={cn(error && 'border-red-500')}
               aria-describedby={cn(helpId, errorId).trim() || undefined}
             >
-              <SelectValue placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} />
+              <SelectValue
+                placeholder={
+                  field.placeholder || `Select ${field.label.toLowerCase()}`
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               {field.options?.map((option) => (
@@ -125,7 +137,7 @@ export const CustomFieldRenderer: React.FC<CustomFieldRendererProps> = ({
               className={cn(
                 'text-sm font-normal',
                 disabled && 'text-gray-400',
-                error && 'text-red-600'
+                error && 'text-red-600',
               )}
             >
               {field.label}

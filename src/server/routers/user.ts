@@ -1,7 +1,10 @@
 import { router, authedProcedure, authedProcedureWithEventId } from '../trpc';
 import type { Prisma } from '~/generated/prisma/client';
 import { z } from 'zod';
-import { InviteOrganizationMemberSchema, CreateOrganizationSchema } from '~/lib/schemas';
+import {
+  InviteOrganizationMemberSchema,
+  CreateOrganizationSchema,
+} from '~/lib/schemas';
 
 import { prisma } from '~/server/prisma';
 import { sendEmail } from '~/utils/email';
@@ -473,6 +476,7 @@ export const userRouter = router({
         enabled: true,
         startsAt: true,
         endsAt: true,
+        customFields: true,
         variants: {
           select: {
             id: true,

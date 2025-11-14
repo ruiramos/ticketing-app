@@ -108,7 +108,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
   const isPurchaseDisabled = !selectedVariant || !event.enabled;
 
   const customFields: CustomField[] =
-    (event.customFields as CustomField[]) || [];
+    (event.customFields as unknown as CustomField[]) || [];
 
   const validateCustomFields = () => {
     const errors: Record<string, string> = {};
