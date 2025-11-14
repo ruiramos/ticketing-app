@@ -59,9 +59,11 @@ export default function OrderConfirmation({
                 <div className="absolute bottom-4 left-4 text-white">
                   <h1 className="text-2xl font-bold mb-1">{event.title}</h1>
                   <div className="flex items-center gap-4 text-sm">
+                    {/*
                     <Badge className="bg-amber-400 text-purple-900 font-medium">
                       Wildlife Experience
                     </Badge>
+                      */}
                   </div>
                 </div>
               </div>
