@@ -33,7 +33,7 @@ export default async function handler(
       },
     });
 
-    const [fields, files] = await form.parse(req);
+    const [_, files] = await form.parse(req);
 
     const file = files.image?.[0];
 

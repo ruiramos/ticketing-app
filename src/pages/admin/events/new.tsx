@@ -31,7 +31,6 @@ const NewEventPage = () => {
   const [location, setLocation] = useState('');
   const [link, setLink] = useState('');
   const [image, setImage] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
@@ -92,7 +91,6 @@ const NewEventPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setImageFile(file);
     setIsUploadingImage(true);
 
     try {
