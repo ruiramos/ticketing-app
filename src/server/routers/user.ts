@@ -290,6 +290,11 @@ export const userRouter = router({
       }
 
       if (invitation.email !== ctx.user.email) {
+        console.error(
+          'Invitation email does not match your account:',
+          invitation.email,
+          ctx.user.email,
+        );
         throw new Error('Invitation email does not match your account');
       }
 
