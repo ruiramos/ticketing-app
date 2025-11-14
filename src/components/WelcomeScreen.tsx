@@ -3,7 +3,13 @@ import { trpc } from '~/utils/trpc';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './ui/card';
 
 export const WelcomeScreen = () => {
   const [formData, setFormData] = useState({
@@ -28,7 +34,7 @@ export const WelcomeScreen = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -100,7 +106,9 @@ export const WelcomeScreen = () => {
                 <Input
                   id="postCode"
                   value={formData.postCode}
-                  onChange={(e) => handleInputChange('postCode', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange('postCode', e.target.value)
+                  }
                   placeholder="Post code"
                 />
               </div>
@@ -116,12 +124,18 @@ export const WelcomeScreen = () => {
               />
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={createOrganization.isLoading || !formData.name || !formData.email}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={
+                createOrganization.isPending ||
+                !formData.name ||
+                !formData.email
+              }
             >
-              {createOrganization.isLoading ? 'Creating...' : 'Create Organization'}
+              {createOrganization.isPending
+                ? 'Creating...'
+                : 'Create Organization'}
             </Button>
           </form>
         </CardContent>

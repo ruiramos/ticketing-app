@@ -205,7 +205,7 @@ const OrganisationDashboard = () => {
 
       {/* Team Members */}
       <div className="p-0">
-        <div className="flex items-center justify-between mb-4 px-6 pb-0">
+        <div className="flex items-center justify-between mb-4 pb-0">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <Users className="w-5 h-5" />
             Team Members

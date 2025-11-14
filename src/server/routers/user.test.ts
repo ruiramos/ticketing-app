@@ -1,8 +1,8 @@
 /**
  * Integration test for the `user` router
- * 
+ *
  * This test suite covers the user-related TRPC queries and functionality.
- * 
+ *
  * Test Coverage:
  * - user.getUser query with authentication
  * - user.getUserEvents query for organization events
@@ -10,7 +10,7 @@
  * - user.getUserEventOrders query for event orders
  * - Authentication and authorization checks
  * - Error handling for missing users and events
- * 
+ *
  * The tests use a clean database state for each test to ensure isolation
  * and create minimal test data (organizations, users, events) as needed.
  */
@@ -107,10 +107,12 @@ describe('user.getUser', () => {
 
     const caller = createCaller(ctx);
 
-    await expect(caller.user.getUser()).rejects.toThrow('Could not get email from user');
+    await expect(caller.user.getUser()).rejects.toThrow(
+      'Could not get email from user',
+    );
   });
 
-  test('should throw error when user does not exist', async () => {
+  test('should not throw error when user does not exist', async () => {
     const ctx = await createContextInner({
       session: {
         user: { email: 'nonexistent@example.com' },
@@ -119,8 +121,15 @@ describe('user.getUser', () => {
     });
 
     const caller = createCaller(ctx);
+    const user = await caller.user.getUser();
 
-    await expect(caller.user.getUser()).rejects.toThrow();
+    expect(user).toMatchObject({
+      address: null,
+      email: ctx.session!.user!.email,
+      id: expect.any(String),
+      role: 'USER',
+      organization: null,
+    });
   });
 });
 
@@ -278,7 +287,7 @@ describe('user.getUserEvent', () => {
           create: [
             {
               title: 'T-shirt',
-              price: 15.00,
+              price: 15.0,
               currency: 'GBP',
             },
           ],
@@ -313,7 +322,7 @@ describe('user.getUserEvent', () => {
     expect(result.eventExtras).toHaveLength(1);
     expect(result.eventExtras[0]).toMatchObject({
       title: 'T-shirt',
-      price: 15.00,
+      price: 15.0,
     });
   });
 
@@ -355,8 +364,12 @@ describe('user.getUserEvent', () => {
 
     const caller = createCaller(ctx);
 
-    await expect(caller.user.getUserEvent({ eventId: event.id })).rejects.toThrow(TRPCError);
-    await expect(caller.user.getUserEvent({ eventId: event.id })).rejects.toMatchObject({
+    await expect(
+      caller.user.getUserEvent({ eventId: event.id }),
+    ).rejects.toThrow(TRPCError);
+    await expect(
+      caller.user.getUserEvent({ eventId: event.id }),
+    ).rejects.toMatchObject({
       code: 'FORBIDDEN',
     });
   });
@@ -384,8 +397,12 @@ describe('user.getUserEvent', () => {
 
     const caller = createCaller(ctx);
 
-    await expect(caller.user.getUserEvent({ eventId: 'non-existent-id' })).rejects.toThrow(TRPCError);
-    await expect(caller.user.getUserEvent({ eventId: 'non-existent-id' })).rejects.toMatchObject({
+    await expect(
+      caller.user.getUserEvent({ eventId: 'non-existent-id' }),
+    ).rejects.toThrow(TRPCError);
+    await expect(
+      caller.user.getUserEvent({ eventId: 'non-existent-id' }),
+    ).rejects.toMatchObject({
       code: 'NOT_FOUND',
     });
   });
@@ -465,15 +482,16 @@ describe('user.getUserEventOrders', () => {
     const caller = createCaller(ctx);
     const result = await caller.user.getUserEventOrders({ eventId: event.id });
 
-    expect(result).toHaveLength(2);
-    expect(result[0]).toMatchObject({
+    expect(result.orders).toHaveLength(2);
+    expect(result.orders[0]).toMatchObject({
       quantity: expect.any(Number),
       status: expect.stringMatching(/CONFIRMED|RESERVED/),
       amount: expect.any(Number),
       currency: 'GBP',
     });
-    expect(result[0].variant).toMatchObject({
+    expect(result.orders[0].variant).toMatchObject({
       title: 'Standard Ticket',
+      price: 25.99,
     });
   });
 
@@ -509,7 +527,7 @@ describe('user.getUserEventOrders', () => {
     const caller = createCaller(ctx);
     const result = await caller.user.getUserEventOrders({ eventId: event.id });
 
-    expect(result).toEqual([]);
+    expect(result.orders).toEqual([]);
   });
 
   test('should order results by creation date descending', async () => {
@@ -588,9 +606,9 @@ describe('user.getUserEventOrders', () => {
     const caller = createCaller(ctx);
     const result = await caller.user.getUserEventOrders({ eventId: event.id });
 
-    expect(result).toHaveLength(2);
+    expect(result.orders).toHaveLength(2);
     // Most recent order should be first
-    expect(result[0].id).toBe(order2.id);
-    expect(result[1].id).toBe(order1.id);
+    expect(result.orders[0].id).toBe(order2.id);
+    expect(result.orders[1].id).toBe(order1.id);
   });
 });

@@ -25,7 +25,8 @@
     "test-start": "run-s test-db-setup test-unit test-e2e",
     "verify-dbs": "tsx scripts/verify-databases.ts",
     "postinstall": "pnpm generate",
-    "expire-reserved": "NODE_ENV=production tsx src/scripts/expire-reserved-orders.ts"
+    "expire-reserved": "NODE_ENV=production tsx src/scripts/expire-reserved-orders.ts",
+    "types:check": "tsc --noEmit --watch"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
