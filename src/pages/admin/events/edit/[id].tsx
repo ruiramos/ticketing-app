@@ -32,6 +32,9 @@ const EditEventPage = () => {
   const [text, setText] = useState('');
   const [location, setLocation] = useState('');
   const [link, setLink] = useState('');
+  const [image, setImage] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [enabled, setEnabled] = useState(true);
@@ -61,6 +64,7 @@ const EditEventPage = () => {
       setText(event.text);
       setLocation(event.location || '');
       setLink(event.link || '');
+      setImage(event.image || '');
       setEnabled(event.enabled);
 
       // Format dates for datetime-local input using date-fns
@@ -204,6 +208,36 @@ const EditEventPage = () => {
     setExtras(updated);
   };
 
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageFile(file);
+    setIsUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/upload-event-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      setImage(data.url);
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -221,6 +255,7 @@ const EditEventPage = () => {
         text,
         location,
         link,
+        image,
         startsAt: toDateFromLocal(startsAt),
         endsAt: endsAt ? toDateFromLocal(endsAt) : null,
         enabled,
@@ -349,6 +384,33 @@ const EditEventPage = () => {
                     placeholder="https://..."
                   />
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="image">Event Image</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    disabled={isUploadingImage}
+                  />
+                  {isUploadingImage && (
+                    <span className="text-sm text-muted-foreground">
+                      Uploading...
+                    </span>
+                  )}
+                </div>
+                {image && (
+                  <div className="mt-2">
+                    <img
+                      src={image}
+                      alt="Event preview"
+                      className="h-32 w-auto object-cover rounded border"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

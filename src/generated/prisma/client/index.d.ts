@@ -1643,6 +1643,7 @@ export namespace Prisma {
     text: string | null
     location: string | null
     link: string | null
+    image: string | null
     startsAt: Date | null
     endsAt: Date | null
     enabled: boolean | null
@@ -1657,6 +1658,7 @@ export namespace Prisma {
     text: string | null
     location: string | null
     link: string | null
+    image: string | null
     startsAt: Date | null
     endsAt: Date | null
     enabled: boolean | null
@@ -1671,6 +1673,7 @@ export namespace Prisma {
     text: number
     location: number
     link: number
+    image: number
     startsAt: number
     endsAt: number
     enabled: number
@@ -1687,6 +1690,7 @@ export namespace Prisma {
     text?: true
     location?: true
     link?: true
+    image?: true
     startsAt?: true
     endsAt?: true
     enabled?: true
@@ -1701,6 +1705,7 @@ export namespace Prisma {
     text?: true
     location?: true
     link?: true
+    image?: true
     startsAt?: true
     endsAt?: true
     enabled?: true
@@ -1715,6 +1720,7 @@ export namespace Prisma {
     text?: true
     location?: true
     link?: true
+    image?: true
     startsAt?: true
     endsAt?: true
     enabled?: true
@@ -1802,6 +1808,7 @@ export namespace Prisma {
     text: string
     location: string | null
     link: string | null
+    image: string | null
     startsAt: Date
     endsAt: Date | null
     enabled: boolean
@@ -1833,6 +1840,7 @@ export namespace Prisma {
     text?: boolean
     location?: boolean
     link?: boolean
+    image?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1852,6 +1860,7 @@ export namespace Prisma {
     text?: boolean
     location?: boolean
     link?: boolean
+    image?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1867,6 +1876,7 @@ export namespace Prisma {
     text?: boolean
     location?: boolean
     link?: boolean
+    image?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1882,6 +1892,7 @@ export namespace Prisma {
     text?: boolean
     location?: boolean
     link?: boolean
+    image?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1890,7 +1901,7 @@ export namespace Prisma {
     organizationId?: boolean
   }
 
-  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "text" | "location" | "link" | "startsAt" | "endsAt" | "enabled" | "createdAt" | "updatedAt" | "organizationId", ExtArgs["result"]["event"]>
+  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "text" | "location" | "link" | "image" | "startsAt" | "endsAt" | "enabled" | "createdAt" | "updatedAt" | "organizationId", ExtArgs["result"]["event"]>
   export type EventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     variants?: boolean | Event$variantsArgs<ExtArgs>
     eventExtras?: boolean | Event$eventExtrasArgs<ExtArgs>
@@ -1919,6 +1930,7 @@ export namespace Prisma {
       text: string
       location: string | null
       link: string | null
+      image: string | null
       startsAt: Date
       endsAt: Date | null
       enabled: boolean
@@ -2357,6 +2369,7 @@ export namespace Prisma {
     readonly text: FieldRef<"Event", 'String'>
     readonly location: FieldRef<"Event", 'String'>
     readonly link: FieldRef<"Event", 'String'>
+    readonly image: FieldRef<"Event", 'String'>
     readonly startsAt: FieldRef<"Event", 'DateTime'>
     readonly endsAt: FieldRef<"Event", 'DateTime'>
     readonly enabled: FieldRef<"Event", 'Boolean'>
@@ -9972,6 +9985,7 @@ export namespace Prisma {
     text: 'text',
     location: 'location',
     link: 'link',
+    image: 'image',
     startsAt: 'startsAt',
     endsAt: 'endsAt',
     enabled: 'enabled',
@@ -10265,6 +10279,7 @@ export namespace Prisma {
     text?: StringFilter<"Event"> | string
     location?: StringNullableFilter<"Event"> | string | null
     link?: StringNullableFilter<"Event"> | string | null
+    image?: StringNullableFilter<"Event"> | string | null
     startsAt?: DateTimeFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableFilter<"Event"> | Date | string | null
     enabled?: BoolFilter<"Event"> | boolean
@@ -10283,6 +10298,7 @@ export namespace Prisma {
     text?: SortOrder
     location?: SortOrderInput | SortOrder
     link?: SortOrderInput | SortOrder
+    image?: SortOrderInput | SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrderInput | SortOrder
     enabled?: SortOrder
@@ -10304,6 +10320,7 @@ export namespace Prisma {
     text?: StringFilter<"Event"> | string
     location?: StringNullableFilter<"Event"> | string | null
     link?: StringNullableFilter<"Event"> | string | null
+    image?: StringNullableFilter<"Event"> | string | null
     startsAt?: DateTimeFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableFilter<"Event"> | Date | string | null
     enabled?: BoolFilter<"Event"> | boolean
@@ -10322,6 +10339,7 @@ export namespace Prisma {
     text?: SortOrder
     location?: SortOrderInput | SortOrder
     link?: SortOrderInput | SortOrder
+    image?: SortOrderInput | SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrderInput | SortOrder
     enabled?: SortOrder
@@ -10342,6 +10360,7 @@ export namespace Prisma {
     text?: StringWithAggregatesFilter<"Event"> | string
     location?: StringNullableWithAggregatesFilter<"Event"> | string | null
     link?: StringNullableWithAggregatesFilter<"Event"> | string | null
+    image?: StringNullableWithAggregatesFilter<"Event"> | string | null
     startsAt?: DateTimeWithAggregatesFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableWithAggregatesFilter<"Event"> | Date | string | null
     enabled?: BoolWithAggregatesFilter<"Event"> | boolean
@@ -10876,6 +10895,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -10893,6 +10913,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -10910,6 +10931,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -10927,6 +10949,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -10944,6 +10967,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -10958,6 +10982,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -10971,6 +10996,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -11658,6 +11684,7 @@ export namespace Prisma {
     text?: SortOrder
     location?: SortOrder
     link?: SortOrder
+    image?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     enabled?: SortOrder
@@ -11672,6 +11699,7 @@ export namespace Prisma {
     text?: SortOrder
     location?: SortOrder
     link?: SortOrder
+    image?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     enabled?: SortOrder
@@ -11686,6 +11714,7 @@ export namespace Prisma {
     text?: SortOrder
     location?: SortOrder
     link?: SortOrder
+    image?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     enabled?: SortOrder
@@ -13535,6 +13564,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13551,6 +13581,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13629,6 +13660,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13645,6 +13677,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13677,6 +13710,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13693,6 +13727,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13725,6 +13760,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13741,6 +13777,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13757,6 +13794,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13773,6 +13811,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13861,6 +13900,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13877,6 +13917,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13961,6 +14002,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13977,6 +14019,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -14094,6 +14137,7 @@ export namespace Prisma {
     text?: StringFilter<"Event"> | string
     location?: StringNullableFilter<"Event"> | string | null
     link?: StringNullableFilter<"Event"> | string | null
+    image?: StringNullableFilter<"Event"> | string | null
     startsAt?: DateTimeFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableFilter<"Event"> | Date | string | null
     enabled?: BoolFilter<"Event"> | boolean
@@ -14736,6 +14780,7 @@ export namespace Prisma {
     text: string
     location?: string | null
     link?: string | null
+    image?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -14773,6 +14818,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -14789,6 +14835,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -14805,6 +14852,7 @@ export namespace Prisma {
     text?: StringFieldUpdateOperationsInput | string
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean

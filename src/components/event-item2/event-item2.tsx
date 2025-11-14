@@ -110,6 +110,12 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
           {/* Hero Section */}
           <Card className="overflow-hidden border-purple-200">
             <div className="relative h-40 lg:h-64 bg-gradient-to-r from-purple-500 to-violet-600">
+              {event.image && (
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${event.image})` }}
+                />
+              )}
               <div className="absolute inset-0 bg-black/20" />
               <div className="absolute bottom-4 left-4 text-white right-1">
                 <h1 className="text-2xl md:text-4xl font-bold mb-2">

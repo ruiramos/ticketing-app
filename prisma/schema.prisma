@@ -17,6 +17,7 @@ model Event {
   text        String
   location    String?
   link        String?
+  image       String?
   variants    Variant[]
   eventExtras EventExtras[]
 
