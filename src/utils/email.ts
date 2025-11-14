@@ -32,7 +32,7 @@ export function generateMailContent(order: Order) {
 
 <p>Hello from Friends of Harris Primary East Dulwich!</p>
 
-<p>We're thrilled to confirm your order for the Summer Fair 2025 Animal Grotto.<br/>
+<p>We're thrilled to confirm your order for the Winter Fair 2025 Santa's Grotto.<br/>
 Your contribution helps fund the PTA projects and community events.</p>
 
 <p>Here are the details of your order:</p>
@@ -50,13 +50,12 @@ ${order?.purchaseUnits?.[0].items
 <p>Some more details about the event:</p>
 
 <ul>
-<li>The animal experience will be in Chestnut Classroom (Reception)</li>
+<li>The Grotto will be in a room behind Chestnut Classroom (Reception)</li>
 <li>Please gather down the path where the bike storage is</li>
 <li>Please arrive 2 minutes before your start time</li>
-<li>No food allowed at the animal experience (we don’t want any animals stealing it!)</li>
-<li>One parent per family must join the animal experience</li>
+<li>No food allowed in The Grotto</li>
 </ul>
 
 <p>Of course, we're here to help. If you have any questions or concerns, simply drop us a line at info@friendsofhped.com. <br/><br/>
-Thank you and see you at the Summer Fair!</p>`;
+Thank you and see you at the Winter Fair!</p>`;
 }

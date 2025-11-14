@@ -302,17 +302,7 @@ export const orderRouter = router({
         );
       }
 
-      // send email
-      if (capturedOrder.payer?.emailAddress) {
-        sendEmail({
-          to: capturedOrder.payer?.emailAddress,
-          replyTo: 'info@friendsofhped.com',
-          subject: 'Order Confirmation - FoHPED Summer Fair 2025',
-          content: generateMailContent(order),
-        });
-      }
-
-      return await prisma.order.findFirstOrThrow({
+      const ourOrder = await prisma.order.findFirstOrThrow({
         include: {
           variant: true,
           event: {
@@ -323,6 +313,18 @@ export const orderRouter = router({
         },
         where: { id: ourOrderId },
       });
+
+      // send email
+      if (capturedOrder.payer?.emailAddress) {
+        sendEmail({
+          to: capturedOrder.payer?.emailAddress,
+          replyTo: ourOrder.event.organization?.email || 'noreply@example.com',
+          subject: 'Order Confirmation - ' + ourOrder.event.title,
+          content: generateMailContent(order),
+        });
+      }
+
+      return order;
     }),
   cancelOrder: authedProcedure
     .input(
