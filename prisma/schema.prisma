@@ -12,14 +12,15 @@ generator client {
 }
 
 model Event {
-  id          String        @id @default(uuid())
-  title       String
-  text        String
-  location    String?
-  link        String?
-  image       String?
-  variants    Variant[]
-  eventExtras EventExtras[]
+  id           String        @id @default(uuid())
+  title        String
+  text         String
+  location     String?
+  link         String?
+  image        String?
+  variants     Variant[]
+  eventExtras  EventExtras[]
+  customFields Json?
 
   startsAt DateTime  @default(now())
   endsAt   DateTime?
@@ -86,10 +87,11 @@ model Order {
 
   status OrderStatus
 
-  selectedExtras Json
-  items          Json
-  customer       Json
-  error          Json?
+  selectedExtras       Json
+  items                Json
+  customer             Json
+  customFieldResponses Json?
+  error                Json?
 
   checkedIn   Boolean?  @default(false)
   checkedInAt DateTime?
@@ -114,7 +116,7 @@ model Organization {
   website  String?
   logoUrl  String?
 
-  events Event[]
+  events      Event[]
   invitations OrganizationInvitation[]
 
   createdAt DateTime @default(now())
@@ -129,19 +131,19 @@ enum InvitationStatus {
 }
 
 model OrganizationInvitation {
-  id     String @id @default(uuid())
+  id     String           @id @default(uuid())
   email  String
   name   String
-  role   Role   @default(USER)
-  token  String @unique
+  role   Role             @default(USER)
+  token  String           @unique
   status InvitationStatus @default(PENDING)
-  
+
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
-  
+
   invitedBy   User   @relation(fields: [invitedById], references: [id])
   invitedById String
-  
+
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -158,7 +160,7 @@ model User {
   orders         Order[]
   organization   Organization? @relation(fields: [organizationId], references: [id])
   organizationId String?
-  
+
   sentInvitations OrganizationInvitation[]
 
   createdAt DateTime @default(now())

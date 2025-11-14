@@ -1674,6 +1674,7 @@ export namespace Prisma {
     location: number
     link: number
     image: number
+    customFields: number
     startsAt: number
     endsAt: number
     enabled: number
@@ -1721,6 +1722,7 @@ export namespace Prisma {
     location?: true
     link?: true
     image?: true
+    customFields?: true
     startsAt?: true
     endsAt?: true
     enabled?: true
@@ -1809,6 +1811,7 @@ export namespace Prisma {
     location: string | null
     link: string | null
     image: string | null
+    customFields: JsonValue | null
     startsAt: Date
     endsAt: Date | null
     enabled: boolean
@@ -1841,6 +1844,7 @@ export namespace Prisma {
     location?: boolean
     link?: boolean
     image?: boolean
+    customFields?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1861,6 +1865,7 @@ export namespace Prisma {
     location?: boolean
     link?: boolean
     image?: boolean
+    customFields?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1877,6 +1882,7 @@ export namespace Prisma {
     location?: boolean
     link?: boolean
     image?: boolean
+    customFields?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1893,6 +1899,7 @@ export namespace Prisma {
     location?: boolean
     link?: boolean
     image?: boolean
+    customFields?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1901,7 +1908,7 @@ export namespace Prisma {
     organizationId?: boolean
   }
 
-  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "text" | "location" | "link" | "image" | "startsAt" | "endsAt" | "enabled" | "createdAt" | "updatedAt" | "organizationId", ExtArgs["result"]["event"]>
+  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "text" | "location" | "link" | "image" | "customFields" | "startsAt" | "endsAt" | "enabled" | "createdAt" | "updatedAt" | "organizationId", ExtArgs["result"]["event"]>
   export type EventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     variants?: boolean | Event$variantsArgs<ExtArgs>
     eventExtras?: boolean | Event$eventExtrasArgs<ExtArgs>
@@ -1931,6 +1938,7 @@ export namespace Prisma {
       location: string | null
       link: string | null
       image: string | null
+      customFields: Prisma.JsonValue | null
       startsAt: Date
       endsAt: Date | null
       enabled: boolean
@@ -2370,6 +2378,7 @@ export namespace Prisma {
     readonly location: FieldRef<"Event", 'String'>
     readonly link: FieldRef<"Event", 'String'>
     readonly image: FieldRef<"Event", 'String'>
+    readonly customFields: FieldRef<"Event", 'Json'>
     readonly startsAt: FieldRef<"Event", 'DateTime'>
     readonly endsAt: FieldRef<"Event", 'DateTime'>
     readonly enabled: FieldRef<"Event", 'Boolean'>
@@ -5239,6 +5248,7 @@ export namespace Prisma {
     selectedExtras: number
     items: number
     customer: number
+    customFieldResponses: number
     error: number
     checkedIn: number
     checkedInAt: number
@@ -5306,6 +5316,7 @@ export namespace Prisma {
     selectedExtras?: true
     items?: true
     customer?: true
+    customFieldResponses?: true
     error?: true
     checkedIn?: true
     checkedInAt?: true
@@ -5414,6 +5425,7 @@ export namespace Prisma {
     selectedExtras: JsonValue
     items: JsonValue
     customer: JsonValue
+    customFieldResponses: JsonValue | null
     error: JsonValue | null
     checkedIn: boolean | null
     checkedInAt: Date | null
@@ -5454,6 +5466,7 @@ export namespace Prisma {
     selectedExtras?: boolean
     items?: boolean
     customer?: boolean
+    customFieldResponses?: boolean
     error?: boolean
     checkedIn?: boolean
     checkedInAt?: boolean
@@ -5478,6 +5491,7 @@ export namespace Prisma {
     selectedExtras?: boolean
     items?: boolean
     customer?: boolean
+    customFieldResponses?: boolean
     error?: boolean
     checkedIn?: boolean
     checkedInAt?: boolean
@@ -5502,6 +5516,7 @@ export namespace Prisma {
     selectedExtras?: boolean
     items?: boolean
     customer?: boolean
+    customFieldResponses?: boolean
     error?: boolean
     checkedIn?: boolean
     checkedInAt?: boolean
@@ -5526,6 +5541,7 @@ export namespace Prisma {
     selectedExtras?: boolean
     items?: boolean
     customer?: boolean
+    customFieldResponses?: boolean
     error?: boolean
     checkedIn?: boolean
     checkedInAt?: boolean
@@ -5536,7 +5552,7 @@ export namespace Prisma {
     userId?: boolean
   }
 
-  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "externalId" | "externalTransactionId" | "eventId" | "variantId" | "quantity" | "status" | "selectedExtras" | "items" | "customer" | "error" | "checkedIn" | "checkedInAt" | "amount" | "currency" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["order"]>
+  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "externalId" | "externalTransactionId" | "eventId" | "variantId" | "quantity" | "status" | "selectedExtras" | "items" | "customer" | "customFieldResponses" | "error" | "checkedIn" | "checkedInAt" | "amount" | "currency" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["order"]>
   export type OrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     event?: boolean | EventDefaultArgs<ExtArgs>
     variant?: boolean | VariantDefaultArgs<ExtArgs>
@@ -5571,6 +5587,7 @@ export namespace Prisma {
       selectedExtras: Prisma.JsonValue
       items: Prisma.JsonValue
       customer: Prisma.JsonValue
+      customFieldResponses: Prisma.JsonValue | null
       error: Prisma.JsonValue | null
       checkedIn: boolean | null
       checkedInAt: Date | null
@@ -6015,6 +6032,7 @@ export namespace Prisma {
     readonly selectedExtras: FieldRef<"Order", 'Json'>
     readonly items: FieldRef<"Order", 'Json'>
     readonly customer: FieldRef<"Order", 'Json'>
+    readonly customFieldResponses: FieldRef<"Order", 'Json'>
     readonly error: FieldRef<"Order", 'Json'>
     readonly checkedIn: FieldRef<"Order", 'Boolean'>
     readonly checkedInAt: FieldRef<"Order", 'DateTime'>
@@ -10012,6 +10030,7 @@ export namespace Prisma {
     location: 'location',
     link: 'link',
     image: 'image',
+    customFields: 'customFields',
     startsAt: 'startsAt',
     endsAt: 'endsAt',
     enabled: 'enabled',
@@ -10061,6 +10080,7 @@ export namespace Prisma {
     selectedExtras: 'selectedExtras',
     items: 'items',
     customer: 'customer',
+    customFieldResponses: 'customFieldResponses',
     error: 'error',
     checkedIn: 'checkedIn',
     checkedInAt: 'checkedInAt',
@@ -10131,19 +10151,19 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-  export const JsonNullValueInput: {
-    JsonNull: typeof JsonNull
-  };
-
-  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
-
-
   export const NullableJsonNullValueInput: {
     DbNull: typeof DbNull,
     JsonNull: typeof JsonNull
   };
 
   export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
   export const QueryMode: {
@@ -10154,14 +10174,6 @@ export namespace Prisma {
   export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
-  export const NullsOrder: {
-    first: 'first',
-    last: 'last'
-  };
-
-  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
-
-
   export const JsonNullValueFilter: {
     DbNull: typeof DbNull,
     JsonNull: typeof JsonNull,
@@ -10169,6 +10181,14 @@ export namespace Prisma {
   };
 
   export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
   /**
@@ -10187,6 +10207,20 @@ export namespace Prisma {
    * Reference to a field of type 'String[]'
    */
   export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -10254,20 +10288,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Json'
-   */
-  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-  /**
-   * Reference to a field of type 'QueryMode'
-   */
-  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-  /**
    * Reference to a field of type 'Role'
    */
   export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>
@@ -10308,6 +10328,7 @@ export namespace Prisma {
     location?: StringNullableFilter<"Event"> | string | null
     link?: StringNullableFilter<"Event"> | string | null
     image?: StringNullableFilter<"Event"> | string | null
+    customFields?: JsonNullableFilter<"Event">
     startsAt?: DateTimeFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableFilter<"Event"> | Date | string | null
     enabled?: BoolFilter<"Event"> | boolean
@@ -10327,6 +10348,7 @@ export namespace Prisma {
     location?: SortOrderInput | SortOrder
     link?: SortOrderInput | SortOrder
     image?: SortOrderInput | SortOrder
+    customFields?: SortOrderInput | SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrderInput | SortOrder
     enabled?: SortOrder
@@ -10349,6 +10371,7 @@ export namespace Prisma {
     location?: StringNullableFilter<"Event"> | string | null
     link?: StringNullableFilter<"Event"> | string | null
     image?: StringNullableFilter<"Event"> | string | null
+    customFields?: JsonNullableFilter<"Event">
     startsAt?: DateTimeFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableFilter<"Event"> | Date | string | null
     enabled?: BoolFilter<"Event"> | boolean
@@ -10368,6 +10391,7 @@ export namespace Prisma {
     location?: SortOrderInput | SortOrder
     link?: SortOrderInput | SortOrder
     image?: SortOrderInput | SortOrder
+    customFields?: SortOrderInput | SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrderInput | SortOrder
     enabled?: SortOrder
@@ -10389,6 +10413,7 @@ export namespace Prisma {
     location?: StringNullableWithAggregatesFilter<"Event"> | string | null
     link?: StringNullableWithAggregatesFilter<"Event"> | string | null
     image?: StringNullableWithAggregatesFilter<"Event"> | string | null
+    customFields?: JsonNullableWithAggregatesFilter<"Event">
     startsAt?: DateTimeWithAggregatesFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableWithAggregatesFilter<"Event"> | Date | string | null
     enabled?: BoolWithAggregatesFilter<"Event"> | boolean
@@ -10553,6 +10578,7 @@ export namespace Prisma {
     selectedExtras?: JsonFilter<"Order">
     items?: JsonFilter<"Order">
     customer?: JsonFilter<"Order">
+    customFieldResponses?: JsonNullableFilter<"Order">
     error?: JsonNullableFilter<"Order">
     checkedIn?: BoolNullableFilter<"Order"> | boolean | null
     checkedInAt?: DateTimeNullableFilter<"Order"> | Date | string | null
@@ -10577,6 +10603,7 @@ export namespace Prisma {
     selectedExtras?: SortOrder
     items?: SortOrder
     customer?: SortOrder
+    customFieldResponses?: SortOrderInput | SortOrder
     error?: SortOrderInput | SortOrder
     checkedIn?: SortOrderInput | SortOrder
     checkedInAt?: SortOrderInput | SortOrder
@@ -10604,6 +10631,7 @@ export namespace Prisma {
     selectedExtras?: JsonFilter<"Order">
     items?: JsonFilter<"Order">
     customer?: JsonFilter<"Order">
+    customFieldResponses?: JsonNullableFilter<"Order">
     error?: JsonNullableFilter<"Order">
     checkedIn?: BoolNullableFilter<"Order"> | boolean | null
     checkedInAt?: DateTimeNullableFilter<"Order"> | Date | string | null
@@ -10628,6 +10656,7 @@ export namespace Prisma {
     selectedExtras?: SortOrder
     items?: SortOrder
     customer?: SortOrder
+    customFieldResponses?: SortOrderInput | SortOrder
     error?: SortOrderInput | SortOrder
     checkedIn?: SortOrderInput | SortOrder
     checkedInAt?: SortOrderInput | SortOrder
@@ -10657,6 +10686,7 @@ export namespace Prisma {
     selectedExtras?: JsonWithAggregatesFilter<"Order">
     items?: JsonWithAggregatesFilter<"Order">
     customer?: JsonWithAggregatesFilter<"Order">
+    customFieldResponses?: JsonNullableWithAggregatesFilter<"Order">
     error?: JsonNullableWithAggregatesFilter<"Order">
     checkedIn?: BoolNullableWithAggregatesFilter<"Order"> | boolean | null
     checkedInAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
@@ -10934,6 +10964,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -10952,6 +10983,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -10970,6 +11002,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -10988,6 +11021,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -11006,6 +11040,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -11021,6 +11056,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -11035,6 +11071,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -11201,6 +11238,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -11224,6 +11262,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -11243,6 +11282,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11266,6 +11306,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11287,6 +11328,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -11306,6 +11348,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11326,6 +11369,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11662,6 +11706,29 @@ export namespace Prisma {
     mode?: QueryMode
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -11737,6 +11804,7 @@ export namespace Prisma {
     location?: SortOrder
     link?: SortOrder
     image?: SortOrder
+    customFields?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     enabled?: SortOrder
@@ -11809,6 +11877,32 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -12074,29 +12168,6 @@ export namespace Prisma {
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
-  export type JsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type BoolNullableFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
@@ -12124,6 +12195,7 @@ export namespace Prisma {
     selectedExtras?: SortOrder
     items?: SortOrder
     customer?: SortOrder
+    customFieldResponses?: SortOrder
     error?: SortOrder
     checkedIn?: SortOrder
     checkedInAt?: SortOrder
@@ -12212,32 +12284,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedJsonFilter<$PrismaModel>
     _max?: NestedJsonFilter<$PrismaModel>
-  }
-  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedJsonNullableFilter<$PrismaModel>
-    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -13130,6 +13176,29 @@ export namespace Prisma {
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
@@ -13297,29 +13366,6 @@ export namespace Prisma {
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
-  export type NestedJsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
@@ -13432,6 +13478,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -13453,6 +13500,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -13599,6 +13647,7 @@ export namespace Prisma {
     selectedExtras?: JsonFilter<"Order">
     items?: JsonFilter<"Order">
     customer?: JsonFilter<"Order">
+    customFieldResponses?: JsonNullableFilter<"Order">
     error?: JsonNullableFilter<"Order">
     checkedIn?: BoolNullableFilter<"Order"> | boolean | null
     checkedInAt?: DateTimeNullableFilter<"Order"> | Date | string | null
@@ -13659,6 +13708,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13676,6 +13726,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13700,6 +13751,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -13721,6 +13773,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -13759,6 +13812,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13776,6 +13830,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13809,6 +13864,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13826,6 +13882,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13859,6 +13916,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13876,6 +13934,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13893,6 +13952,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13910,6 +13970,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13999,6 +14060,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -14016,6 +14078,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -14101,6 +14164,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -14118,6 +14182,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -14236,6 +14301,7 @@ export namespace Prisma {
     location?: StringNullableFilter<"Event"> | string | null
     link?: StringNullableFilter<"Event"> | string | null
     image?: StringNullableFilter<"Event"> | string | null
+    customFields?: JsonNullableFilter<"Event">
     startsAt?: DateTimeFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableFilter<"Event"> | Date | string | null
     enabled?: BoolFilter<"Event"> | boolean
@@ -14465,6 +14531,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -14487,6 +14554,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -14683,6 +14751,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -14761,6 +14830,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14782,6 +14852,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14802,6 +14873,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14822,6 +14894,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -14841,6 +14914,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14862,6 +14936,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14882,6 +14957,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14899,6 +14975,7 @@ export namespace Prisma {
     location?: string | null
     link?: string | null
     image?: string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -14937,6 +15014,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -14954,6 +15032,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -14971,6 +15050,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: NullableJsonNullValueInput | InputJsonValue
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -15065,6 +15145,7 @@ export namespace Prisma {
     selectedExtras: JsonNullValueInput | InputJsonValue
     items: JsonNullValueInput | InputJsonValue
     customer: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
@@ -15096,6 +15177,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15118,6 +15200,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15138,6 +15221,7 @@ export namespace Prisma {
     selectedExtras?: JsonNullValueInput | InputJsonValue
     items?: JsonNullValueInput | InputJsonValue
     customer?: JsonNullValueInput | InputJsonValue
+    customFieldResponses?: NullableJsonNullValueInput | InputJsonValue
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

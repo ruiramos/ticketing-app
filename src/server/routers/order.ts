@@ -40,6 +40,7 @@ export const orderRouter = router({
         variantId: z.string().uuid(),
         quantity: z.number().min(1),
         extras: z.record(z.string().uuid(), z.any()).nullish(),
+        customFields: z.record(z.string(), z.any()).nullish(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -56,6 +57,7 @@ export const orderRouter = router({
               id: true,
               title: true,
               eventExtras: true,
+              customFields: true,
             },
           },
         },
@@ -76,6 +78,22 @@ export const orderRouter = router({
           return { ...extra, quantity: 1 };
         })
         .filter((a) => !!a);
+
+      // Process custom field responses
+      const customFields = (variant.event.customFields as any[]) || [];
+      const customFieldResponses: Record<string, any> = {};
+
+      customFields.forEach((field: any) => {
+        const value = input.customFields?.[field.id];
+        if (value !== undefined && value !== null && value !== '') {
+          customFieldResponses[field.id] = {
+            fieldId: field.id,
+            fieldName: field.name,
+            fieldLabel: field.label,
+            value: value,
+          };
+        }
+      });
 
       const amount =
         variant.price * input.quantity +
@@ -129,6 +147,10 @@ export const orderRouter = router({
               selectedExtras: extrasState,
               items,
               customer: {}, // TBD later
+              customFieldResponses:
+                Object.keys(customFieldResponses).length > 0
+                  ? customFieldResponses
+                  : undefined,
               amount: amount,
               currency: variant.currency,
             },
@@ -324,7 +346,7 @@ export const orderRouter = router({
         });
       }
 
-      return order;
+      return ourOrder;
     }),
   cancelOrder: authedProcedure
     .input(

@@ -90,6 +90,16 @@ const EventAdminPage = () => {
         (order) => order.status !== 'EXPIRED',
       );
 
+      // Get all unique custom fields from all orders
+      const allCustomFields = new Set<string>();
+      exportOrders.forEach((order: any) => {
+        if (order.customFieldResponses) {
+          Object.values(order.customFieldResponses).forEach((response: any) => {
+            allCustomFields.add(response.fieldLabel || response.fieldName);
+          });
+        }
+      });
+
       // Define CSV headers
       const headers = [
         'Date',
@@ -103,6 +113,7 @@ const EventAdminPage = () => {
         'Currency',
         'Customer Name',
         'Customer Email',
+        ...Array.from(allCustomFields).sort(),
       ];
 
       // Convert orders to CSV rows
@@ -113,6 +124,26 @@ const EventAdminPage = () => {
         const extras = (order.selectedExtras || [])
           .map((extra: any) => `${extra.title} (${extra.quantity})`)
           .join('; ');
+
+        // Create map of custom field responses for easy lookup
+        const customFieldMap = new Map<string, any>();
+        if (order.customFieldResponses) {
+          Object.values(order.customFieldResponses).forEach((response: any) => {
+            const fieldLabel = response.fieldLabel || response.fieldName;
+            customFieldMap.set(fieldLabel, response.value);
+          });
+        }
+
+        // Get custom field values in same order as headers
+        const customFieldValues = Array.from(allCustomFields).map(
+          (fieldLabel) => {
+            const value = customFieldMap.get(fieldLabel);
+            if (typeof value === 'object') {
+              return JSON.stringify(value);
+            }
+            return value || '';
+          },
+        );
 
         return [
           order.createdAt.toLocaleString(),
@@ -126,6 +157,7 @@ const EventAdminPage = () => {
           order.currency,
           customerName,
           customerEmail,
+          ...customFieldValues,
         ];
       });
 
@@ -238,7 +270,10 @@ const EventAdminPage = () => {
               </Link>
             </Button>
             <Button variant={'outline'} asChild size={'sm'}>
-              <Link href={`/admin/events/checkin/${id}`} className="no-underline">
+              <Link
+                href={`/admin/events/checkin/${id}`}
+                className="no-underline"
+              >
                 <UserCheck className="-ms-1 opacity-60" size={16} />
                 <span>Check-in</span>
               </Link>
@@ -385,6 +420,56 @@ const EventAdminPage = () => {
         </TableBody>
       </Table>
 
+      {event.customFields && (event.customFields as any[]).length > 0 && (
+        <>
+          <h2 className="text-xl font-semibold mt-8 mb-4">Custom Fields</h2>
+          <Table className="bg-white">
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Field Name</TableHead>
+                <TableHead>Display Label</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Required</TableHead>
+                <TableHead>Options</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {((event.customFields as any[]) || [])
+                .sort((a, b) => a.displayOrder - b.displayOrder)
+                .map((field: any) => (
+                  <TableRow key={field.id}>
+                    <TableCell className="font-mono text-sm">
+                      {field.name}
+                    </TableCell>
+                    <TableCell className="font-medium">{field.label}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{field.type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {field.required ? (
+                        <Badge variant="destructive">Required</Badge>
+                      ) : (
+                        <Badge variant="outline">Optional</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {field.type === 'select' && field.options ? (
+                        <div className="text-sm text-muted-foreground">
+                          {field.options
+                            .map((opt: any) => opt.label)
+                            .join(', ')}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </>
+      )}
+
       <div className="flex items-center justify-between mt-8 mb-4">
         <h2 className="text-xl font-semibold">Orders</h2>
         <div>
@@ -413,6 +498,7 @@ const EventAdminPage = () => {
             <TableHead>Currency</TableHead>
             <TableHead>Customer name</TableHead>
             <TableHead>Customer email</TableHead>
+            <TableHead>Custom Fields</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -452,6 +538,29 @@ const EventAdminPage = () => {
                   {(order.customer as any)?.name?.surname}
                 </TableCell>
                 <TableCell>{(order.customer as any)?.emailAddress}</TableCell>
+                <TableCell>
+                  {order.customFieldResponses &&
+                  Object.keys(order.customFieldResponses).length > 0 ? (
+                    <div className="space-y-1 max-w-xs">
+                      {Object.values(order.customFieldResponses).map(
+                        (response: any, idx) => (
+                          <div key={idx} className="text-xs">
+                            <strong>{response.fieldLabel}:</strong>{' '}
+                            {typeof response.value === 'boolean'
+                              ? response.value
+                                ? 'Yes'
+                                : 'No'
+                              : typeof response.value === 'object'
+                                ? JSON.stringify(response.value)
+                                : response.value}
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-xs">None</span>
+                  )}
+                </TableCell>
                 <TableCell>
                   {order.status === 'CONFIRMED' && (
                     <Button

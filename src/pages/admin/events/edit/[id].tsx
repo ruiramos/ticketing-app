@@ -21,6 +21,14 @@ import Link from 'next/link';
 import { Alert, AlertTitle } from '~/components/ui/alert';
 import { cn } from '~/lib/utils';
 import { EventExtras, Variant } from '~/generated/prisma/client';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select';
+import { CustomField, CustomFieldType } from '~/types/customFields';
 
 const EditEventPage = () => {
   const router = useRouter();
@@ -39,6 +47,7 @@ const EditEventPage = () => {
   const [enabled, setEnabled] = useState(true);
   const [variants, setVariants] = useState<Partial<Variant>[]>([]);
   const [extras, setExtras] = useState<Partial<EventExtras>[]>([]);
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
 
   const { data: event, isLoading } = trpc.event.byId.useQuery(
     { id: eventId },
@@ -116,6 +125,11 @@ const EditEventPage = () => {
             description: extra.description || '',
           })),
         );
+      }
+
+      // Set custom fields
+      if (event.customFields) {
+        setCustomFields((event.customFields as CustomField[]) || []);
       }
     }
   }, [event]);
@@ -207,6 +221,28 @@ const EditEventPage = () => {
     setExtras(updated);
   };
 
+  const addCustomField = () => {
+    const newField: CustomField = {
+      id: `field_${Date.now()}`,
+      name: '',
+      label: '',
+      type: 'text',
+      required: false,
+      displayOrder: customFields.length,
+    };
+    setCustomFields([...customFields, newField]);
+  };
+
+  const removeCustomField = (index: number) => {
+    setCustomFields(customFields.filter((_, i) => i !== index));
+  };
+
+  const updateCustomField = (index: number, updates: Partial<CustomField>) => {
+    const updated = [...customFields];
+    updated[index] = { ...updated[index], ...updates };
+    setCustomFields(updated);
+  };
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -281,6 +317,7 @@ const EditEventPage = () => {
             price: e.price!,
             description: e.description || '',
           })),
+        customFields: customFields.filter((f) => f.name && f.label),
       });
     } catch (error) {
       console.error('Failed to update event:', error);
@@ -666,6 +703,178 @@ const EditEventPage = () => {
                           updateExtra(index, 'description', e.target.value)
                         }
                       />
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Custom Order Fields</CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addCustomField}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Field
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {customFields.length === 0 ? (
+                <p className="text-muted-foreground">
+                  No custom fields configured. Add fields to collect additional
+                  information during ticket purchase.
+                </p>
+              ) : (
+                customFields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="flex flex-col gap-4 p-4 border rounded"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor={`field-name-${index}`}>
+                          Field Name *
+                        </Label>
+                        <Input
+                          id={`field-name-${index}`}
+                          value={field.name}
+                          onChange={(e) =>
+                            updateCustomField(index, { name: e.target.value })
+                          }
+                          placeholder="e.g., dietary_requirements"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`field-label-${index}`}>
+                          Display Label *
+                        </Label>
+                        <Input
+                          id={`field-label-${index}`}
+                          value={field.label}
+                          onChange={(e) =>
+                            updateCustomField(index, { label: e.target.value })
+                          }
+                          placeholder="e.g., Dietary Requirements"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`field-type-${index}`}>
+                          Field Type
+                        </Label>
+                        <Select
+                          value={field.type}
+                          onValueChange={(value: CustomFieldType) =>
+                            updateCustomField(index, { type: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Text</SelectItem>
+                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="phone">Phone</SelectItem>
+                            <SelectItem value="number">Number</SelectItem>
+                            <SelectItem value="textarea">Long Text</SelectItem>
+                            <SelectItem value="select">Dropdown</SelectItem>
+                            <SelectItem value="checkbox">Checkbox</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`field-placeholder-${index}`}>
+                          Placeholder
+                        </Label>
+                        <Input
+                          id={`field-placeholder-${index}`}
+                          value={field.placeholder || ''}
+                          onChange={(e) =>
+                            updateCustomField(index, {
+                              placeholder: e.target.value,
+                            })
+                          }
+                          placeholder="Hint text for the field"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`field-help-${index}`}>Help Text</Label>
+                        <Input
+                          id={`field-help-${index}`}
+                          value={field.helpText || ''}
+                          onChange={(e) =>
+                            updateCustomField(index, {
+                              helpText: e.target.value,
+                            })
+                          }
+                          placeholder="Additional guidance"
+                        />
+                      </div>
+                    </div>
+
+                    {field.type === 'select' && (
+                      <div>
+                        <Label>Options (one per line)</Label>
+                        <Textarea
+                          value={
+                            field.options
+                              ?.map((opt) => `${opt.value}:${opt.label}`)
+                              .join('\n') || ''
+                          }
+                          onChange={(e) => {
+                            const lines = e.target.value
+                              .split('\n')
+                              .filter((line) => line.trim());
+                            const options = lines.map((line) => {
+                              const [value, ...labelParts] = line.split(':');
+                              return {
+                                value: value.trim(),
+                                label:
+                                  labelParts.join(':').trim() || value.trim(),
+                              };
+                            });
+                            updateCustomField(index, { options });
+                          }}
+                          placeholder="value1:Label 1&#10;value2:Label 2"
+                          rows={3}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Format: value:label (e.g., "vegan:Vegan" or just
+                          "vegan")
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id={`field-required-${index}`}
+                          checked={field.required}
+                          onCheckedChange={(checked) =>
+                            updateCustomField(index, { required: checked })
+                          }
+                        />
+                        <Label htmlFor={`field-required-${index}`}>
+                          Required field
+                        </Label>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeCustomField(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 ))

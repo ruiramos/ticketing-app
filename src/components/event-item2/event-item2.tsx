@@ -37,6 +37,8 @@ import EventExtra from '../event-extra/event-extra';
 import PayPalButton from '../PayPalButton';
 import { Label } from '../ui/label';
 import { useRouter } from 'next/navigation';
+import { CustomField, validateCustomFieldResponse } from '~/types/customFields';
+import { CustomFieldRenderer } from '~/components/CustomFieldRenderer';
 
 type EventByIdOutput = RouterOutput['event']['byId'];
 
@@ -46,6 +48,12 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
   );
   const [quantity, setQuantity] = useState<number>(1);
   const [extrasState, setExtrasState] = useState<Record<string, any>>({});
+  const [customFieldValues, setCustomFieldValues] = useState<
+    Record<string, any>
+  >({});
+  const [customFieldErrors, setCustomFieldErrors] = useState<
+    Record<string, string>
+  >({});
   const [error, setError] = useState<string | undefined>();
   const router = useRouter();
 
@@ -98,6 +106,27 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
   };
 
   const isPurchaseDisabled = !selectedVariant || !event.enabled;
+
+  const customFields: CustomField[] =
+    (event.customFields as CustomField[]) || [];
+
+  const validateCustomFields = () => {
+    const errors: Record<string, string> = {};
+    let isValid = true;
+
+    customFields.forEach((field) => {
+      const value = customFieldValues[field.id];
+      const validation = validateCustomFieldResponse(field, value);
+
+      if (!validation.isValid && validation.error) {
+        errors[field.id] = validation.error;
+        isValid = false;
+      }
+    });
+
+    setCustomFieldErrors(errors);
+    return isValid;
+  };
 
   return (
     <>
@@ -349,6 +378,41 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                 </div>
               </div>
 
+              {/* Custom Fields */}
+              {customFields.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-medium text-lg">
+                    Additional Information
+                  </h3>
+                  <div className="space-y-4">
+                    {customFields
+                      .sort((a, b) => a.displayOrder - b.displayOrder)
+                      .map((field) => (
+                        <CustomFieldRenderer
+                          key={field.id}
+                          field={field}
+                          value={customFieldValues[field.id]}
+                          onChange={(value) => {
+                            setCustomFieldValues((prev) => ({
+                              ...prev,
+                              [field.id]: value,
+                            }));
+                            // Clear error when user starts typing
+                            if (customFieldErrors[field.id]) {
+                              setCustomFieldErrors((prev) => ({
+                                ...prev,
+                                [field.id]: '',
+                              }));
+                            }
+                          }}
+                          error={customFieldErrors[field.id]}
+                          disabled={isPurchaseDisabled}
+                        />
+                      ))}
+                  </div>
+                </div>
+              )}
+
               {/* Total */}
               {event.enabled && (
                 <>
@@ -412,6 +476,15 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                           }
                           return actions.reject();
                         }
+
+                        // Validate custom fields
+                        if (!validateCustomFields()) {
+                          setError(
+                            'Please fill in all required fields correctly.',
+                          );
+                          return actions.reject();
+                        }
+
                         setError(undefined); // Clear error if validation passes
                         return actions.resolve();
                       }}
@@ -431,6 +504,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                             variantId: selectedVariant.id, // selectedVariant is guaranteed here by checks
                             quantity,
                             extras: extrasState,
+                            customFields: customFieldValues,
                           });
                           if (!order.id) {
                             // This case should ideally not happen if backend is robust

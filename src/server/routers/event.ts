@@ -22,6 +22,7 @@ const defaultEventSelect = {
     },
   },
   eventExtras: true,
+  customFields: true,
 } satisfies Prisma.EventSelect;
 
 export const eventRouter = router({
@@ -130,6 +131,46 @@ export const eventRouter = router({
           )
           .optional()
           .default([]),
+        customFields: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string().min(1),
+              label: z.string().min(1),
+              type: z.enum([
+                'text',
+                'email',
+                'phone',
+                'number',
+                'select',
+                'checkbox',
+                'textarea',
+              ]),
+              required: z.boolean(),
+              placeholder: z.string().optional(),
+              helpText: z.string().optional(),
+              options: z
+                .array(
+                  z.object({
+                    value: z.string(),
+                    label: z.string(),
+                  }),
+                )
+                .optional(),
+              validation: z
+                .object({
+                  minLength: z.number().optional(),
+                  maxLength: z.number().optional(),
+                  min: z.number().optional(),
+                  max: z.number().optional(),
+                  pattern: z.string().optional(),
+                })
+                .optional(),
+              displayOrder: z.number().int(),
+            }),
+          )
+          .optional()
+          .default([]),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -176,6 +217,8 @@ export const eventRouter = router({
               currency: 'GBP',
             })),
           },
+          customFields:
+            input.customFields.length > 0 ? input.customFields : undefined,
         },
         select: defaultEventSelect,
       });
@@ -212,6 +255,46 @@ export const eventRouter = router({
               title: z.string().min(1),
               price: z.number().min(0),
               description: z.string().optional(),
+            }),
+          )
+          .optional()
+          .default([]),
+        customFields: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string().min(1),
+              label: z.string().min(1),
+              type: z.enum([
+                'text',
+                'email',
+                'phone',
+                'number',
+                'select',
+                'checkbox',
+                'textarea',
+              ]),
+              required: z.boolean(),
+              placeholder: z.string().optional(),
+              helpText: z.string().optional(),
+              options: z
+                .array(
+                  z.object({
+                    value: z.string(),
+                    label: z.string(),
+                  }),
+                )
+                .optional(),
+              validation: z
+                .object({
+                  minLength: z.number().optional(),
+                  maxLength: z.number().optional(),
+                  min: z.number().optional(),
+                  max: z.number().optional(),
+                  pattern: z.string().optional(),
+                })
+                .optional(),
+              displayOrder: z.number().int(),
             }),
           )
           .optional()
@@ -265,6 +348,8 @@ export const eventRouter = router({
             startsAt: input.startsAt,
             endsAt: input.endsAt,
             enabled: input.enabled,
+            customFields:
+              input.customFields.length > 0 ? input.customFields : undefined,
           },
           select: defaultEventSelect,
         });

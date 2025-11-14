@@ -12,14 +12,15 @@ generator client {
 }
 
 model Event {
-  id          String        @id @default(uuid())
-  title       String
-  text        String
-  location    String?
-  link        String?
-  image       String?
-  variants    Variant[]
-  eventExtras EventExtras[]
+  id           String        @id @default(uuid())
+  title        String
+  text         String
+  location     String?
+  link         String?
+  image        String?
+  variants     Variant[]
+  eventExtras  EventExtras[]
+  customFields Json?
 
   startsAt DateTime  @default(now())
   endsAt   DateTime?
@@ -86,10 +87,11 @@ model Order {
 
   status OrderStatus
 
-  selectedExtras Json
-  items          Json
-  customer       Json
-  error          Json?
+  selectedExtras       Json
+  items                Json
+  customer             Json
+  customFieldResponses Json?
+  error                Json?
 
   checkedIn   Boolean?  @default(false)
   checkedInAt DateTime?

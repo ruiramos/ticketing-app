@@ -8,6 +8,7 @@ interface EventFormProps {
     text: string;
     variants: Variant[];
     eventExtras: EventExtras[];
+    customFields?: any; // JSON field from prisma
   };
   _setOrderResult: (order: Order) => void;
 }
@@ -28,6 +29,8 @@ import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
 import { trpc } from '~/utils/trpc';
 import { Checkbox } from '../ui/checkbox';
 import { LAST_FEW_STOCK_WARNING, EVENT_MAX_TICKETS } from '~/utils/contants';
+import { CustomField, validateCustomFieldResponse } from '~/types/customFields';
+import { CustomFieldRenderer } from '~/components/CustomFieldRenderer';
 import { Button } from '../ui/button';
 import { useEffect, useMemo } from 'react'; // Added useEffect and useMemo
 import { cn } from '~/lib/utils';
@@ -38,6 +41,12 @@ const EventForm = ({ event, _setOrderResult }: EventFormProps) => {
   );
   const [quantity, setQuantity] = useState<number>(1);
   const [extrasState, setExtrasState] = useState<Record<string, any>>({});
+  const [customFieldValues, setCustomFieldValues] = useState<
+    Record<string, any>
+  >({});
+  const [customFieldErrors, setCustomFieldErrors] = useState<
+    Record<string, string>
+  >({});
   const [error, setError] = useState<string | undefined>();
 
   const typeId = useId(); // For radio group label or select label
@@ -101,6 +110,27 @@ const EventForm = ({ event, _setOrderResult }: EventFormProps) => {
   }, [selectedVariant, quantity, extrasState, event.eventExtras]);
 
   const isPurchaseDisabled = !selectedVariant;
+
+  const customFields: CustomField[] =
+    (event.customFields as CustomField[]) || [];
+
+  const validateCustomFields = () => {
+    const errors: Record<string, string> = {};
+    let isValid = true;
+
+    customFields.forEach((field) => {
+      const value = customFieldValues[field.id];
+      const validation = validateCustomFieldResponse(field, value);
+
+      if (!validation.isValid && validation.error) {
+        errors[field.id] = validation.error;
+        isValid = false;
+      }
+    });
+
+    setCustomFieldErrors(errors);
+    return isValid;
+  };
 
   return (
     <form
@@ -240,6 +270,39 @@ const EventForm = ({ event, _setOrderResult }: EventFormProps) => {
           ))}
         </div>
       )}
+      {customFields.length > 0 && (
+        <div>
+          <Label className="block font-medium text-sm mb-2">
+            4. Additional Information
+          </Label>
+          <div className="space-y-4">
+            {customFields
+              .sort((a, b) => a.displayOrder - b.displayOrder)
+              .map((field) => (
+                <CustomFieldRenderer
+                  key={field.id}
+                  field={field}
+                  value={customFieldValues[field.id]}
+                  onChange={(value) => {
+                    setCustomFieldValues((prev) => ({
+                      ...prev,
+                      [field.id]: value,
+                    }));
+                    // Clear error when user starts typing
+                    if (customFieldErrors[field.id]) {
+                      setCustomFieldErrors((prev) => ({
+                        ...prev,
+                        [field.id]: '',
+                      }));
+                    }
+                  }}
+                  error={customFieldErrors[field.id]}
+                  disabled={isPurchaseDisabled}
+                />
+              ))}
+          </div>
+        </div>
+      )}
       <div className="bg-gray-100 p-4 rounded">
         <p className="text-sm text-gray-500">Total</p>
         <p className="text-xl font-bold">£{(price ?? 0).toFixed(2)}</p>
@@ -274,6 +337,13 @@ const EventForm = ({ event, _setOrderResult }: EventFormProps) => {
                 }
                 return actions.reject();
               }
+
+              // Validate custom fields
+              if (!validateCustomFields()) {
+                setError('Please fill in all required fields correctly.');
+                return actions.reject();
+              }
+
               setError(undefined); // Clear error if validation passes
               return actions.resolve();
             }}
@@ -291,6 +361,7 @@ const EventForm = ({ event, _setOrderResult }: EventFormProps) => {
                   variantId: selectedVariant.id, // selectedVariant is guaranteed here by checks
                   quantity,
                   extras: extrasState,
+                  customFields: customFieldValues,
                 });
                 if (!order.id) {
                   // This case should ideally not happen if backend is robust
