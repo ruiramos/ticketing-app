@@ -464,7 +464,7 @@ export const orderRouter = router({
       }
 
       return await prisma.order.findMany({
-        where: {},
+        where,
         include: {
           variant: true,
           event: {
