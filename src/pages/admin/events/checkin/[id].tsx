@@ -270,6 +270,7 @@ const CheckinPage = () => {
                 <TableHead>Ticket Type</TableHead>
                 <TableHead>Quantity</TableHead>
                 <TableHead>Extras</TableHead>
+                <TableHead>Custom Fields</TableHead>
                 <TableHead>Check-in Time</TableHead>
                 <TableHead>Action</TableHead>
               </TableRow>
@@ -330,6 +331,15 @@ const CheckinPage = () => {
                       ),
                     )}
                   </TableCell>
+                  <TableHead>
+                    {Object.values(order.customFieldResponses || {}).map(
+                      (value, index) => (
+                        <div key={index} className="text-xs">
+                          {value.fieldLabel}: {value.value}
+                        </div>
+                      ),
+                    )}
+                  </TableHead>
                   <TableCell>
                     {order.checkedInAt ? (
                       <span className="text-xs text-muted-foreground">
