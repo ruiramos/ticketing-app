@@ -116,7 +116,7 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                   style={{ backgroundImage: `url(${event.image})` }}
                 />
               )}
-              <div className="absolute inset-0 bg-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-400/30 to-gray-900/60" />
               <div className="absolute bottom-4 left-4 text-white right-1">
                 <h1 className="text-2xl md:text-4xl font-bold mb-2">
                   {event.title}
