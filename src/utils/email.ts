@@ -1,7 +1,11 @@
 import { Order } from '@paypal/paypal-server-sdk/dist/types/models/order';
-import sgMail from '@sendgrid/mail';
+import Mailjet from 'node-mailjet';
 import { env } from '~/server/env';
-sgMail.setApiKey(env.SENDGRID_API_KEY);
+
+const mailjet = new Mailjet({
+  apiKey: env.MAILJET_API_KEY,
+  apiSecret: env.MAILJET_API_SECRET,
+});
 
 const FROM_EMAIL_ADDRESS = 'ticketing@ruiramos.com';
 
@@ -12,14 +16,19 @@ interface SendMailProps {
   replyTo?: string;
 }
 
-export function sendEmail({ to, subject, content, replyTo }: SendMailProps) {
+export async function sendEmail({ to, subject, content, replyTo }: SendMailProps) {
   try {
-    return sgMail.send({
-      to,
-      subject,
-      html: content,
-      from: FROM_EMAIL_ADDRESS,
-      replyTo: replyTo,
+    const recipients = (Array.isArray(to) ? to : [to]).map((email) => ({ Email: email }));
+    return await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [
+        {
+          From: { Email: FROM_EMAIL_ADDRESS },
+          To: recipients,
+          Subject: subject,
+          HTMLPart: content,
+          ...(replyTo ? { ReplyTo: { Email: replyTo } } : {}),
+        },
+      ],
     });
   } catch (e) {
     console.error(e);

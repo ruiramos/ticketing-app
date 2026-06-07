@@ -259,7 +259,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/ruiramos/work/ticketing-app/src/generated/prisma/client",
+      "value": "/Users/ruiramos/projects/ticketing-app/src/generated/prisma/client",
       "fromEnvVar": null
     },
     "config": {
@@ -273,7 +273,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/ruiramos/work/ticketing-app/prisma/schema.prisma",
+    "sourceFilePath": "/Users/ruiramos/projects/ticketing-app/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -287,12 +287,11 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": null
+        "value": "postgresql://postgres:example@localhost:5432/ticketing_test"
       }
     }
   },
