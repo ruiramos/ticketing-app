@@ -101,5 +101,15 @@
   "publishConfig": {
     "access": "restricted"
   },
-  "version": "11.1.2"
+  "version": "11.1.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
 }
