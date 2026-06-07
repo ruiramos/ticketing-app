@@ -4,7 +4,6 @@ import { prisma } from '../server/prisma';
 const HOW_MANY_MINUTES = 5;
 
 async function doIt() {
-  // TODO this also needs a transaction
   const orders = await prisma.order.findMany({
     where: {
       status: 'RESERVED',
@@ -18,7 +17,7 @@ async function doIt() {
     },
   });
 
-  orders.forEach(async (order) => {
+  for (const order of orders) {
     console.log(
       `Expiring order ${order.id} - releasing ${order.quantity} tickets to variant ${order.variant.id} - ${order.variant.title}`,
     );
@@ -42,11 +41,17 @@ async function doIt() {
         },
       }),
     ]);
-  });
+  }
 
   return orders.length;
 }
 
-doIt().then((result) => {
-  console.log(`Done expiring orders - orders affected: ${result}`);
-});
+doIt()
+  .then((result) => {
+    console.log(`Done expiring orders - orders affected: ${result}`);
+  })
+  .catch((err) => {
+    console.error('Failed to expire reserved orders', err);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());
