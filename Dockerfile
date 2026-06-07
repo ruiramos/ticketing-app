@@ -15,7 +15,8 @@ COPY pnpm-*.yaml /app
 RUN pnpm fetch
 
 COPY . /app
-RUN pnpm dlx prisma generate
+RUN pnpm install --frozen-lockfile
+RUN pnpm run generate
 RUN pnpm run build
 
 FROM base
