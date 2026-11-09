@@ -881,3 +881,118 @@ describe('event.update', () => {
     });
   });
 });
+
+describe('event.duplicate', () => {
+  test('should copy event data without orders, restoring original stock', async () => {
+    const organization = await prisma.organization.create({
+      data: { name: 'Test Org', email: 'test@org.com' },
+    });
+    await prisma.user.create({
+      data: {
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'ADMIN',
+        organizationId: organization.id,
+      },
+    });
+
+    const source = await prisma.event.create({
+      data: {
+        title: 'Original Event',
+        text: 'Description',
+        location: 'Somewhere',
+        enabled: true,
+        organizationId: organization.id,
+        customFields: [{ id: 'f1', name: 'diet', label: 'Diet' }],
+        variants: {
+          create: [
+            { title: 'Adult', price: 10, currency: 'GBP', stock: 5 },
+            { title: 'Child', price: 5, currency: 'GBP', stock: 10 },
+          ],
+        },
+        eventExtras: {
+          create: [{ title: 'T-shirt', price: 15, currency: 'GBP' }],
+        },
+      },
+      include: { variants: { orderBy: { displayOrder: 'asc' } } },
+    });
+
+    const adult = source.variants[0];
+    const orderBase = {
+      eventId: source.id,
+      variantId: adult.id,
+      selectedExtras: [],
+      items: [],
+      customer: {},
+      amount: 10,
+      currency: 'GBP',
+    };
+    // Stock was already decremented for these when they were placed
+    await prisma.order.createMany({
+      data: [
+        { ...orderBase, quantity: 2, status: 'CONFIRMED' },
+        { ...orderBase, quantity: 1, status: 'RESERVED' },
+        { ...orderBase, quantity: 4, status: 'EXPIRED' },
+      ],
+    });
+
+    const ctx = await createContextInner({
+      session: {
+        user: { email: 'test@example.com' },
+        expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+      },
+    });
+    const caller = createCaller(ctx);
+
+    const copy = await caller.event.duplicate({ id: source.id });
+
+    expect(copy.id).not.toBe(source.id);
+    expect(copy.title).toBe('Original Event (copy)');
+    expect(copy.text).toBe('Description');
+    expect(copy.location).toBe('Somewhere');
+    expect(copy.enabled).toBe(false);
+    expect(copy.customFields).toEqual(source.customFields);
+    expect(copy.variants.map((v) => [v.title, v.price, v.stock])).toEqual([
+      ['Adult', 10, 8],
+      ['Child', 5, 10],
+    ]);
+    expect(copy.eventExtras).toHaveLength(1);
+    expect(copy.eventExtras[0].title).toBe('T-shirt');
+
+    const copiedOrders = await prisma.order.count({
+      where: { eventId: copy.id },
+    });
+    expect(copiedOrders).toBe(0);
+  });
+
+  test('should not duplicate events from another organization', async () => {
+    const otherOrg = await prisma.organization.create({
+      data: { name: 'Other Org', email: 'other@org.com' },
+    });
+    const organization = await prisma.organization.create({
+      data: { name: 'Test Org', email: 'test@org.com' },
+    });
+    await prisma.user.create({
+      data: {
+        email: 'test@example.com',
+        name: 'Test User',
+        organizationId: organization.id,
+      },
+    });
+    const source = await prisma.event.create({
+      data: { title: 'Theirs', text: 'x', organizationId: otherOrg.id },
+    });
+
+    const ctx = await createContextInner({
+      session: {
+        user: { email: 'test@example.com' },
+        expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+      },
+    });
+    const caller = createCaller(ctx);
+
+    await expect(caller.event.duplicate({ id: source.id })).rejects.toThrow(
+      TRPCError,
+    );
+  });
+});

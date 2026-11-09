@@ -22,6 +22,7 @@ import {
   Calendar,
   MapPin,
   UserCheck,
+  Copy,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
@@ -30,7 +31,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { cx } from 'class-variance-authority';
 
 const EventAdminPage = () => {
-  const id = useRouter().query.id as string;
+  const router = useRouter();
+  const id = router.query.id as string;
   const utils = trpc.useContext();
   const [showExpiredOrders, setShowExpiredOrders] = useState(false);
   const { data: event, refetch: refetchEvent } =
@@ -62,6 +64,27 @@ const EventAdminPage = () => {
       refetchEvent();
     },
   });
+
+  const duplicateEventMutation = trpc.event.duplicate.useMutation({
+    onSuccess: (newEvent) => {
+      router.push(`/admin/events/edit/${newEvent.id}`);
+    },
+  });
+
+  const handleDuplicateEvent = async () => {
+    if (
+      confirm(
+        'Create a copy of this event? Orders will not be copied, and the new event will start disabled.',
+      )
+    ) {
+      try {
+        await duplicateEventMutation.mutateAsync({ id });
+      } catch (error) {
+        console.error('Failed to duplicate event:', error);
+        alert('Failed to duplicate event. Please try again.');
+      }
+    }
+  };
 
   const handleCancelOrder = async (orderId: string) => {
     if (
@@ -277,6 +300,15 @@ const EventAdminPage = () => {
                 <UserCheck className="-ms-1 opacity-60" size={16} />
                 <span>Check-in</span>
               </Link>
+            </Button>
+            <Button
+              variant={'outline'}
+              size={'sm'}
+              onClick={handleDuplicateEvent}
+              disabled={duplicateEventMutation.isPending}
+            >
+              <Copy className="-ms-1 opacity-60" size={16} />
+              <span>Duplicate</span>
             </Button>
             <Button
               variant={'outline'}

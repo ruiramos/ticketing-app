@@ -225,6 +225,94 @@ export const eventRouter = router({
 
       return event;
     }),
+  duplicate: authedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.user.email) throw new Error('Could not get email from user');
+
+      // Get user's organization
+      const user = await prisma.user.findFirst({
+        where: { email: ctx.user.email },
+        include: { organization: true },
+      });
+
+      if (!user?.organization) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message:
+            'User must be associated with an organization to duplicate events',
+        });
+      }
+
+      const source = await prisma.event.findFirst({
+        where: {
+          id: input.id,
+          organizationId: user.organization.id,
+        },
+        include: {
+          variants: {
+            orderBy: { displayOrder: 'asc' },
+            include: {
+              // Only reserved/confirmed orders hold stock
+              orders: {
+                where: { status: { in: ['RESERVED', 'CONFIRMED'] } },
+                select: { quantity: true },
+              },
+            },
+          },
+          eventExtras: true,
+        },
+      });
+
+      if (!source) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message:
+            'Event not found or you do not have permission to duplicate it',
+        });
+      }
+
+      const event = await prisma.event.create({
+        data: {
+          title: `${source.title} (copy)`,
+          text: source.text,
+          location: source.location,
+          link: source.link,
+          image: source.image,
+          startsAt: source.startsAt,
+          endsAt: source.endsAt,
+          // Start disabled so it can be reviewed before going live
+          enabled: false,
+          organizationId: user.organization.id,
+          variants: {
+            create: source.variants.map((variant) => ({
+              title: variant.title,
+              price: variant.price,
+              currency: variant.currency,
+              displayOrder: variant.displayOrder,
+              // Restore the original stock, i.e. before any sales
+              stock:
+                variant.stock +
+                variant.orders.reduce((acc, order) => acc + order.quantity, 0),
+            })),
+          },
+          eventExtras: {
+            create: source.eventExtras.map((extra) => ({
+              title: extra.title,
+              description: extra.description,
+              price: extra.price,
+              currency: extra.currency,
+              multiple: extra.multiple,
+              multipleLimit: extra.multipleLimit,
+            })),
+          },
+          customFields: source.customFields ?? undefined,
+        },
+        select: defaultEventSelect,
+      });
+
+      return event;
+    }),
   update: authedProcedure
     .input(
       z.object({
