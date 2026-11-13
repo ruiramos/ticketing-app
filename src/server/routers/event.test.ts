@@ -904,6 +904,7 @@ describe('event.duplicate', () => {
         enabled: true,
         organizationId: organization.id,
         customFields: [{ id: 'f1', name: 'diet', label: 'Diet' }],
+        emailNotes: '- Bring a coat',
         variants: {
           create: [
             { title: 'Adult', price: 10, currency: 'GBP', stock: 5 },
@@ -952,6 +953,10 @@ describe('event.duplicate', () => {
     expect(copy.location).toBe('Somewhere');
     expect(copy.enabled).toBe(false);
     expect(copy.customFields).toEqual(source.customFields);
+    const copyWithNotes = await prisma.event.findUniqueOrThrow({
+      where: { id: copy.id },
+    });
+    expect(copyWithNotes.emailNotes).toBe('- Bring a coat');
     expect(copy.variants.map((v) => [v.title, v.price, v.stock])).toEqual([
       ['Adult', 10, 8],
       ['Child', 5, 10],
@@ -994,5 +999,58 @@ describe('event.duplicate', () => {
     await expect(caller.event.duplicate({ id: source.id })).rejects.toThrow(
       TRPCError,
     );
+  });
+});
+
+describe('event emailNotes', () => {
+  test('are saved on create and update, but not exposed publicly', async () => {
+    const organization = await prisma.organization.create({
+      data: { name: 'Test Org', email: 'test@org.com' },
+    });
+    await prisma.user.create({
+      data: {
+        email: 'test@example.com',
+        name: 'Test User',
+        organizationId: organization.id,
+      },
+    });
+    const ctx = await createContextInner({
+      session: {
+        user: { email: 'test@example.com' },
+        expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+      },
+    });
+    const caller = createCaller(ctx);
+
+    const input = {
+      title: 'Notes Event',
+      text: 'Description',
+      startsAt: new Date('2026-12-05T12:00:00Z'),
+      emailNotes: '- Arrive early',
+      variants: [{ title: 'Ticket', price: 10, stock: 5, displayOrder: 0 }],
+    };
+    const created = await caller.event.create(input);
+    const stored = () =>
+      prisma.event.findUniqueOrThrow({ where: { id: created.id } });
+    expect((await stored()).emailNotes).toBe('- Arrive early');
+
+    await caller.event.update({
+      ...input,
+      id: created.id,
+      emailNotes: '- Arrive on time',
+      variants: [{ ...input.variants[0], id: created.variants[0].id }],
+    });
+    expect((await stored()).emailNotes).toBe('- Arrive on time');
+
+    await caller.event.update({
+      ...input,
+      id: created.id,
+      emailNotes: '',
+      variants: [{ ...input.variants[0], id: created.variants[0].id }],
+    });
+    expect((await stored()).emailNotes).toBeNull();
+
+    const publicEvent = await caller.event.byId({ id: created.id });
+    expect(publicEvent).not.toHaveProperty('emailNotes');
   });
 });

@@ -1644,6 +1644,7 @@ export namespace Prisma {
     location: string | null
     link: string | null
     image: string | null
+    emailNotes: string | null
     startsAt: Date | null
     endsAt: Date | null
     enabled: boolean | null
@@ -1659,6 +1660,7 @@ export namespace Prisma {
     location: string | null
     link: string | null
     image: string | null
+    emailNotes: string | null
     startsAt: Date | null
     endsAt: Date | null
     enabled: boolean | null
@@ -1675,6 +1677,7 @@ export namespace Prisma {
     link: number
     image: number
     customFields: number
+    emailNotes: number
     startsAt: number
     endsAt: number
     enabled: number
@@ -1692,6 +1695,7 @@ export namespace Prisma {
     location?: true
     link?: true
     image?: true
+    emailNotes?: true
     startsAt?: true
     endsAt?: true
     enabled?: true
@@ -1707,6 +1711,7 @@ export namespace Prisma {
     location?: true
     link?: true
     image?: true
+    emailNotes?: true
     startsAt?: true
     endsAt?: true
     enabled?: true
@@ -1723,6 +1728,7 @@ export namespace Prisma {
     link?: true
     image?: true
     customFields?: true
+    emailNotes?: true
     startsAt?: true
     endsAt?: true
     enabled?: true
@@ -1812,6 +1818,7 @@ export namespace Prisma {
     link: string | null
     image: string | null
     customFields: JsonValue | null
+    emailNotes: string | null
     startsAt: Date
     endsAt: Date | null
     enabled: boolean
@@ -1845,6 +1852,7 @@ export namespace Prisma {
     link?: boolean
     image?: boolean
     customFields?: boolean
+    emailNotes?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1866,6 +1874,7 @@ export namespace Prisma {
     link?: boolean
     image?: boolean
     customFields?: boolean
+    emailNotes?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1883,6 +1892,7 @@ export namespace Prisma {
     link?: boolean
     image?: boolean
     customFields?: boolean
+    emailNotes?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1900,6 +1910,7 @@ export namespace Prisma {
     link?: boolean
     image?: boolean
     customFields?: boolean
+    emailNotes?: boolean
     startsAt?: boolean
     endsAt?: boolean
     enabled?: boolean
@@ -1908,7 +1919,7 @@ export namespace Prisma {
     organizationId?: boolean
   }
 
-  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "text" | "location" | "link" | "image" | "customFields" | "startsAt" | "endsAt" | "enabled" | "createdAt" | "updatedAt" | "organizationId", ExtArgs["result"]["event"]>
+  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "text" | "location" | "link" | "image" | "customFields" | "emailNotes" | "startsAt" | "endsAt" | "enabled" | "createdAt" | "updatedAt" | "organizationId", ExtArgs["result"]["event"]>
   export type EventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     variants?: boolean | Event$variantsArgs<ExtArgs>
     eventExtras?: boolean | Event$eventExtrasArgs<ExtArgs>
@@ -1939,6 +1950,7 @@ export namespace Prisma {
       link: string | null
       image: string | null
       customFields: Prisma.JsonValue | null
+      emailNotes: string | null
       startsAt: Date
       endsAt: Date | null
       enabled: boolean
@@ -2379,6 +2391,7 @@ export namespace Prisma {
     readonly link: FieldRef<"Event", 'String'>
     readonly image: FieldRef<"Event", 'String'>
     readonly customFields: FieldRef<"Event", 'Json'>
+    readonly emailNotes: FieldRef<"Event", 'String'>
     readonly startsAt: FieldRef<"Event", 'DateTime'>
     readonly endsAt: FieldRef<"Event", 'DateTime'>
     readonly enabled: FieldRef<"Event", 'Boolean'>
@@ -6494,6 +6507,7 @@ export namespace Prisma {
     postCode: string | null
     website: string | null
     logoUrl: string | null
+    emailMessage: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -6508,6 +6522,7 @@ export namespace Prisma {
     postCode: string | null
     website: string | null
     logoUrl: string | null
+    emailMessage: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -6522,6 +6537,7 @@ export namespace Prisma {
     postCode: number
     website: number
     logoUrl: number
+    emailMessage: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -6538,6 +6554,7 @@ export namespace Prisma {
     postCode?: true
     website?: true
     logoUrl?: true
+    emailMessage?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -6552,6 +6569,7 @@ export namespace Prisma {
     postCode?: true
     website?: true
     logoUrl?: true
+    emailMessage?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -6566,6 +6584,7 @@ export namespace Prisma {
     postCode?: true
     website?: true
     logoUrl?: true
+    emailMessage?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -6653,6 +6672,7 @@ export namespace Prisma {
     postCode: string | null
     website: string | null
     logoUrl: string | null
+    emailMessage: string | null
     createdAt: Date
     updatedAt: Date
     _count: OrganizationCountAggregateOutputType | null
@@ -6684,6 +6704,7 @@ export namespace Prisma {
     postCode?: boolean
     website?: boolean
     logoUrl?: boolean
+    emailMessage?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     events?: boolean | Organization$eventsArgs<ExtArgs>
@@ -6702,6 +6723,7 @@ export namespace Prisma {
     postCode?: boolean
     website?: boolean
     logoUrl?: boolean
+    emailMessage?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["organization"]>
@@ -6716,6 +6738,7 @@ export namespace Prisma {
     postCode?: boolean
     website?: boolean
     logoUrl?: boolean
+    emailMessage?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["organization"]>
@@ -6730,11 +6753,12 @@ export namespace Prisma {
     postCode?: boolean
     website?: boolean
     logoUrl?: boolean
+    emailMessage?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "phone" | "address" | "city" | "postCode" | "website" | "logoUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
+  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "phone" | "address" | "city" | "postCode" | "website" | "logoUrl" | "emailMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
   export type OrganizationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     events?: boolean | Organization$eventsArgs<ExtArgs>
     invitations?: boolean | Organization$invitationsArgs<ExtArgs>
@@ -6761,6 +6785,7 @@ export namespace Prisma {
       postCode: string | null
       website: string | null
       logoUrl: string | null
+      emailMessage: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["organization"]>
@@ -7198,6 +7223,7 @@ export namespace Prisma {
     readonly postCode: FieldRef<"Organization", 'String'>
     readonly website: FieldRef<"Organization", 'String'>
     readonly logoUrl: FieldRef<"Organization", 'String'>
+    readonly emailMessage: FieldRef<"Organization", 'String'>
     readonly createdAt: FieldRef<"Organization", 'DateTime'>
     readonly updatedAt: FieldRef<"Organization", 'DateTime'>
   }
@@ -10031,6 +10057,7 @@ export namespace Prisma {
     link: 'link',
     image: 'image',
     customFields: 'customFields',
+    emailNotes: 'emailNotes',
     startsAt: 'startsAt',
     endsAt: 'endsAt',
     enabled: 'enabled',
@@ -10104,6 +10131,7 @@ export namespace Prisma {
     postCode: 'postCode',
     website: 'website',
     logoUrl: 'logoUrl',
+    emailMessage: 'emailMessage',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -10329,6 +10357,7 @@ export namespace Prisma {
     link?: StringNullableFilter<"Event"> | string | null
     image?: StringNullableFilter<"Event"> | string | null
     customFields?: JsonNullableFilter<"Event">
+    emailNotes?: StringNullableFilter<"Event"> | string | null
     startsAt?: DateTimeFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableFilter<"Event"> | Date | string | null
     enabled?: BoolFilter<"Event"> | boolean
@@ -10349,6 +10378,7 @@ export namespace Prisma {
     link?: SortOrderInput | SortOrder
     image?: SortOrderInput | SortOrder
     customFields?: SortOrderInput | SortOrder
+    emailNotes?: SortOrderInput | SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrderInput | SortOrder
     enabled?: SortOrder
@@ -10372,6 +10402,7 @@ export namespace Prisma {
     link?: StringNullableFilter<"Event"> | string | null
     image?: StringNullableFilter<"Event"> | string | null
     customFields?: JsonNullableFilter<"Event">
+    emailNotes?: StringNullableFilter<"Event"> | string | null
     startsAt?: DateTimeFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableFilter<"Event"> | Date | string | null
     enabled?: BoolFilter<"Event"> | boolean
@@ -10392,6 +10423,7 @@ export namespace Prisma {
     link?: SortOrderInput | SortOrder
     image?: SortOrderInput | SortOrder
     customFields?: SortOrderInput | SortOrder
+    emailNotes?: SortOrderInput | SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrderInput | SortOrder
     enabled?: SortOrder
@@ -10414,6 +10446,7 @@ export namespace Prisma {
     link?: StringNullableWithAggregatesFilter<"Event"> | string | null
     image?: StringNullableWithAggregatesFilter<"Event"> | string | null
     customFields?: JsonNullableWithAggregatesFilter<"Event">
+    emailNotes?: StringNullableWithAggregatesFilter<"Event"> | string | null
     startsAt?: DateTimeWithAggregatesFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableWithAggregatesFilter<"Event"> | Date | string | null
     enabled?: BoolWithAggregatesFilter<"Event"> | boolean
@@ -10710,6 +10743,7 @@ export namespace Prisma {
     postCode?: StringNullableFilter<"Organization"> | string | null
     website?: StringNullableFilter<"Organization"> | string | null
     logoUrl?: StringNullableFilter<"Organization"> | string | null
+    emailMessage?: StringNullableFilter<"Organization"> | string | null
     createdAt?: DateTimeFilter<"Organization"> | Date | string
     updatedAt?: DateTimeFilter<"Organization"> | Date | string
     events?: EventListRelationFilter
@@ -10727,6 +10761,7 @@ export namespace Prisma {
     postCode?: SortOrderInput | SortOrder
     website?: SortOrderInput | SortOrder
     logoUrl?: SortOrderInput | SortOrder
+    emailMessage?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     events?: EventOrderByRelationAggregateInput
@@ -10747,6 +10782,7 @@ export namespace Prisma {
     postCode?: StringNullableFilter<"Organization"> | string | null
     website?: StringNullableFilter<"Organization"> | string | null
     logoUrl?: StringNullableFilter<"Organization"> | string | null
+    emailMessage?: StringNullableFilter<"Organization"> | string | null
     createdAt?: DateTimeFilter<"Organization"> | Date | string
     updatedAt?: DateTimeFilter<"Organization"> | Date | string
     events?: EventListRelationFilter
@@ -10764,6 +10800,7 @@ export namespace Prisma {
     postCode?: SortOrderInput | SortOrder
     website?: SortOrderInput | SortOrder
     logoUrl?: SortOrderInput | SortOrder
+    emailMessage?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: OrganizationCountOrderByAggregateInput
@@ -10784,6 +10821,7 @@ export namespace Prisma {
     postCode?: StringNullableWithAggregatesFilter<"Organization"> | string | null
     website?: StringNullableWithAggregatesFilter<"Organization"> | string | null
     logoUrl?: StringNullableWithAggregatesFilter<"Organization"> | string | null
+    emailMessage?: StringNullableWithAggregatesFilter<"Organization"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
   }
@@ -10965,6 +11003,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -10984,6 +11023,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -11003,6 +11043,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -11022,6 +11063,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -11041,6 +11083,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -11057,6 +11100,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -11072,6 +11116,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -11390,6 +11435,7 @@ export namespace Prisma {
     postCode?: string | null
     website?: string | null
     logoUrl?: string | null
+    emailMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     events?: EventCreateNestedManyWithoutOrganizationInput
@@ -11407,6 +11453,7 @@ export namespace Prisma {
     postCode?: string | null
     website?: string | null
     logoUrl?: string | null
+    emailMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     events?: EventUncheckedCreateNestedManyWithoutOrganizationInput
@@ -11424,6 +11471,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUpdateManyWithoutOrganizationNestedInput
@@ -11441,6 +11489,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -11458,6 +11507,7 @@ export namespace Prisma {
     postCode?: string | null
     website?: string | null
     logoUrl?: string | null
+    emailMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -11472,6 +11522,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -11486,6 +11537,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -11805,6 +11857,7 @@ export namespace Prisma {
     link?: SortOrder
     image?: SortOrder
     customFields?: SortOrder
+    emailNotes?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     enabled?: SortOrder
@@ -11820,6 +11873,7 @@ export namespace Prisma {
     location?: SortOrder
     link?: SortOrder
     image?: SortOrder
+    emailNotes?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     enabled?: SortOrder
@@ -11835,6 +11889,7 @@ export namespace Prisma {
     location?: SortOrder
     link?: SortOrder
     image?: SortOrder
+    emailNotes?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     enabled?: SortOrder
@@ -12334,6 +12389,7 @@ export namespace Prisma {
     postCode?: SortOrder
     website?: SortOrder
     logoUrl?: SortOrder
+    emailMessage?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -12348,6 +12404,7 @@ export namespace Prisma {
     postCode?: SortOrder
     website?: SortOrder
     logoUrl?: SortOrder
+    emailMessage?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -12362,6 +12419,7 @@ export namespace Prisma {
     postCode?: SortOrder
     website?: SortOrder
     logoUrl?: SortOrder
+    emailMessage?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -13531,6 +13589,7 @@ export namespace Prisma {
     postCode?: string | null
     website?: string | null
     logoUrl?: string | null
+    emailMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     invitations?: OrganizationInvitationCreateNestedManyWithoutOrganizationInput
@@ -13547,6 +13606,7 @@ export namespace Prisma {
     postCode?: string | null
     website?: string | null
     logoUrl?: string | null
+    emailMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     invitations?: OrganizationInvitationUncheckedCreateNestedManyWithoutOrganizationInput
@@ -13679,6 +13739,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invitations?: OrganizationInvitationUpdateManyWithoutOrganizationNestedInput
@@ -13695,6 +13756,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invitations?: OrganizationInvitationUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -13709,6 +13771,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13727,6 +13790,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13813,6 +13877,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13831,6 +13896,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13865,6 +13931,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13883,6 +13950,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13917,6 +13985,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13935,6 +14004,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -13953,6 +14023,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -13971,6 +14042,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -14061,6 +14133,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -14079,6 +14152,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -14165,6 +14239,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -14183,6 +14258,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -14302,6 +14378,7 @@ export namespace Prisma {
     link?: StringNullableFilter<"Event"> | string | null
     image?: StringNullableFilter<"Event"> | string | null
     customFields?: JsonNullableFilter<"Event">
+    emailNotes?: StringNullableFilter<"Event"> | string | null
     startsAt?: DateTimeFilter<"Event"> | Date | string
     endsAt?: DateTimeNullableFilter<"Event"> | Date | string | null
     enabled?: BoolFilter<"Event"> | boolean
@@ -14384,6 +14461,7 @@ export namespace Prisma {
     postCode?: string | null
     website?: string | null
     logoUrl?: string | null
+    emailMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     events?: EventCreateNestedManyWithoutOrganizationInput
@@ -14400,6 +14478,7 @@ export namespace Prisma {
     postCode?: string | null
     website?: string | null
     logoUrl?: string | null
+    emailMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     events?: EventUncheckedCreateNestedManyWithoutOrganizationInput
@@ -14463,6 +14542,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUpdateManyWithoutOrganizationNestedInput
@@ -14479,6 +14559,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -14584,6 +14665,7 @@ export namespace Prisma {
     postCode?: string | null
     website?: string | null
     logoUrl?: string | null
+    emailMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     events?: EventCreateNestedManyWithoutOrganizationInput
@@ -14600,6 +14682,7 @@ export namespace Prisma {
     postCode?: string | null
     website?: string | null
     logoUrl?: string | null
+    emailMessage?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     events?: EventUncheckedCreateNestedManyWithoutOrganizationInput
@@ -14684,6 +14767,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUpdateManyWithoutOrganizationNestedInput
@@ -14700,6 +14784,7 @@ export namespace Prisma {
     postCode?: NullableStringFieldUpdateOperationsInput | string | null
     website?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    emailMessage?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -14976,6 +15061,7 @@ export namespace Prisma {
     link?: string | null
     image?: string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: string | null
     startsAt?: Date | string
     endsAt?: Date | string | null
     enabled?: boolean
@@ -15015,6 +15101,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -15033,6 +15120,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
@@ -15051,6 +15139,7 @@ export namespace Prisma {
     link?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: NullableJsonNullValueInput | InputJsonValue
+    emailNotes?: NullableStringFieldUpdateOperationsInput | string | null
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean

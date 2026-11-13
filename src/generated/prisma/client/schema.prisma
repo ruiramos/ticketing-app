@@ -21,6 +21,8 @@ model Event {
   variants     Variant[]
   eventExtras  EventExtras[]
   customFields Json?
+  // Extra details for the order confirmation email
+  emailNotes   String?
 
   startsAt DateTime  @default(now())
   endsAt   DateTime?
@@ -106,15 +108,17 @@ model Order {
 }
 
 model Organization {
-  id       String  @id @default(uuid())
-  name     String
-  email    String
-  phone    String?
-  address  String?
-  city     String?
-  postCode String?
-  website  String?
-  logoUrl  String?
+  id           String  @id @default(uuid())
+  name         String
+  email        String
+  phone        String?
+  address      String?
+  city         String?
+  postCode     String?
+  website      String?
+  logoUrl      String?
+  // Shown in every order confirmation email, under the greeting
+  emailMessage String?
 
   events      Event[]
   invitations OrganizationInvitation[]

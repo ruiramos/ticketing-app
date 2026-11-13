@@ -14,7 +14,8 @@ function getBaseUrl() {
   }
 
   if (process.env.DEPLOYED_URL) {
-    return `https://${process.env.DEPLOYED_URL}`;
+    // A full URL, e.g. https://ticketing.example.com
+    return process.env.DEPLOYED_URL.replace(/\/$/, '');
   }
 
   // // reference for vercel.com

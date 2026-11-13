@@ -612,3 +612,64 @@ describe('user.getUserEventOrders', () => {
     expect(result.orders[1].id).toBe(order1.id);
   });
 });
+
+describe('user.updateOrganization', () => {
+  test("should update the current user's organization", async () => {
+    const organization = await prisma.organization.create({
+      data: { name: 'Test Org', email: 'test@org.com', phone: '123' },
+    });
+    const otherOrg = await prisma.organization.create({
+      data: { name: 'Other Org', email: 'other@org.com' },
+    });
+    await prisma.user.create({
+      data: {
+        email: 'test@example.com',
+        name: 'Test User',
+        organizationId: organization.id,
+      },
+    });
+
+    const ctx = await createContextInner({
+      session: {
+        user: { email: 'test@example.com' },
+        expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+      },
+    });
+    const caller = createCaller(ctx);
+
+    await caller.user.updateOrganization({
+      name: 'Renamed Org',
+      email: 'new@org.com',
+      phone: '',
+      emailMessage: 'Thanks for supporting us!',
+    });
+
+    const updated = await caller.user.getOrganization();
+    expect(updated.name).toBe('Renamed Org');
+    expect(updated.email).toBe('new@org.com');
+    expect(updated.phone).toBeNull();
+    expect(updated.emailMessage).toBe('Thanks for supporting us!');
+
+    const untouched = await prisma.organization.findUniqueOrThrow({
+      where: { id: otherOrg.id },
+    });
+    expect(untouched.name).toBe('Other Org');
+  });
+
+  test('should fail for users without an organization', async () => {
+    await prisma.user.create({
+      data: { email: 'test@example.com', name: 'Test User' },
+    });
+    const ctx = await createContextInner({
+      session: {
+        user: { email: 'test@example.com' },
+        expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+      },
+    });
+    const caller = createCaller(ctx);
+
+    await expect(
+      caller.user.updateOrganization({ name: 'X', email: 'x@org.com' }),
+    ).rejects.toThrow();
+  });
+});

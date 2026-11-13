@@ -112,6 +112,7 @@ export const eventRouter = router({
         startsAt: z.date(),
         endsAt: z.date().nullable().optional(),
         enabled: z.boolean().default(true),
+        emailNotes: z.string().optional(),
         variants: z
           .array(
             z.object({
@@ -200,6 +201,7 @@ export const eventRouter = router({
           startsAt: input.startsAt,
           endsAt: input.endsAt,
           enabled: input.enabled,
+          emailNotes: input.emailNotes || null,
           organizationId: user.organization.id,
           variants: {
             create: input.variants.map((variant) => ({
@@ -283,6 +285,7 @@ export const eventRouter = router({
           endsAt: source.endsAt,
           // Start disabled so it can be reviewed before going live
           enabled: false,
+          emailNotes: source.emailNotes,
           organizationId: user.organization.id,
           variants: {
             create: source.variants.map((variant) => ({
@@ -325,6 +328,7 @@ export const eventRouter = router({
         startsAt: z.date(),
         endsAt: z.date().nullable().optional(),
         enabled: z.boolean().default(true),
+        emailNotes: z.string().optional(),
         variants: z
           .array(
             z.object({
@@ -436,6 +440,7 @@ export const eventRouter = router({
             startsAt: input.startsAt,
             endsAt: input.endsAt,
             enabled: input.enabled,
+            emailNotes: input.emailNotes || null,
             customFields:
               input.customFields.length > 0 ? input.customFields : undefined,
           },

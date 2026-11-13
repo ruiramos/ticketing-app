@@ -342,11 +342,7 @@ export const orderRouter = router({
           to: capturedOrder.payer?.emailAddress,
           replyTo: ourOrder.event.organization?.email || 'noreply@example.com',
           subject: 'Order Confirmation - ' + ourOrder.event.title,
-          content: generateMailContent(
-            order,
-            ourOrder.event,
-            ourOrder.event.organization!,
-          ),
+          content: generateMailContent(order, ourOrder),
         });
       }
 

@@ -48,6 +48,7 @@ const NewEventPage = () => {
   ]);
   const [extras, setExtras] = useState<EventExtra[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [emailNotes, setEmailNotes] = useState('');
 
   const createEventMutation = trpc.event.create.useMutation({
     onSuccess: (event) => {
@@ -141,6 +142,7 @@ const NewEventPage = () => {
         enabled,
         variants: variants.filter((v) => v.title && v.price > 0),
         extras: extras.filter((e) => e.title && e.price >= 0),
+        emailNotes,
         customFields: customFields.filter((f) => f.name && f.label),
       });
     } catch (error) {
@@ -605,6 +607,29 @@ const NewEventPage = () => {
                 </div>
               ))
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Confirmation Email</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Label htmlFor="emailNotes">Event details for the email</Label>
+            <Textarea
+              id="emailNotes"
+              value={emailNotes}
+              onChange={(e) => setEmailNotes(e.target.value)}
+              placeholder={
+                '- Please arrive 5 minutes before your time slot\n- Meet at the main entrance'
+              }
+              rows={5}
+            />
+            <p className="text-xs text-muted-foreground">
+              Added to the order confirmation email, after the date, location
+              and order details. Start a line with &quot;- &quot; to make a
+              bullet point, and leave a blank line between paragraphs.
+            </p>
           </CardContent>
         </Card>
 

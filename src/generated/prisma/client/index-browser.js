@@ -128,6 +128,7 @@ exports.Prisma.EventScalarFieldEnum = {
   link: 'link',
   image: 'image',
   customFields: 'customFields',
+  emailNotes: 'emailNotes',
   startsAt: 'startsAt',
   endsAt: 'endsAt',
   enabled: 'enabled',
@@ -189,6 +190,7 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   postCode: 'postCode',
   website: 'website',
   logoUrl: 'logoUrl',
+  emailMessage: 'emailMessage',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

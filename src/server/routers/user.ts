@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   InviteOrganizationMemberSchema,
   CreateOrganizationSchema,
+  UpdateOrganizationSchema,
 } from '~/lib/schemas';
 
 import { prisma } from '~/server/prisma';
@@ -65,6 +66,7 @@ export const userRouter = router({
             city: true,
             postCode: true,
             website: true,
+            emailMessage: true,
             users: {
               select: {
                 id: true,
@@ -136,6 +138,34 @@ export const userRouter = router({
       }
 
       return organization;
+    }),
+  updateOrganization: authedProcedure
+    .input(UpdateOrganizationSchema)
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.user.email) throw new Error('Could not get email from user');
+
+      const currentUser = await prisma.user.findFirstOrThrow({
+        select: { organizationId: true },
+        where: { email: ctx.user.email },
+      });
+
+      if (!currentUser.organizationId) {
+        throw new Error('User does not belong to an organization');
+      }
+
+      return await prisma.organization.update({
+        where: { id: currentUser.organizationId },
+        data: {
+          name: input.name,
+          email: input.email,
+          phone: input.phone || null,
+          address: input.address || null,
+          city: input.city || null,
+          postCode: input.postCode || null,
+          website: input.website || null,
+          emailMessage: input.emailMessage || null,
+        },
+      });
     }),
   inviteOrganizationMember: authedProcedure
     .input(InviteOrganizationMemberSchema)
@@ -482,6 +512,7 @@ export const userRouter = router({
         startsAt: true,
         endsAt: true,
         customFields: true,
+        emailNotes: true,
         variants: {
           select: {
             id: true,

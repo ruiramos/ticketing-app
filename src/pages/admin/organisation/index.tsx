@@ -4,6 +4,7 @@ import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
+import { Textarea } from '~/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -21,7 +22,11 @@ import {
 } from '~/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { trpc } from '~/utils/trpc';
-import { RoleEnum, type Role } from '~/lib/schemas';
+import {
+  RoleEnum,
+  type Role,
+  type UpdateOrganizationInput,
+} from '~/lib/schemas';
 import {
   Building2,
   Mail,
@@ -31,6 +36,7 @@ import {
   Users,
   Plus,
   Trash2,
+  Edit,
 } from 'lucide-react';
 
 const OrganisationDashboard = () => {
@@ -40,6 +46,60 @@ const OrganisationDashboard = () => {
   const [newMemberRole, setNewMemberRole] = useState<Role>('USER');
 
   const { data: organization, refetch } = trpc.user.getOrganization.useQuery();
+
+  const [isEditOrgOpen, setIsEditOrgOpen] = useState(false);
+  const [orgForm, setOrgForm] = useState<UpdateOrganizationInput>({
+    name: '',
+    email: '',
+  });
+
+  const updateOrganizationMutation = trpc.user.updateOrganization.useMutation({
+    onSuccess: () => {
+      setIsEditOrgOpen(false);
+      refetch();
+    },
+  });
+
+  const openEditOrg = () => {
+    if (!organization) return;
+    setOrgForm({
+      name: organization.name,
+      email: organization.email,
+      phone: organization.phone ?? '',
+      address: organization.address ?? '',
+      city: organization.city ?? '',
+      postCode: organization.postCode ?? '',
+      website: organization.website ?? '',
+      emailMessage: organization.emailMessage ?? '',
+    });
+    setIsEditOrgOpen(true);
+  };
+
+  const handleUpdateOrganization = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateOrganizationMutation.mutateAsync(orgForm);
+    } catch (error) {
+      console.error('Failed to update organization:', error);
+      alert('Failed to update organization. Please try again.');
+    }
+  };
+
+  const orgField = (
+    field: keyof UpdateOrganizationInput,
+    label: string,
+    props: React.ComponentProps<typeof Input> = {},
+  ) => (
+    <div>
+      <Label htmlFor={`org-${field}`}>{label}</Label>
+      <Input
+        id={`org-${field}`}
+        value={orgForm[field] ?? ''}
+        onChange={(e) => setOrgForm({ ...orgForm, [field]: e.target.value })}
+        {...props}
+      />
+    </div>
+  );
 
   const { data: invitations, refetch: refetchInvitations } =
     trpc.user.getOrganizationInvitations.useQuery();
@@ -138,10 +198,73 @@ const OrganisationDashboard = () => {
       {/* Organization Details */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5" />
-            Organization Details
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              Organization Details
+            </CardTitle>
+            <Dialog open={isEditOrgOpen} onOpenChange={setIsEditOrgOpen}>
+              <Button variant="outline" size="sm" onClick={openEditOrg}>
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Details
+              </Button>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Organization Details</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleUpdateOrganization} className="space-y-4">
+                  {orgField('name', 'Name *', { required: true })}
+                  {orgField('email', 'Contact Email *', {
+                    type: 'email',
+                    required: true,
+                  })}
+                  {orgField('phone', 'Phone')}
+                  {orgField('address', 'Address')}
+                  <div className="grid grid-cols-2 gap-4">
+                    {orgField('city', 'City')}
+                    {orgField('postCode', 'Post Code')}
+                  </div>
+                  {orgField('website', 'Website')}
+                  <div>
+                    <Label htmlFor="org-emailMessage">
+                      Confirmation email message
+                    </Label>
+                    <Textarea
+                      id="org-emailMessage"
+                      value={orgForm.emailMessage ?? ''}
+                      onChange={(e) =>
+                        setOrgForm({ ...orgForm, emailMessage: e.target.value })
+                      }
+                      placeholder="e.g. Your contribution helps fund our community events."
+                      rows={2}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Shown under the greeting in every order confirmation
+                      email. The contact email above is used for questions and
+                      replies.
+                    </p>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsEditOrgOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={updateOrganizationMutation.isPending}
+                    >
+                      {updateOrganizationMutation.isPending
+                        ? 'Saving...'
+                        : 'Save'}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -171,6 +294,14 @@ const OrganisationDashboard = () => {
                       ]
                         .filter(Boolean)
                         .join(', ')}
+                    </span>
+                  </div>
+                )}
+                {organization.emailMessage && (
+                  <div className="flex items-start gap-2 text-sm">
+                    <Mail className="w-4 h-4 text-muted-foreground mt-0.5" />
+                    <span className="text-muted-foreground">
+                      Email message: {organization.emailMessage}
                     </span>
                   </div>
                 )}

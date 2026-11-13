@@ -25,3 +25,9 @@ export const CreateOrganizationSchema = z.object({
 });
 
 export type CreateOrganizationInput = z.infer<typeof CreateOrganizationSchema>;
+
+export const UpdateOrganizationSchema = CreateOrganizationSchema.extend({
+  emailMessage: z.string().optional(),
+});
+
+export type UpdateOrganizationInput = z.infer<typeof UpdateOrganizationSchema>;

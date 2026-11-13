@@ -1,7 +1,11 @@
 import { Order } from '@paypal/paypal-server-sdk/dist/types/models/order';
 import Mailjet from 'node-mailjet';
 import { env } from '~/server/env';
-import { Event, Organization } from '~/generated/prisma/client';
+import type {
+  Event,
+  Order as OurOrder,
+  Organization,
+} from '~/generated/prisma/client';
 
 const mailjet = new Mailjet({
   apiKey: env.MAILJET_API_KEY,
@@ -43,18 +47,22 @@ export async function sendEmail({
   }
 }
 
-export function generateMailContent(
-  order: Order,
-  event: Event,
-  org: Organization,
-) {
+type OrderWithEvent = OurOrder & {
+  event: Event & { organization: Organization | null };
+};
+
+export function generateMailContent(order: Order, ourOrder: OrderWithEvent) {
+  const { event } = ourOrder;
+  const org = event.organization;
+
   return `
-<p>Dear ${order?.payer?.name?.givenName},</p>
+<p>Dear ${escapeHtml(order?.payer?.name?.givenName ?? '')},</p>
 
-<p>Hello from ${org.name}!</p>
+<p>Hello from ${escapeHtml(org?.name ?? '')}!</p>
 
-<p>We're thrilled to confirm your order for the ${event.title}.<br/>
-Your contribution helps fund the PTA projects and community events.</p>
+<p>We're thrilled to confirm your order for the ${escapeHtml(event.title)}.${
+    org?.emailMessage ? `<br/>\n${escapeHtml(org.emailMessage)}` : ''
+  }</p>
 
 <p>Here are the details of your order:</p>
 
@@ -62,15 +70,24 @@ Your contribution helps fund the PTA projects and community events.</p>
 ${order?.purchaseUnits?.[0].items
   ?.map((item, i) => {
     return i === 0
-      ? `${item.quantity} ticket(s) for: ${item.name}`
-      : `${item.name}`;
+      ? `${item.quantity} ticket(s) for: ${escapeHtml(item.name)}`
+      : `${escapeHtml(item.name)}`;
   })
   .join('<br/>')}<br/>
 <strong>Total:</strong> £${order?.purchaseUnits?.[0].amount?.value}
-
+${customFieldDetails(ourOrder)}
 ${eventDetails(event)}
-<p>Of course, we're here to help. If you have any questions or concerns, simply drop us a line at info@friendsofhped.com. <br/><br/>
-Thank you and see you at the ${event.title}!</p>`;
+${
+  event.emailNotes?.trim()
+    ? `<p>Some more details about the event:</p>\n\n${formatNotes(event.emailNotes)}\n`
+    : ''
+}
+<p>Of course, we're here to help.${
+    org?.email
+      ? ` If you have any questions or concerns, simply drop us a line at ${escapeHtml(org.email)}.`
+      : ''
+  } <br/><br/>
+Thank you and see you at the ${escapeHtml(event.title)}!</p>`;
 }
 
 function escapeHtml(text: string) {
@@ -80,21 +97,100 @@ function escapeHtml(text: string) {
     .replace(/>/g, '&gt;');
 }
 
-// Uses the "- " bullet lines from the event description as the details list
+function formatEventDate(event: Event) {
+  // All events are currently UK based
+  const timeZone = 'Europe/London';
+  const date = event.startsAt.toLocaleDateString('en-GB', {
+    timeZone,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const time = (d: Date) =>
+    d.toLocaleTimeString('en-GB', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  return event.endsAt
+    ? `${date}, ${time(event.startsAt)} - ${time(event.endsAt)}`
+    : `${date}, ${time(event.startsAt)}`;
+}
+
 function eventDetails(event: Event) {
-  const details = event.text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('- '))
-    .map((line) => line.slice(2).trim())
-    .filter(Boolean);
+  const eventUrl = env.DEPLOYED_URL
+    ? new URL(`/events/${event.id}`, env.DEPLOYED_URL).toString()
+    : null;
 
-  if (details.length === 0) return '';
-
-  return `<p>Some more details about the event:</p>
-
-<ul>
-${details.map((detail) => `<li>${escapeHtml(detail)}</li>`).join('\n')}
-</ul>
+  return `
+<p><strong>When:</strong> ${formatEventDate(event)}<br/>${
+    event.location
+      ? `\n<strong>Where:</strong> ${escapeHtml(event.location)}<br/>`
+      : ''
+  }${
+    eventUrl
+      ? `\n<strong>Event page:</strong> <a href="${eventUrl}">${eventUrl}</a><br/>`
+      : ''
+  }</p>
 `;
+}
+
+function customFieldDetails(ourOrder: OurOrder) {
+  const responses = Object.values(
+    (ourOrder.customFieldResponses ?? {}) as Record<
+      string,
+      { fieldLabel?: string; fieldName?: string; value: unknown }
+    >,
+  );
+
+  if (responses.length === 0) return '';
+
+  const formatValue = (value: unknown) =>
+    typeof value === 'boolean'
+      ? value
+        ? 'Yes'
+        : 'No'
+      : typeof value === 'string' || typeof value === 'number'
+        ? String(value)
+        : JSON.stringify(value);
+
+  return `<br/>${responses
+    .map(
+      (response) =>
+        `<strong>${escapeHtml(response.fieldLabel || response.fieldName || '')}:</strong> ${escapeHtml(formatValue(response.value))}`,
+    )
+    .join('<br/>')}`;
+}
+
+// Plain text to HTML: blank lines separate paragraphs and "- " lines become a
+// bulleted list
+export function formatNotes(notes: string) {
+  const html: string[] = [];
+  let paragraph: string[] = [];
+  let list: string[] = [];
+
+  const flush = () => {
+    if (paragraph.length > 0) html.push(`<p>${paragraph.join('<br/>')}</p>`);
+    if (list.length > 0) html.push(`<ul>\n${list.join('\n')}\n</ul>`);
+    paragraph = [];
+    list = [];
+  };
+
+  for (const rawLine of notes.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) {
+      flush();
+    } else if (line.startsWith('- ')) {
+      if (paragraph.length > 0) flush();
+      list.push(`<li>${escapeHtml(line.slice(2).trim())}</li>`);
+    } else {
+      if (list.length > 0) flush();
+      paragraph.push(escapeHtml(line));
+    }
+  }
+  flush();
+
+  return html.join('\n');
 }

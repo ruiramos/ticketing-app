@@ -48,6 +48,7 @@ const EditEventPage = () => {
   const [variants, setVariants] = useState<Partial<Variant>[]>([]);
   const [extras, setExtras] = useState<Partial<EventExtras>[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [emailNotes, setEmailNotes] = useState('');
 
   const { data: event, isLoading } = trpc.event.byId.useQuery(
     { id: eventId },
@@ -58,6 +59,13 @@ const EditEventPage = () => {
     { eventId: eventId },
     { enabled: !!eventId },
   );
+
+  // Email notes aren't public, so they come from the authed event query
+  useEffect(() => {
+    if (eventWithOrders) {
+      setEmailNotes(eventWithOrders.emailNotes || '');
+    }
+  }, [eventWithOrders]);
 
   const updateEventMutation = trpc.event.update.useMutation({
     onSuccess: () => {
@@ -317,6 +325,7 @@ const EditEventPage = () => {
             price: e.price!,
             description: e.description || '',
           })),
+        emailNotes,
         customFields: customFields.filter((f) => f.name && f.label),
       });
     } catch (error) {
@@ -879,6 +888,29 @@ const EditEventPage = () => {
                   </div>
                 ))
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Confirmation Email</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Label htmlFor="emailNotes">Event details for the email</Label>
+              <Textarea
+                id="emailNotes"
+                value={emailNotes}
+                onChange={(e) => setEmailNotes(e.target.value)}
+                placeholder={
+                  '- Please arrive 5 minutes before your time slot\n- Meet at the main entrance'
+                }
+                rows={5}
+              />
+              <p className="text-xs text-muted-foreground">
+                Added to the order confirmation email, after the date, location
+                and order details. Start a line with &quot;- &quot; to make a
+                bullet point, and leave a blank line between paragraphs.
+              </p>
             </CardContent>
           </Card>
 
