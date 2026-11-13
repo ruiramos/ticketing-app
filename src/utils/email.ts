@@ -68,15 +68,33 @@ ${order?.purchaseUnits?.[0].items
   .join('<br/>')}<br/>
 <strong>Total:</strong> £${order?.purchaseUnits?.[0].amount?.value}
 
-<p>Some more details about the event:</p>
-
-<ul>
-<li>Please arrive 2 minutes before your start time</li>
-<li>The Slime Experience will take place in Chestnut Classroom (Reception)</li>
-<li>Please gather down the path by the bike storage</li>
-<li>Please ensure your child is wearing something suitable for messy play!</li>
-</ul>
-
+${eventDetails(event)}
 <p>Of course, we're here to help. If you have any questions or concerns, simply drop us a line at info@friendsofhped.com. <br/><br/>
 Thank you and see you at the ${event.title}!</p>`;
+}
+
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Uses the "- " bullet lines from the event description as the details list
+function eventDetails(event: Event) {
+  const details = event.text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- '))
+    .map((line) => line.slice(2).trim())
+    .filter(Boolean);
+
+  if (details.length === 0) return '';
+
+  return `<p>Some more details about the event:</p>
+
+<ul>
+${details.map((detail) => `<li>${escapeHtml(detail)}</li>`).join('\n')}
+</ul>
+`;
 }
