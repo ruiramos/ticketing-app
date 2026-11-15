@@ -157,7 +157,7 @@ Select namespace `default` at the top. The dashboard picks the
   with **Continue matching** on, so critical alerts go to both.
 - Repeat interval: 4h.
 
-**Rules:** create the 13 rules in `alerts.md`. Then test one: delete the app
+**Rules:** run `provision_alerts.py` (see the top of `alerts.md`) to create rules 2–13, and set up the Synthetic Monitoring uptime check (#1) by hand. Then test one: delete the app
 pod (`kubectl -n default delete pod -l app=ticketing`). Alert #3 should reach
 Slack within about 2 minutes. (Expect a few seconds of downtime: there's one
 replica.)
