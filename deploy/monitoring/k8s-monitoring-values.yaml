@@ -16,7 +16,7 @@ destinations:
     type: prometheus
     # Grafana Cloud portal → your stack → Prometheus → "Details" → Remote Write Endpoint
     # e.g. https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push
-    url: <PROMETHEUS_REMOTE_WRITE_URL>
+    url: https://prometheus-prod-77-prod-us-east-6.grafana.net/api/prom/push
     auth:
       type: basic
       usernameKey: prom-username
@@ -30,7 +30,7 @@ destinations:
     type: loki
     # Grafana Cloud portal → your stack → Loki → "Details" → URL + /loki/api/v1/push
     # e.g. https://logs-prod-012.grafana.net/loki/api/v1/push
-    url: <LOKI_PUSH_URL>
+    url: https://logs-prod-053-prod-us-east-6.grafana.net/loki/api/v1/push
     auth:
       type: basic
       usernameKey: loki-username
