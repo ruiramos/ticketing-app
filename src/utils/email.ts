@@ -1,6 +1,8 @@
 import { Order } from '@paypal/paypal-server-sdk/dist/types/models/order';
 import Mailjet from 'node-mailjet';
 import { env } from '~/server/env';
+import { logger } from '~/server/logger';
+import { metrics } from '~/server/metrics';
 import type {
   Event,
   Order as OurOrder,
@@ -31,7 +33,7 @@ export async function sendEmail({
     const recipients = (Array.isArray(to) ? to : [to]).map((email) => ({
       Email: email,
     }));
-    return await mailjet.post('send', { version: 'v3.1' }).request({
+    const result = await mailjet.post('send', { version: 'v3.1' }).request({
       Messages: [
         {
           From: { Email: FROM_EMAIL_ADDRESS },
@@ -42,8 +44,12 @@ export async function sendEmail({
         },
       ],
     });
+    metrics.emailsSent.inc({ outcome: 'sent' });
+    return result;
   } catch (e) {
-    console.error(e);
+    metrics.emailsSent.inc({ outcome: 'failed' });
+    // recipient address deliberately not logged
+    logger.error({ err: e, subject }, 'failed to send email');
   }
 }
 

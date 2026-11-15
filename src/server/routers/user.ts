@@ -9,6 +9,7 @@ import {
 
 import { prisma } from '~/server/prisma';
 import { sendEmail } from '~/utils/email';
+import { logger } from '~/server/logger';
 
 const defaultUserSelect = {
   id: true,
@@ -320,10 +321,9 @@ export const userRouter = router({
       }
 
       if (invitation.email !== ctx.user.email) {
-        console.error(
-          'Invitation email does not match your account:',
-          invitation.email,
-          ctx.user.email,
+        logger.warn(
+          { invitationId: invitation.id },
+          'invitation email does not match the signed-in account',
         );
         throw new Error('Invitation email does not match your account');
       }

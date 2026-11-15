@@ -1,0 +1,35 @@
+# Exposes Traefik's request metrics (requests by status code, latency) and
+# marks the Traefik pod for scraping by Grafana Alloy.
+#
+# This works when Traefik was installed by k3s / Civo as a HelmChart resource
+# named `traefik` in kube-system. Check first:
+#
+#   kubectl -n kube-system get helmchart traefik
+#
+# If that returns nothing, see "Traefik installed some other way" in README.md.
+#
+# Apply with:  kubectl apply -f deploy/monitoring/traefik-metrics.yaml
+# k3s's helm controller re-deploys Traefik with these values merged in.
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    metrics:
+      prometheus:
+        entryPoint: metrics
+        # per-backend-service labels; router labels would add series for no gain
+        addServicesLabels: true
+        addEntryPointsLabels: true
+        addRoutersLabels: false
+    # Traefik serves these on its internal `metrics` entrypoint, port 9100 by
+    # default (not exposed outside the cluster). Verify with the README step.
+    deployment:
+      podAnnotations:
+        k8s.grafana.com/scrape: "true"
+        k8s.grafana.com/job: traefik
+        k8s.grafana.com/metrics.portNumber: "9100"
+        k8s.grafana.com/metrics.path: /metrics

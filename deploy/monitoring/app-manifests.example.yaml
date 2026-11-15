@@ -1,0 +1,70 @@
+# Monitoring-related fields to MERGE INTO your existing ticketing-app manifests.
+# This is not a complete deployment: names, image, env and namespace below are
+# placeholders. Every line marked `# <-- monitoring` is what matters.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticketing-app
+spec:
+  template:
+    metadata:
+      annotations:
+        k8s.grafana.com/scrape: "true"                 # <-- monitoring: Alloy scrapes this pod
+        k8s.grafana.com/job: ticketing-app             # <-- monitoring: metrics `job` label
+        k8s.grafana.com/metrics.portNumber: "9464"     # <-- monitoring: app metrics port
+        k8s.grafana.com/logs.job: ticketing-app        # <-- monitoring: logs `job` label
+    spec:
+      containers:
+        - name: ticketing-app
+          image: europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:<tag>
+          ports:
+            - name: http
+              containerPort: 3000
+            - name: metrics                            # <-- monitoring
+              containerPort: 9464                      #     (not added to the Service,
+          env:                                         #      so never public)
+            - name: LOG_LEVEL                          # <-- optional: info is the default
+              value: info
+          # Probes: liveness only checks the process, so a DB blip doesn't restart
+          # every pod; readiness also checks the DB and takes the pod out of
+          # rotation while the DB is unreachable.
+          livenessProbe:                               # <-- monitoring
+            httpGet: { path: /api/health, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 4
+          readinessProbe:                              # <-- monitoring
+            httpGet: { path: /api/health?db=1, port: http }
+            periodSeconds: 10
+            failureThreshold: 3
+          # Memory limit makes OOMKills visible as alerts instead of a node
+          # quietly running out of memory. Adjust to what the dashboard shows.
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: expire-reserved                                # alerts reference this name
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid                            # <-- don't let runs overlap
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0                                  # next minute's run is the retry
+      activeDeadlineSeconds: 120                       # a hung run fails instead of blocking
+      template:
+        metadata:
+          annotations:
+            k8s.grafana.com/logs.job: ticketing-expire-reserved   # <-- monitoring
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: expire-reserved
+              image: europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:<tag>
+              command: ["pnpm", "expire-reserved"]
+              # exits non-zero if any order failed to expire → Job marked failed → alert

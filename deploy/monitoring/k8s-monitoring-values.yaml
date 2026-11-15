@@ -1,0 +1,98 @@
+# Values for the grafana/k8s-monitoring Helm chart (written against chart v4.6).
+# Install instructions: deploy/monitoring/README.md
+#
+# Sends container metrics, cluster events, pod logs and the app's /metrics to
+# Grafana Cloud. Credentials are NOT in this file: they come from the
+# `grafana-cloud` Secret created in step 2 of the README.
+#
+# Replace every <PLACEHOLDER> before installing.
+---
+cluster:
+  # Shows up as the `cluster` label on everything. Pick any name.
+  name: civo-ticketing
+
+destinations:
+  grafana-cloud-metrics:
+    type: prometheus
+    # Grafana Cloud portal → your stack → Prometheus → "Details" → Remote Write Endpoint
+    # e.g. https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push
+    url: <PROMETHEUS_REMOTE_WRITE_URL>
+    auth:
+      type: basic
+      usernameKey: prom-username
+      passwordKey: access-token
+    secret:
+      create: false
+      name: grafana-cloud
+      namespace: monitoring
+
+  grafana-cloud-logs:
+    type: loki
+    # Grafana Cloud portal → your stack → Loki → "Details" → URL + /loki/api/v1/push
+    # e.g. https://logs-prod-012.grafana.net/loki/api/v1/push
+    url: <LOKI_PUSH_URL>
+    auth:
+      type: basic
+      usernameKey: loki-username
+      passwordKey: access-token
+    secret:
+      create: false
+      name: grafana-cloud
+      namespace: monitoring
+
+# ---------------------------------------------------------------------------
+# Features
+# ---------------------------------------------------------------------------
+
+# CPU / memory / restarts / OOMKills / CronJob status (cAdvisor, kubelet,
+# kube-state-metrics). The chart's default allow-lists keep this to the series
+# the Grafana Cloud Kubernetes app needs, which matters on the 10k-series free tier.
+clusterMetrics:
+  enabled: true
+  collector: alloy-metrics
+
+# Node CPU / memory / disk, trimmed to what the Linux node integration uses.
+hostMetrics:
+  enabled: true
+  collector: alloy-metrics
+  linuxHosts:
+    enabled: true
+    metricsTuning:
+      useIntegrationAllowList: true
+
+# Kubernetes events (OOMKilled, BackOff, FailedScheduling, ...) as logs.
+clusterEvents:
+  enabled: true
+  collector: alloy-singleton
+
+# stdout/stderr of every pod → Loki.
+# The app sets the `k8s.grafana.com/logs.job` pod annotation so its logs get a
+# stable `job` label (see app-manifests.example.yaml).
+podLogsViaLoki:
+  enabled: true
+  collector: alloy-logs
+
+# Scrapes any pod annotated with k8s.grafana.com/scrape: "true". Used for the
+# app's metrics port (9464) and for Traefik's metrics (traefik-metrics.yaml).
+# Opt-in by annotation keeps the series count predictable.
+annotationAutodiscovery:
+  enabled: true
+  collector: alloy-metrics
+
+# ---------------------------------------------------------------------------
+# Collectors (Grafana Alloy instances) — sized for a small cluster.
+# Roughly 3 × (100m CPU / 128Mi) requested in total, plus the operator.
+# ---------------------------------------------------------------------------
+collectors:
+  alloy-metrics:
+    presets: [small, clustered, statefulset]
+  alloy-logs:
+    presets: [small, filesystem-log-reader, daemonset]
+  alloy-singleton:
+    presets: [small, singleton]
+
+telemetryServices:
+  kube-state-metrics:
+    deploy: true
+  node-exporter:
+    deploy: true
