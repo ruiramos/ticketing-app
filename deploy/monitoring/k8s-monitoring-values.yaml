@@ -114,6 +114,17 @@ annotationAutodiscovery:
       action        = "drop"
     }
 
+# Alloy's own health metrics. The Grafana Cloud Kubernetes app uses these to
+# show the collectors as online (without them it reports "Alloy offline" even
+# though data is flowing). Default allow-list, ~100 series per collector.
+integrations:
+  collector: alloy-metrics
+  alloy:
+    instances:
+      - name: alloy
+        labelSelectors:
+          app.kubernetes.io/name: [alloy-metrics, alloy-logs, alloy-singleton]
+
 # ---------------------------------------------------------------------------
 # Collectors (Grafana Alloy instances) — sized for a small cluster.
 # Roughly 3 × (100m CPU / 128Mi) requested in total, plus the operator.
