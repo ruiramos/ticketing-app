@@ -969,7 +969,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container=\"ticketing-app\"}[5m]))",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container=\"ticketing\"}[5m]))",
           "legendFormat": "{{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -978,7 +978,7 @@
         },
         {
           "refId": "B",
-          "expr": "max(kube_pod_container_resource_limits{namespace=\"$namespace\", container=\"ticketing-app\", resource=\"cpu\"})",
+          "expr": "max(kube_pod_container_resource_limits{namespace=\"$namespace\", container=\"ticketing\", resource=\"cpu\"})",
           "legendFormat": "limit",
           "datasource": {
             "type": "prometheus",
@@ -1030,7 +1030,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"$namespace\", container=\"ticketing-app\"})",
+          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"$namespace\", container=\"ticketing\"})",
           "legendFormat": "{{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -1039,7 +1039,7 @@
         },
         {
           "refId": "B",
-          "expr": "max(kube_pod_container_resource_limits{namespace=\"$namespace\", container=\"ticketing-app\", resource=\"memory\"})",
+          "expr": "max(kube_pod_container_resource_limits{namespace=\"$namespace\", container=\"ticketing\", resource=\"memory\"})",
           "legendFormat": "limit",
           "datasource": {
             "type": "prometheus",
@@ -1091,7 +1091,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\", container=\"ticketing-app\"}[10m]))",
+          "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\", container=\"ticketing\"}[10m]))",
           "legendFormat": "{{pod}}",
           "datasource": {
             "type": "prometheus",
@@ -1187,7 +1187,7 @@
     {
       "type": "timeseries",
       "title": "expire-reserved: minutes since last success",
-      "description": "Should stay near 1. Alert fires above 15.",
+      "description": "Runs every 4 minutes, so this should stay under 4. Alert fires above 15.",
       "datasource": {
         "type": "prometheus",
         "uid": "${prom}"
@@ -1195,7 +1195,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - max(kube_cronjob_status_last_successful_time{namespace=\"$namespace\", cronjob=\"expire-reserved\"})) / 60",
+          "expr": "(time() - max(kube_cronjob_status_last_successful_time{namespace=\"$namespace\", cronjob=\"ticketing-expire\"})) / 60",
           "legendFormat": "minutes",
           "datasource": {
             "type": "prometheus",

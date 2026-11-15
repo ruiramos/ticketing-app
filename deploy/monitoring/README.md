@@ -15,8 +15,7 @@ Everything goes to a **Grafana Cloud free** stack:
 Files in this folder:
 
 - `k8s-monitoring-values.yaml`: Helm values for the cluster agent.
-- `traefik-metrics.yaml`: turns on Traefik metrics scraping.
-- `app-manifests.example.yaml`: annotations, port and probes to merge into the app's Deployment and CronJob.
+- `patches/`: changes for `deployment/ticketing-deployment` and `cronjob/ticketing-expire` (scrape annotations, metrics port, probes, memory limit, job settings).
 - `alerts.md`: the alert rules, with queries.
 - `grafana-dashboard.json`: dashboard to import.
 
@@ -46,8 +45,7 @@ Expect around 30–45 minutes for the whole setup.
 3. Create the namespace and secret (the token never goes into git):
 
 ```bash
-kubectl create namespace monitoring
-
+# the `monitoring` namespace already exists on this cluster (now empty)
 kubectl -n monitoring create secret generic grafana-cloud \
   --from-literal=prom-username='<PROMETHEUS_INSTANCE_ID>' \
   --from-literal=loki-username='<LOKI_USER>' \
@@ -93,57 +91,43 @@ A `401` means the username, URL or token in the secret don't match.
 
 ## 4. Traefik request metrics
 
-Check how Traefik was installed:
+Nothing to do on this cluster. Traefik (v2, installed by Civo as a DaemonSet)
+already serves metrics on port 9100 and carries `prometheus.io/*` pod
+annotations. The values file tells Alloy to discover pods by those
+annotations, and keeps only request counts for every site plus latency for
+`default-ticketing-service-3000@kubernetes`.
 
-```bash
-kubectl -n kube-system get helmchart traefik
-```
-
-**If that returns a resource** (standard k3s/Civo setup):
-
-```bash
-kubectl apply -f deploy/monitoring/traefik-metrics.yaml
-# k3s redeploys Traefik with the extra values; takes ~30s
-kubectl -n kube-system rollout status deploy/traefik
-```
-
-**Traefik installed some other way:** add these annotations to the Traefik
-pod template using whatever installed it (Helm values `deployment.podAnnotations`):
-
-```yaml
-k8s.grafana.com/scrape: "true"
-k8s.grafana.com/job: traefik
-k8s.grafana.com/metrics.portNumber: "9100"
-```
-
-**Check it's working.** Confirm Traefik serves metrics on 9100:
-
-```bash
-kubectl -n kube-system port-forward deploy/traefik 9100:9100 &
-curl -s localhost:9100/metrics | grep -m3 traefik_service_requests_total
-kill %1
-```
-
-If port 9100 has nothing, find the metrics port with
-`kubectl -n kube-system get deploy traefik -o yaml | grep -B2 -A2 metrics`
-and change `metrics.portNumber` to match.
-Then in Explore: `sum by (service, code) (rate(traefik_service_requests_total[5m]))`.
+**Check it's working** in Explore:
+`sum by (service, code) (rate(traefik_service_requests_total[5m]))`
 
 ## 5. Deploy the app changes
 
-1. Merge the fields marked `# <-- monitoring` from `app-manifests.example.yaml`
-   into your Deployment and CronJob:
-   - pod annotations (scraping + log `job` label)
-   - container port 9464 (**don't** add it to the Service or Ingress)
-   - liveness and readiness probes on `/api/health`
-   - a memory limit, if there isn't one
-   - on the CronJob: `concurrencyPolicy: Forbid`, `backoffLimit: 0`, `activeDeadlineSeconds`
-2. Deploy the new image built from this branch.
+1. Merge this branch to `main`. CI builds
+   `europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:<short-sha>`.
+2. Roll out the new image to both workloads:
+
+```bash
+TAG=<short-sha>
+IMG=europe-west2-docker.pkg.dev/vernal-mantra-665/eu/ticketing-app:$TAG
+kubectl -n default set image deployment/ticketing-deployment ticketing=$IMG
+kubectl -n default rollout status deployment/ticketing-deployment
+kubectl -n default set image cronjob/ticketing-expire ticketing-app=$IMG
+```
+
+3. Apply the monitoring patches (needs the new image: it adds the metrics port
+   and switches probes to `/api/health`):
+
+```bash
+kubectl -n default patch deployment ticketing-deployment \
+  --patch-file deploy/monitoring/patches/ticketing-deployment.yaml
+kubectl -n default patch cronjob ticketing-expire \
+  --patch-file deploy/monitoring/patches/ticketing-expire.yaml
+```
 
 **Check it's working**
 
 ```bash
-kubectl -n <NAMESPACE> port-forward deploy/ticketing-app 9464:9464 &
+kubectl -n default port-forward deploy/ticketing-deployment 9464:9464 &
 curl -s localhost:9464/metrics | grep ^ticketing_
 kill %1
 ```
@@ -156,7 +140,7 @@ Counters show up after the first request that touches them. In Explore:
 ## 6. Import the dashboard
 
 Grafana → **Dashboards → New → Import** → upload `grafana-dashboard.json`.
-Select the namespace at the top. The dashboard picks the
+Select namespace `default` at the top. The dashboard picks the
 `grafanacloud-…-prom` and `grafanacloud-…-logs` data sources automatically.
 
 ## 7. Alerts
@@ -173,8 +157,10 @@ Select the namespace at the top. The dashboard picks the
   with **Continue matching** on, so critical alerts go to both.
 - Repeat interval: 4h.
 
-**Rules:** create the 13 rules in `alerts.md`. Then test one: delete an app
-pod (`kubectl delete pod …`). Alert #3 should reach Slack within about 2 minutes.
+**Rules:** create the 13 rules in `alerts.md`. Then test one: delete the app
+pod (`kubectl -n default delete pod -l app=ticketing`). Alert #3 should reach
+Slack within about 2 minutes. (Expect a few seconds of downtime: there's one
+replica.)
 
 ## 8. Staying inside the free tier
 

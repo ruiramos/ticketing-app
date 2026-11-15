@@ -66,18 +66,53 @@ clusterEvents:
   collector: alloy-singleton
 
 # stdout/stderr of every pod → Loki.
-# The app sets the `k8s.grafana.com/logs.job` pod annotation so its logs get a
-# stable `job` label (see app-manifests.example.yaml).
+# The ticketing pods set the `k8s.grafana.com/logs.job` annotation so their
+# logs get a stable `job` label (see ticketing-patches.yaml).
 podLogsViaLoki:
   enabled: true
   collector: alloy-logs
 
-# Scrapes any pod annotated with k8s.grafana.com/scrape: "true". Used for the
-# app's metrics port (9464) and for Traefik's metrics (traefik-metrics.yaml).
-# Opt-in by annotation keeps the series count predictable.
+# Scrapes pods annotated with prometheus.io/scrape: "true". On this cluster that
+# is Traefik (annotated by Civo's install) and the ticketing app (port 9464).
+# Services are not discovered, so kube-dns etc. aren't scraped.
 annotationAutodiscovery:
   enabled: true
   collector: alloy-metrics
+  annotations:
+    scrape: prometheus.io/scrape
+    metricsPath: prometheus.io/path
+    metricsPortNumber: prometheus.io/port
+    metricsScheme: prometheus.io/scheme
+  services:
+    enabled: false
+  # Traefik exposes ~1.6k series per pod across every site on the cluster.
+  # Keep request counts by status code for all sites; drop the rest.
+  metricsTuning:
+    excludeMetrics:
+      - traefik_entrypoint_.*
+      - traefik_service_(requests|responses)_bytes_total
+      - traefik_service_open_connections
+      - traefik_config_.*
+      - traefik_tls_.*
+  # ...and keep latency histograms only for the ticketing app's service.
+  extraMetricProcessingRules: |
+    rule {
+      source_labels = ["__name__"]
+      regex         = "traefik_service_request_duration_seconds_(bucket|sum|count)"
+      target_label  = "__tmp_drop"
+      replacement   = "1"
+    }
+    rule {
+      source_labels = ["service"]
+      regex         = ".*ticketing.*"
+      target_label  = "__tmp_drop"
+      replacement   = ""
+    }
+    rule {
+      source_labels = ["__tmp_drop"]
+      regex         = "1"
+      action        = "drop"
+    }
 
 # ---------------------------------------------------------------------------
 # Collectors (Grafana Alloy instances) — sized for a small cluster.

@@ -1,0 +1,48 @@
+# Strategic-merge patch for deployment/ticketing-deployment (namespace default).
+# Apply AFTER the image built from this code is deployed (it adds the metrics
+# port and the /api/health probes, which older images don't have):
+#
+#   kubectl -n default patch deployment ticketing-deployment \
+#     --patch-file deploy/monitoring/patches/ticketing-deployment.yaml
+spec:
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"        # Alloy scrapes this pod...
+        prometheus.io/port: "9464"          # ...on the app's metrics port
+        prometheus.io/path: /metrics
+        k8s.grafana.com/job: ticketing-app        # metrics `job` label
+        k8s.grafana.com/logs.job: ticketing-app   # logs `job` label
+    spec:
+      containers:
+        - name: ticketing
+          ports:
+            - name: metrics                 # not added to the Service, so never public
+              containerPort: 9464
+              protocol: TCP
+          # Single replica: neither probe checks the DB, so a DB blip doesn't
+          # restart the pod or take the whole site out of rotation. The
+          # external uptime check covers the DB via /api/health?db=1.
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 4
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # Uses ~230Mi today. The limit makes runaway memory an OOMKill
+          # alert instead of starving the other apps on the node.
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi

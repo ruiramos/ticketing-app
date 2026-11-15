@@ -5,9 +5,10 @@ For each one, pick the data source shown, paste the query, and set the condition
 and pending period from the table. Put them all in one folder (e.g. `ticketing`)
 and one evaluation group that runs **every 1m**.
 
-Replace `<NAMESPACE>` with the namespace the app runs in. The queries assume
-the Deployment's container is called `ticketing-app` and the CronJob is
-`expire-reserved`, as in `app-manifests.example.yaml`.
+The queries use this cluster's names: namespace `default`, Deployment
+`ticketing-deployment`, container `ticketing`, CronJob `ticketing-expire`.
+Other apps share the `default` namespace, so rule #3 is scoped to the
+ticketing pods with `pod=~"ticketing-.*"`.
 
 Contact point and notification policy setup is in the README (step 7).
 
@@ -39,7 +40,7 @@ OK** on every rule except #11 (see its note).
 ## 1. Site down
 
 Not a rule: create a **Synthetic Monitoring → HTTP check** on
-`https://<your-domain>/api/health?db=1` from 3 probe locations (e.g. London,
+`https://ticketing.ruiramos.com/api/health?db=1` from 3 probe locations (e.g. London,
 Frankfurt, Paris) **every 2m**, and turn on the check's alerting. It tests the
 whole path: DNS, TLS, Traefik, the app and its database.
 
@@ -50,7 +51,7 @@ locations would go over it.
 ## 2. App has no ready pods
 
 ```promql
-sum(kube_deployment_status_replicas_available{namespace="<NAMESPACE>", deployment="ticketing-app"})
+sum(kube_deployment_status_replicas_available{namespace="default", deployment="ticketing-deployment"})
 ```
 Condition: `< 1`, pending 2m.
 
@@ -58,15 +59,15 @@ Condition: `< 1`, pending 2m.
 
 ```promql
 sum by (pod, container) (
-  increase(kube_pod_container_status_restarts_total{namespace="<NAMESPACE>"}[10m])
+  increase(kube_pod_container_status_restarts_total{namespace="default", pod=~"ticketing-.*"}[10m])
 )
 ```
-Condition: `> 0`. Covers both the app and the CronJob pods. Add this to the
+Condition: `> 0`. Covers both the app and the CronJob pods (`ticketing-deployment-…` and `ticketing-expire-…`). Add this to the
 rule's description so the notification says *why*:
 
 ```promql
 max by (pod, container, reason) (
-  kube_pod_container_status_last_terminated_reason{namespace="<NAMESPACE>"}
+  kube_pod_container_status_last_terminated_reason{namespace="default", pod=~"ticketing-.*"}
 )
 ```
 (`reason="OOMKilled"` means it hit its memory limit; `Error` means it crashed.)
@@ -74,9 +75,9 @@ max by (pod, container, reason) (
 ## 4. Memory near limit
 
 ```promql
-max by (pod) (container_memory_working_set_bytes{namespace="<NAMESPACE>", container="ticketing-app"})
+max by (pod) (container_memory_working_set_bytes{namespace="default", container="ticketing"})
 /
-max by (pod) (kube_pod_container_resource_limits{namespace="<NAMESPACE>", container="ticketing-app", resource="memory"})
+max by (pod) (kube_pod_container_resource_limits{namespace="default", container="ticketing", resource="memory"})
 ```
 Condition: `> 0.9`, pending 10m. Only works once the pod has a memory limit.
 
@@ -87,15 +88,14 @@ sum(rate(traefik_service_requests_total{service=~".*ticketing.*", code=~"5.."}[5
 /
 sum(rate(traefik_service_requests_total{service=~".*ticketing.*"}[5m]))
 ```
-Condition: `> 0.05`, pending 5m. Check the exact `service` label value in
-Explore first (`traefik_service_requests_total`) and tighten the regex if other
-services match.
+Condition: `> 0.05`, pending 5m. On this cluster the app's Traefik service
+label is `default-ticketing-service-3000@kubernetes`.
 
 ## 6. Server errors in API
 
 ```promql
 sum by (procedure) (
-  increase(ticketing_trpc_requests_total{namespace="<NAMESPACE>", code="INTERNAL_SERVER_ERROR"}[5m])
+  increase(ticketing_trpc_requests_total{namespace="default", code="INTERNAL_SERVER_ERROR"}[5m])
 )
 ```
 Condition: `> 0`. This catches errors inside batched tRPC requests, which the
@@ -106,7 +106,7 @@ ingress sees as HTTP 207 or 200. Details are in the logs:
 
 ```promql
 sum by (stage) (
-  increase(ticketing_order_capture_failures_total{namespace="<NAMESPACE>", stage=~"payment|post_capture"}[15m])
+  increase(ticketing_order_capture_failures_total{namespace="default", stage=~"payment|post_capture"}[15m])
 )
 ```
 Condition: `> 0`.
@@ -117,7 +117,7 @@ Condition: `> 0`.
 
 ```promql
 sum by (operation) (
-  increase(ticketing_paypal_requests_total{namespace="<NAMESPACE>", outcome="error"}[10m])
+  increase(ticketing_paypal_requests_total{namespace="default", outcome="error"}[10m])
 )
 ```
 Condition: `> 2`. A sustained run of these usually means PayPal is down or
@@ -126,7 +126,7 @@ credentials changed.
 ## 9. Paid after reservation expired
 
 ```promql
-sum(increase(ticketing_order_capture_failures_total{namespace="<NAMESPACE>", stage="confirm"}[1h]))
+sum(increase(ticketing_order_capture_failures_total{namespace="default", stage="confirm"}[1h]))
 ```
 Condition: `> 2`. Customers finished PayPal checkout after their 5-minute hold
 had expired. A few are normal; a cluster of them means the hold is too short
@@ -135,16 +135,16 @@ or PayPal is slow.
 ## 10. Confirmation emails failing
 
 ```promql
-sum(increase(ticketing_emails_total{namespace="<NAMESPACE>", outcome="failed"}[30m]))
+sum(increase(ticketing_emails_total{namespace="default", outcome="failed"}[30m]))
 ```
 Condition: `> 0`.
 
 ## 11. Expiry job not running
 
 ```promql
-time() - max(kube_cronjob_status_last_successful_time{namespace="<NAMESPACE>", cronjob="expire-reserved"})
+time() - max(kube_cronjob_status_last_successful_time{namespace="default", cronjob="ticketing-expire"})
 ```
-Condition: `> 900` (15 minutes). Set **Alert state if no data → Alerting** for
+Condition: `> 900` (15 minutes; the job runs every 4). Set **Alert state if no data → Alerting** for
 this one: no data means the CronJob is gone or the metric stopped arriving,
 and either way reserved tickets aren't being released.
 
@@ -152,7 +152,7 @@ and either way reserved tickets aren't being released.
 
 Data source: Loki.
 ```logql
-sum(count_over_time({namespace="<NAMESPACE>", job="ticketing-expire-reserved"} | json | level="error" [10m]))
+sum(count_over_time({namespace="default", job="ticketing-expire-reserved"} | json | level="error" [10m]))
 ```
 Condition: `> 0`. Covers a crash of the whole run and individual orders that
 failed to expire (the run's summary line has `failed > 0`).
@@ -161,7 +161,7 @@ failed to expire (the run's summary line has `failed > 0`).
 
 Data source: Loki.
 ```logql
-sum(count_over_time({namespace="<NAMESPACE>", job="ticketing-app"} | json | level="error" [5m]))
+sum(count_over_time({namespace="default", job="ticketing-app"} | json | level="error" [5m]))
 ```
 Condition: `> 10`. A catch-all for errors none of the metric-based alerts cover.
 
