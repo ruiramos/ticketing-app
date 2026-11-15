@@ -1,0 +1,13 @@
+# Strategic-merge patch for cronjob/ticketing-expire (namespace default).
+#
+#   kubectl -n default patch cronjob ticketing-expire \
+#     --patch-file deploy/monitoring/patches/ticketing-expire.yaml
+spec:
+  jobTemplate:
+    spec:
+      backoffLimit: 0              # the next run (4 min later) is the retry
+      activeDeadlineSeconds: 120   # a hung run fails instead of blocking the schedule
+      template:
+        metadata:
+          annotations:
+            k8s.grafana.com/logs.job: ticketing-expire-reserved   # logs `job` label

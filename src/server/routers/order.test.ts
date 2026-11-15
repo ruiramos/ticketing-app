@@ -15,6 +15,7 @@ import { createContextInner } from '../context';
 import { createCaller } from './_app';
 import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
+import { metrics } from '../metrics';
 import {
   vi,
   beforeEach,
@@ -491,5 +492,105 @@ describe('order business logic', () => {
         extras: null,
       }),
     ).rejects.toThrow('The selected option is out of stock');
+  });
+});
+
+describe('order metrics', () => {
+  async function counterValue(
+    name: string,
+    labels: Record<string, string> = {},
+  ): Promise<number> {
+    const metric = await metrics.registry.getSingleMetric(name)?.get();
+    const match = metric?.values.find((v) =>
+      Object.entries(labels).every(([k, val]) => v.labels[k] === val),
+    );
+    return match?.value ?? 0;
+  }
+
+  async function createEventWithStock(stock: number) {
+    const organization = await prisma.organization.create({
+      data: { name: 'Metrics Org', email: 'metrics@test.com' },
+    });
+    const event = await prisma.event.create({
+      data: {
+        title: 'Metrics Event',
+        text: 'Description',
+        organizationId: organization.id,
+        variants: {
+          create: {
+            title: 'Standard',
+            price: 10,
+            currency: 'GBP',
+            stock,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+    return { event, variant: event.variants[0] };
+  }
+
+  test('counts successful reservations and tRPC calls', async () => {
+    const { event, variant } = await createEventWithStock(10);
+    const caller = createCaller(await createContextInner({ session: null }));
+
+    const reservedBefore = await counterValue(
+      'ticketing_orders_reserved_total',
+    );
+    const okBefore = await counterValue('ticketing_trpc_requests_total', {
+      procedure: 'order.createOrder',
+      code: 'OK',
+    });
+
+    await caller.order.createOrder({
+      id: event.id,
+      variantId: variant.id,
+      quantity: 1,
+    });
+
+    expect(await counterValue('ticketing_orders_reserved_total')).toBe(
+      reservedBefore + 1,
+    );
+    expect(
+      await counterValue('ticketing_trpc_requests_total', {
+        procedure: 'order.createOrder',
+        code: 'OK',
+      }),
+    ).toBe(okBefore + 1);
+  });
+
+  test('counts out-of-stock failures with their tRPC error code', async () => {
+    const { event, variant } = await createEventWithStock(0);
+    const caller = createCaller(await createContextInner({ session: null }));
+
+    const failedBefore = await counterValue(
+      'ticketing_order_reservation_failures_total',
+      { reason: 'out_of_stock' },
+    );
+    const errorsBefore = await counterValue('ticketing_trpc_requests_total', {
+      procedure: 'order.createOrder',
+      code: 'UNPROCESSABLE_CONTENT',
+    });
+
+    await expect(
+      caller.order.createOrder({
+        id: event.id,
+        variantId: variant.id,
+        quantity: 1,
+      }),
+    ).rejects.toThrow();
+
+    expect(
+      await counterValue('ticketing_order_reservation_failures_total', {
+        reason: 'out_of_stock',
+      }),
+    ).toBe(failedBefore + 1);
+    expect(
+      await counterValue('ticketing_trpc_requests_total', {
+        procedure: 'order.createOrder',
+        code: 'UNPROCESSABLE_CONTENT',
+      }),
+    ).toBe(errorsBefore + 1);
   });
 });

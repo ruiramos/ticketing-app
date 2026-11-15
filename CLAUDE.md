@@ -94,6 +94,13 @@ PayPal integration for order processing. Orders have statuses: RESERVED ’ CONFIR
 - Stock management is handled automatically during order processing
 - Email functionality uses SendGrid (mocked in tests)
 
+## Observability
+
+- Server-side code logs with `logger` from `src/server/logger.ts` (pino, JSON to stdout), not `console.*`. Pass context as an object first: `logger.error({ err, orderId }, 'message')`.
+- Business and API metrics live in `src/server/metrics.ts` and are served on `METRICS_PORT` (9464) by `src/instrumentation.ts`. Keep metric labels low-cardinality (never ids or emails).
+- Every tRPC procedure is counted automatically by the middleware in `src/server/trpc.ts`; build new procedures from `publicProcedure`/`authedProcedure`, not `t.procedure`.
+- Cluster monitoring setup (Grafana Cloud), alerts and dashboard: `deploy/monitoring/`.
+
 ## Environment Setup
 
 Requires `.env` for development and `.env.test` for testing. Key variables include:

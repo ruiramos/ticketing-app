@@ -3,6 +3,7 @@ import formidable from 'formidable';
 import fs from 'fs/promises';
 import path from 'path';
 import { Storage } from '@google-cloud/storage';
+import { logger } from '~/server/logger';
 
 export const config = {
   api: {
@@ -62,7 +63,7 @@ export default async function handler(
     try {
       await fs.unlink(file.filepath);
     } catch (e) {
-      console.error('Error unlinking file', e);
+      logger.warn({ err: e }, 'upload: error unlinking temp file');
     }
 
     // Construct public URL
@@ -70,7 +71,7 @@ export default async function handler(
 
     return res.status(200).json({ url: publicUrl });
   } catch (error) {
-    console.error('Upload error:', error);
+    logger.error({ err: error }, 'upload: image upload failed');
     return res.status(500).json({ error: 'Upload failed' });
   }
 }

@@ -14,6 +14,8 @@ import { TRPCError } from '@trpc/server';
 import { Order, Prisma } from '~/generated/prisma/client';
 import { env } from '../env';
 import { generateMailContent, sendEmail } from '~/utils/email';
+import { logger } from '../logger';
+import { metrics, trackPaypal } from '../metrics';
 
 const client = new Client({
   clientCredentialsAuthCredentials: {
@@ -158,7 +160,17 @@ export const orderRouter = router({
         ]);
       } catch (error) {
         // couldnt update variant - is stock already 0?
-        console.error(error);
+        metrics.orderReservationFailures.inc({ reason: 'out_of_stock' });
+        logger.warn(
+          {
+            err: error,
+            eventId: variant.event.id,
+            variantId: variant.id,
+            quantity: input.quantity,
+            stock: variant.stock,
+          },
+          'order reservation failed: not enough stock',
+        );
         throw new TRPCError({
           code: 'UNPROCESSABLE_CONTENT',
           message: !variant?.stock
@@ -174,38 +186,63 @@ export const orderRouter = router({
         });
       }
 
-      const { result: paypalOrder } = await ordersController.createOrder({
-        body: {
-          intent: 'CAPTURE' as CheckoutPaymentIntent,
-          paymentSource: {
-            paypal: {
-              experienceContext: {
-                shippingPreference:
-                  PaypalWalletContextShippingPreference.NoShipping,
-                userAction: PaypalExperienceUserAction.PayNow,
-                locale: 'en-GB',
-              },
-            },
-          },
-          purchaseUnits: [
-            {
-              items: items,
-              amount: {
-                currencyCode: 'GBP',
-                value: amount.toFixed(2),
-                breakdown: {
-                  itemTotal: {
-                    currencyCode: 'GBP',
-                    value: amount.toFixed(2),
+      metrics.ordersReserved.inc();
+      logger.info(
+        {
+          orderId: ourOrder.id,
+          eventId: variant.event.id,
+          variantId: variant.id,
+          quantity: input.quantity,
+          amount,
+        },
+        'order reserved',
+      );
+
+      let paypalOrder;
+      try {
+        ({ result: paypalOrder } = await trackPaypal('createOrder', () =>
+          ordersController.createOrder({
+            body: {
+              intent: 'CAPTURE' as CheckoutPaymentIntent,
+              paymentSource: {
+                paypal: {
+                  experienceContext: {
+                    shippingPreference:
+                      PaypalWalletContextShippingPreference.NoShipping,
+                    userAction: PaypalExperienceUserAction.PayNow,
+                    locale: 'en-GB',
                   },
                 },
               },
-              referenceId: ourOrder.id,
-              description: `${variant.event.title} - ${variant.title} x ${input.quantity}`,
+              purchaseUnits: [
+                {
+                  items: items,
+                  amount: {
+                    currencyCode: 'GBP',
+                    value: amount.toFixed(2),
+                    breakdown: {
+                      itemTotal: {
+                        currencyCode: 'GBP',
+                        value: amount.toFixed(2),
+                      },
+                    },
+                  },
+                  referenceId: ourOrder.id,
+                  description: `${variant.event.title} - ${variant.title} x ${input.quantity}`,
+                },
+              ],
             },
-          ],
-        },
-      });
+          }),
+        ));
+      } catch (error) {
+        // the reservation stays RESERVED and is released by the expiry job
+        metrics.orderReservationFailures.inc({ reason: 'paypal_error' });
+        logger.error(
+          { err: error, orderId: ourOrder.id, eventId: variant.event.id },
+          'PayPal createOrder failed',
+        );
+        throw error;
+      }
 
       await prisma.order.update({
         where: {
@@ -229,9 +266,11 @@ export const orderRouter = router({
 
       // locks our order to confirmed so it doesnt expire and the tickets dont get relased
       try {
-        ({ result: order } = await ordersController.getOrder({
-          id: input.id,
-        }));
+        ({ result: order } = await trackPaypal('getOrder', () =>
+          ordersController.getOrder({
+            id: input.id,
+          }),
+        ));
 
         ourOrderId = order.purchaseUnits?.[0].referenceId;
 
@@ -251,50 +290,66 @@ export const orderRouter = router({
           },
         });
       } catch (error) {
-        console.warn(
-          `Error during capure: could not confirm our order. Error: ${(error as any).message}`,
+        metrics.orderCaptureFailures.inc({ stage: 'confirm' });
+        logger.warn(
+          { err: error, paypalOrderId: input.id, orderId: ourOrderId },
+          'capture: could not confirm our order (reservation missing or expired)',
         );
         throw new Error('Could not confirm order - order might have expired.');
       }
 
       // tries to capture payment
       try {
-        ({ result: capturedOrder } = await ordersController.captureOrder({
-          id: input.id,
-        }));
+        ({ result: capturedOrder } = await trackPaypal('captureOrder', () =>
+          ordersController.captureOrder({
+            id: input.id,
+          }),
+        ));
       } catch (error: any) {
         // if capture fails, release tickets and cancel order
-        console.error(error);
+        metrics.orderCaptureFailures.inc({ stage: 'payment' });
+        logger.error(
+          { err: error, paypalOrderId: input.id, orderId: ourOrderId },
+          'capture: PayPal payment capture failed, cancelling order',
+        );
 
-        prisma.$transaction(async (tx) => {
-          const ourOrder = await tx.order.findUnique({
-            where: { id: ourOrderId },
-          });
+        prisma
+          .$transaction(async (tx) => {
+            const ourOrder = await tx.order.findUnique({
+              where: { id: ourOrderId },
+            });
 
-          const variantId = ourOrder?.variantId;
-          const quantity = ourOrder?.quantity;
+            const variantId = ourOrder?.variantId;
+            const quantity = ourOrder?.quantity;
 
-          await tx.variant.update({
-            where: {
-              id: variantId,
-            },
-            data: {
-              stock: {
-                increment: quantity,
+            await tx.variant.update({
+              where: {
+                id: variantId,
               },
-            },
-          });
+              data: {
+                stock: {
+                  increment: quantity,
+                },
+              },
+            });
 
-          await tx.order.update({
-            where: {
-              id: ourOrderId,
-            },
-            data: {
-              status: 'CANCELLED',
-              error: error.result,
-            },
+            await tx.order.update({
+              where: {
+                id: ourOrderId,
+              },
+              data: {
+                status: 'CANCELLED',
+                error: error.result,
+              },
+            });
+          })
+          .catch((cancelError) => {
+            // tickets are still held by a CONFIRMED order that was never paid
+            logger.error(
+              { err: cancelError, orderId: ourOrderId },
+              'capture: failed to cancel order and release stock after failed payment',
+            );
           });
-        });
 
         if (error.body) {
           const jsonErrorBody = JSON.parse(error.body);
@@ -319,8 +374,10 @@ export const orderRouter = router({
           },
         });
       } catch (e) {
-        console.error(
-          `Could not update customer and transaction details on order: ${(e as any).message}`,
+        metrics.orderCaptureFailures.inc({ stage: 'post_capture' });
+        logger.error(
+          { err: e, paypalOrderId: input.id, orderId: ourOrderId },
+          'capture: payment taken but could not save customer and transaction details',
         );
       }
 
@@ -335,6 +392,21 @@ export const orderRouter = router({
         },
         where: { id: ourOrderId },
       });
+
+      metrics.ordersConfirmed.inc();
+      metrics.ticketsSold.inc(ourOrder.quantity);
+      metrics.revenue.inc({ currency: ourOrder.currency }, ourOrder.amount);
+      logger.info(
+        {
+          orderId: ourOrder.id,
+          eventId: ourOrder.eventId,
+          variantId: ourOrder.variantId,
+          quantity: ourOrder.quantity,
+          amount: ourOrder.amount,
+          currency: ourOrder.currency,
+        },
+        'order confirmed',
+      );
 
       // send email
       if (capturedOrder.payer?.emailAddress) {
@@ -390,6 +462,12 @@ export const orderRouter = router({
           },
         });
       });
+
+      metrics.ordersCancelled.inc();
+      logger.info(
+        { orderId: order.id, eventId: order.eventId, quantity: order.quantity },
+        'order cancelled by admin',
+      );
 
       return { success: true };
     }),

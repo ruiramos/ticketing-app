@@ -13,6 +13,8 @@ import { transformer } from '~/utils/transformer';
 import type { Context } from './context';
 import { z } from 'zod';
 import { prisma } from './prisma';
+import { logger } from './logger';
+import { metrics } from './metrics';
 
 const t = initTRPC.context<Context>().create({
   /**
@@ -34,24 +36,43 @@ const t = initTRPC.context<Context>().create({
 export const router = t.router;
 
 /**
+ * Counts every procedure call by outcome and times it. HTTP status codes alone
+ * miss errors here because tRPC batches calls (a batch with one failure is
+ * returned as 207), so this is the source of truth for API error rates.
+ */
+const observability = t.middleware(async ({ path, type, next }) => {
+  const endTimer = metrics.trpcDuration.startTimer({ procedure: path, type });
+  const result = await next();
+  endTimer();
+  metrics.trpcRequests.inc({
+    procedure: path,
+    type,
+    code: result.ok ? 'OK' : result.error.code,
+  });
+  return result;
+});
+
+/**
  * Create an unprotected procedure
  * @see https://trpc.io/docs/v11/procedures
  **/
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(observability);
 
-export const authedProcedure = t.procedure.use(async function isAuthed(opts) {
-  const { ctx } = opts;
+export const authedProcedure = publicProcedure.use(
+  async function isAuthed(opts) {
+    const { ctx } = opts;
 
-  if (!ctx?.session?.user) {
-    throw new TRPCError({ code: 'UNAUTHORIZED' });
-  }
+    if (!ctx?.session?.user) {
+      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    }
 
-  return opts.next({
-    ctx: {
-      user: ctx.session.user,
-    },
-  });
-});
+    return opts.next({
+      ctx: {
+        user: ctx.session.user,
+      },
+    });
+  },
+);
 
 export const authedProcedureWithEventId = authedProcedure
   .input(z.object({ eventId: z.string() }))
@@ -59,7 +80,7 @@ export const authedProcedureWithEventId = authedProcedure
     const { ctx } = opts;
 
     if (!ctx.user.email) {
-      console.error('Could not get email from user');
+      logger.error('Could not get email from user');
       throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
     }
 

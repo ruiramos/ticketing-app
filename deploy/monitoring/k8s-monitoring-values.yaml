@@ -1,0 +1,133 @@
+# Values for the grafana/k8s-monitoring Helm chart (written against chart v4.6).
+# Install instructions: deploy/monitoring/README.md
+#
+# Sends container metrics, cluster events, pod logs and the app's /metrics to
+# Grafana Cloud. Credentials are NOT in this file: they come from the
+# `grafana-cloud` Secret created in step 2 of the README.
+#
+# Replace every <PLACEHOLDER> before installing.
+---
+cluster:
+  # Shows up as the `cluster` label on everything. Pick any name.
+  name: civo-ticketing
+
+destinations:
+  grafana-cloud-metrics:
+    type: prometheus
+    # Grafana Cloud portal → your stack → Prometheus → "Details" → Remote Write Endpoint
+    # e.g. https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push
+    url: https://prometheus-prod-77-prod-us-east-6.grafana.net/api/prom/push
+    auth:
+      type: basic
+      usernameKey: prom-username
+      passwordKey: access-token
+    secret:
+      create: false
+      name: grafana-cloud
+      namespace: monitoring
+
+  grafana-cloud-logs:
+    type: loki
+    # Grafana Cloud portal → your stack → Loki → "Details" → URL + /loki/api/v1/push
+    # e.g. https://logs-prod-012.grafana.net/loki/api/v1/push
+    url: https://logs-prod-053-prod-us-east-6.grafana.net/loki/api/v1/push
+    auth:
+      type: basic
+      usernameKey: loki-username
+      passwordKey: access-token
+    secret:
+      create: false
+      name: grafana-cloud
+      namespace: monitoring
+
+# ---------------------------------------------------------------------------
+# Features
+# ---------------------------------------------------------------------------
+
+# CPU / memory / restarts / OOMKills / CronJob status (cAdvisor, kubelet,
+# kube-state-metrics). The chart's default allow-lists keep this to the series
+# the Grafana Cloud Kubernetes app needs, which matters on the 10k-series free tier.
+clusterMetrics:
+  enabled: true
+  collector: alloy-metrics
+
+# Node CPU / memory / disk, trimmed to what the Linux node integration uses.
+hostMetrics:
+  enabled: true
+  collector: alloy-metrics
+  linuxHosts:
+    enabled: true
+    metricsTuning:
+      useIntegrationAllowList: true
+
+# Kubernetes events (OOMKilled, BackOff, FailedScheduling, ...) as logs.
+clusterEvents:
+  enabled: true
+  collector: alloy-singleton
+
+# stdout/stderr of every pod → Loki.
+# The ticketing pods set the `k8s.grafana.com/logs.job` annotation so their
+# logs get a stable `job` label (see ticketing-patches.yaml).
+podLogsViaLoki:
+  enabled: true
+  collector: alloy-logs
+
+# Scrapes pods annotated with prometheus.io/scrape: "true". On this cluster that
+# is Traefik (annotated by Civo's install) and the ticketing app (port 9464).
+# Services are not discovered, so kube-dns etc. aren't scraped.
+annotationAutodiscovery:
+  enabled: true
+  collector: alloy-metrics
+  annotations:
+    scrape: prometheus.io/scrape
+    metricsPath: prometheus.io/path
+    metricsPortNumber: prometheus.io/port
+    metricsScheme: prometheus.io/scheme
+  services:
+    enabled: false
+  # Traefik exposes ~1.6k series per pod across every site on the cluster.
+  # Keep request counts by status code for all sites; drop the rest.
+  metricsTuning:
+    excludeMetrics:
+      - traefik_entrypoint_.*
+      - traefik_service_(requests|responses)_bytes_total
+      - traefik_service_open_connections
+      - traefik_config_.*
+      - traefik_tls_.*
+  # ...and keep latency histograms only for the ticketing app's service.
+  extraMetricProcessingRules: |
+    rule {
+      source_labels = ["__name__"]
+      regex         = "traefik_service_request_duration_seconds_(bucket|sum|count)"
+      target_label  = "__tmp_drop"
+      replacement   = "1"
+    }
+    rule {
+      source_labels = ["service"]
+      regex         = ".*ticketing.*"
+      target_label  = "__tmp_drop"
+      replacement   = ""
+    }
+    rule {
+      source_labels = ["__tmp_drop"]
+      regex         = "1"
+      action        = "drop"
+    }
+
+# ---------------------------------------------------------------------------
+# Collectors (Grafana Alloy instances) — sized for a small cluster.
+# Roughly 3 × (100m CPU / 128Mi) requested in total, plus the operator.
+# ---------------------------------------------------------------------------
+collectors:
+  alloy-metrics:
+    presets: [small, clustered, statefulset]
+  alloy-logs:
+    presets: [small, filesystem-log-reader, daemonset]
+  alloy-singleton:
+    presets: [small, singleton]
+
+telemetryServices:
+  kube-state-metrics:
+    deploy: true
+  node-exporter:
+    deploy: true
