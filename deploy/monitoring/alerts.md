@@ -192,9 +192,11 @@ The same script also creates folder/group `greatdj`:
 ```logql
 sum(count_over_time({namespace="default", job="greatdj"} |= "heap out of memory" [10m]))
 ```
-While diagnosing the leak, the server writes a heap snapshot to `/diag` when it
-nears the heap limit (see `infra/greatdj/greatdj_deployment.yml`). Copy it
-off before redeploying, since a new pod starts with an empty `/diag`.
+The heap is capped at 384MB (see `infra/greatdj/greatdj_deployment.yml`), so a
+runaway request restarts the server instead of eating the node's memory. The
+past cause was `/sitemap.xml` loading every full playlist (the whole 1.2GB
+collection), not a leak; that's fixed. If this fires, look at the requests
+just before the crash: `kubectl logs deploy/greatdj-deployment -c server --previous`.
 
 ---
 
