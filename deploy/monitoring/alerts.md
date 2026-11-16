@@ -181,6 +181,23 @@ Condition: `> 10`. A catch-all for errors none of the metric-based alerts cover.
 
 ---
 
+## Other apps on the cluster
+
+The same script also creates folder/group `greatdj`:
+
+| Alert | Severity | Source | Fires when |
+|---|---|---|---|
+| greatdj: server ran out of memory | warning | logs | a `heap out of memory` line in 10m |
+
+```logql
+sum(count_over_time({namespace="default", job="greatdj"} |= "heap out of memory" [10m]))
+```
+While diagnosing the leak, the server writes a heap snapshot to `/diag` when it
+nears the heap limit (see `infra/greatdj/greatdj_deployment.yml`). Copy it
+off before redeploying, since a new pod starts with an empty `/diag`.
+
+---
+
 ## Later, once you have a few weeks of data
 
 - **Checkout looks broken**: during an on-sale, many reservations but no

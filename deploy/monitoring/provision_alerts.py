@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Creates (or updates) the ticketing alert rules in Grafana Cloud in one go.
+Creates (or updates) the cluster's alert rules in Grafana Cloud in one go.
 
-Rules are Grafana-managed, live in folder "ticketing", evaluation group
-"ticketing" (every 1m), and route through your notification policies by their
-`severity` label. They are created with X-Disable-Provenance so they stay
+Rules are Grafana-managed. Each app gets its own folder and evaluation group
+(every 1m): "ticketing" and "greatdj". They route through your notification
+policies by their `severity` label. They are created with X-Disable-Provenance so they stay
 editable in the UI. Re-running updates the rules in place (stable UIDs).
 
 Usage:
@@ -22,8 +22,6 @@ import sys
 import urllib.error
 import urllib.request
 
-FOLDER_TITLE = "ticketing"
-GROUP = "ticketing"
 NS = "default"
 
 # (uid, title, datasource, query, op, threshold, for, severity, no_data, summary, description)
@@ -93,6 +91,22 @@ RULES = [
      "Logs: {job=\"ticketing-app\"} | json | level=\"error\""),
 ]
 
+GREATDJ_RULES = [
+    ("greatdj-heap-oom", "greatdj: server ran out of memory", "logs",
+     f'sum(count_over_time({{namespace="{NS}", job="greatdj"}} |= "heap out of memory" [10m]))',
+     "gt", 0, "0s", "warning", "OK",
+     "greatdj server hit its heap limit and restarted",
+     "Node wrote a heap snapshot to /diag in the pod (survives the container restart, "
+     "not pod deletion). Copy it before redeploying: "
+     "kubectl exec <pod> -c server -- ls /diag; kubectl cp <pod>:/diag/<file> -c server ./"),
+]
+
+# (folder/group title, app label, rules)
+GROUPS = [
+    ("ticketing", "ticketing", RULES),
+    ("greatdj", "greatdj", GREATDJ_RULES),
+]
+
 
 class Grafana:
     def __init__(self, url, token):
@@ -124,14 +138,14 @@ def pick_datasources(gf):
     return {"prom": prom[0], "logs": logs[0]}
 
 
-def ensure_folder(gf):
+def ensure_folder(gf, title):
     for f in gf.req("GET", "/api/folders?limit=1000"):
-        if f["title"] == FOLDER_TITLE:
+        if f["title"] == title:
             return f["uid"]
-    return gf.req("POST", "/api/folders", {"title": FOLDER_TITLE})["uid"]
+    return gf.req("POST", "/api/folders", {"title": title})["uid"]
 
 
-def build_rule(r, ds, folder_uid):
+def build_rule(r, ds, folder_uid, group, app):
     uid, title, src, expr, op, thr, for_, sev, nodata, summary, desc = r
     d = ds[src]
     window = 3600 if "[1h]" in expr else 900
@@ -144,12 +158,12 @@ def build_rule(r, ds, folder_uid):
         "uid": uid,
         "title": title,
         "folderUID": folder_uid,
-        "ruleGroup": GROUP,
+        "ruleGroup": group,
         "condition": "C",
         "for": for_,
         "noDataState": nodata,
         "execErrState": "Error",
-        "labels": {"severity": sev, "app": "ticketing"},
+        "labels": {"severity": sev, "app": app},
         "annotations": {"summary": summary, "description": desc},
         "data": [
             {"refId": "A", "datasourceUid": d["uid"],
@@ -173,24 +187,26 @@ def main():
 
     if a.dry_run:
         fake = {"prom": {"uid": "PROM_UID", "name": "x-prom"}, "logs": {"uid": "LOGS_UID", "name": "x-logs"}}
-        body = {"title": GROUP, "interval": 60, "rules": [build_rule(r, fake, "FOLDER_UID") for r in RULES]}
-        print(json.dumps(body, indent=2))
+        for group, app, rules in GROUPS:
+            body = {"title": group, "interval": 60,
+                    "rules": [build_rule(r, fake, "FOLDER_UID", group, app) for r in rules]}
+            print(json.dumps(body, indent=2))
         return
 
     token = open(os.path.expanduser(a.token_file)).read().strip()
     gf = Grafana(a.url, token)
     ds = pick_datasources(gf)
     print(f"data sources: {ds['prom']['name']}, {ds['logs']['name']}")
-    folder = ensure_folder(gf)
-    print(f"folder: {FOLDER_TITLE} ({folder})")
-    body = {"title": GROUP, "interval": 60,
-            "rules": [build_rule(r, ds, folder) for r in RULES]}
-    gf.req("PUT", f"/api/v1/provisioning/folder/{folder}/rule-groups/{GROUP}", body,
-           headers={"X-Disable-Provenance": "true"})
-    got = gf.req("GET", f"/api/v1/provisioning/folder/{folder}/rule-groups/{GROUP}")
-    print(f"rule group '{GROUP}' now has {len(got.get('rules', []))} rules:")
-    for r in got.get("rules", []):
-        print(f"  - [{r['labels'].get('severity')}] {r['title']}")
+    for group, app, rules in GROUPS:
+        folder = ensure_folder(gf, group)
+        body = {"title": group, "interval": 60,
+                "rules": [build_rule(r, ds, folder, group, app) for r in rules]}
+        gf.req("PUT", f"/api/v1/provisioning/folder/{folder}/rule-groups/{group}", body,
+               headers={"X-Disable-Provenance": "true"})
+        got = gf.req("GET", f"/api/v1/provisioning/folder/{folder}/rule-groups/{group}")
+        print(f"folder/group '{group}' ({folder}) now has {len(got.get('rules', []))} rules:")
+        for r in got.get("rules", []):
+            print(f"  - [{r['labels'].get('severity')}] {r['title']}")
 
 
 if __name__ == "__main__":
