@@ -96,9 +96,10 @@ GREATDJ_RULES = [
      f'sum(count_over_time({{namespace="{NS}", job="greatdj"}} |= "heap out of memory" [10m]))',
      "gt", 0, "0s", "warning", "OK",
      "greatdj server hit its heap limit and restarted",
-     "Node wrote a heap snapshot to /diag in the pod (survives the container restart, "
-     "not pod deletion). Copy it before redeploying: "
-     "kubectl exec <pod> -c server -- ls /diag; kubectl cp <pod>:/diag/<file> -c server ./"),
+     "Something loaded far too much into memory in one go. The past cause was "
+     "/sitemap.xml loading every full playlist (fixed: it projects ids only). Look at "
+     "the requests just before the crash: kubectl logs deploy/greatdj-deployment "
+     "-c server --previous | tail -50"),
 ]
 
 # (folder/group title, app label, rules)
