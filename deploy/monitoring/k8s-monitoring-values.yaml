@@ -71,6 +71,10 @@ clusterEvents:
 podLogsViaLoki:
   enabled: true
   collector: alloy-logs
+  # Read newly discovered log files from the start. With the default (true),
+  # short-lived pods like the ticketing-expire CronJob (~7s per run) finish
+  # before Alloy discovers them and their logs are never collected.
+  onlyGatherNewLogLines: false
 
 # Scrapes pods annotated with prometheus.io/scrape: "true". On this cluster that
 # is Traefik (annotated by Civo's install) and the ticketing app (port 9464).

@@ -1,6 +1,20 @@
 # Alert rules
 
-Create these in Grafana Cloud under **Alerts & IRM → Alerting → Alert rules → New alert rule**.
+**Rules 2–13 are created by a script**, not by hand:
+
+```bash
+python3 deploy/monitoring/provision_alerts.py \
+  --url https://keenmole1238.grafana.net --token-file ~/.grafana-alerts-token
+```
+
+It needs a Grafana service account token (role Admin) saved in the token file.
+It creates folder `ticketing` and evaluation group `ticketing` (every 1m),
+and re-running it updates the rules in place. The rules stay editable in the
+UI, but the script's definitions in `provision_alerts.py` are the source of
+truth: if you change a rule in the UI, re-running the script overwrites it.
+
+The rest of this file explains each rule. To create one manually instead, go
+to **Alerts & IRM → Alerting → Alert rules → New alert rule**.
 For each one, pick the data source shown, paste the query, and set the condition
 and pending period from the table. Put them all in one folder (e.g. `ticketing`)
 and one evaluation group that runs **every 1m**.
@@ -164,6 +178,23 @@ Data source: Loki.
 sum(count_over_time({namespace="default", job="ticketing-app"} | json | level="error" [5m]))
 ```
 Condition: `> 10`. A catch-all for errors none of the metric-based alerts cover.
+
+---
+
+## Other apps on the cluster
+
+The same script also creates folder/group `greatdj`:
+
+| Alert | Severity | Source | Fires when |
+|---|---|---|---|
+| greatdj: server ran out of memory | warning | logs | a `heap out of memory` line in 10m |
+
+```logql
+sum(count_over_time({namespace="default", job="greatdj"} |= "heap out of memory" [10m]))
+```
+While diagnosing the leak, the server writes a heap snapshot to `/diag` when it
+nears the heap limit (see `infra/greatdj/greatdj_deployment.yml`). Copy it
+off before redeploying, since a new pod starts with an empty `/diag`.
 
 ---
 
