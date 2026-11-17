@@ -183,11 +183,20 @@ Condition: `> 10`. A catch-all for errors none of the metric-based alerts cover.
 
 ## Other apps on the cluster
 
-The same script also creates folder/group `greatdj`:
+The same script also creates folder/group `greatdj`. "No data" is OK on every
+rule except "no ready pods" (no data means the Deployment or its metrics are gone).
 
-| Alert | Severity | Source | Fires when |
-|---|---|---|---|
-| greatdj: server ran out of memory | warning | logs | a `heap out of memory` line in 10m |
+| Alert | Severity | Source | Fires when | Pending |
+|---|---|---|---|---|
+| greatdj: server ran out of memory | warning | logs | a `heap out of memory` line in 10m | 0 |
+| greatdj: server has no ready pods | critical | metrics | 0 available replicas | 2m |
+| greatdj: server container restarted | warning | metrics | any restart in 10m | 0 |
+| greatdj: high 5xx rate at ingress | critical | metrics | > 5% of requests, and at least 5 of them, in 5m | 5m |
+
+They cover the production server only (`greatdj-deployment`, Traefik service
+`default-greatdj-service-8090@kubernetes`), not staging (`greatdj-test-*`) or the importer.
+
+### greatdj: server ran out of memory
 
 ```logql
 sum(count_over_time({namespace="default", job="greatdj"} |= "heap out of memory" [10m]))
@@ -197,6 +206,46 @@ runaway request restarts the server instead of eating the node's memory. The
 past cause was `/sitemap.xml` loading every full playlist (the whole 1.2GB
 collection), not a leak; that's fixed. If this fires, look at the requests
 just before the crash: `kubectl logs deploy/greatdj-deployment -c server --previous`.
+
+### greatdj: server has no ready pods
+
+```promql
+sum(kube_deployment_status_replicas_available{namespace="default", deployment="greatdj-deployment"})
+```
+Condition: `< 1`, pending 2m, no data → Alerting. The Deployment rolls out
+with a surge pod, so a normal deploy never drops to 0; this means the server
+is down or crash looping.
+
+### greatdj: server container restarted
+
+```promql
+sum by (pod, container) (
+  increase(kube_pod_container_status_restarts_total{namespace="default", pod=~"greatdj-deployment-.*"}[10m])
+)
+```
+Condition: `> 0`. An out-of-memory crash fires this and the heap alert above
+together; a restart on its own is a different crash or a failed liveness probe
+on `/healthz`. The reason is in
+`kube_pod_container_status_last_terminated_reason{namespace="default", pod=~"greatdj-deployment-.*"}`.
+
+### greatdj: high 5xx rate at ingress
+
+```promql
+(
+  sum(rate(traefik_service_requests_total{service="default-greatdj-service-8090@kubernetes", code=~"5.."}[5m]))
+  /
+  sum(rate(traefik_service_requests_total{service="default-greatdj-service-8090@kubernetes"}[5m]))
+)
+and on()
+(
+  sum(increase(traefik_service_requests_total{service="default-greatdj-service-8090@kubernetes", code=~"5.."}[5m])) >= 5
+)
+```
+Condition: `> 0.05`, pending 5m. Traffic is low, so the `and on()` clause
+needs at least 5 server errors in the window: one stray 502 at night can't
+fire it. 4xx (scanners, missing playlists) are ignored. Traefik counts 502s
+when the server is restarting, so expect this alongside the restart alerts
+during a crash; on its own it means the server is up but failing requests.
 
 ---
 

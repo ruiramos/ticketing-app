@@ -100,6 +100,29 @@ GREATDJ_RULES = [
      "/sitemap.xml loading every full playlist (fixed: it projects ids only). Look at "
      "the requests just before the crash: kubectl logs deploy/greatdj-deployment "
      "-c server --previous | tail -50"),
+    ("greatdj-no-ready-pods", "greatdj: server has no ready pods", "prom",
+     f'sum(kube_deployment_status_replicas_available{{namespace="{NS}", deployment="greatdj-deployment"}})',
+     "lt", 1, "2m", "critical", "Alerting",
+     "greatdj server has no available replicas",
+     "great.dj and api/ws.great.dj are down or crash looping. Check "
+     "`kubectl -n default get pods -l app=greatdj` and "
+     "`kubectl -n default describe pod -l app=greatdj`."),
+    ("greatdj-restarts", "greatdj: server container restarted", "prom",
+     f'sum by (pod, container) (increase(kube_pod_container_status_restarts_total{{namespace="{NS}", pod=~"greatdj-deployment-.*"}}[10m]))',
+     "gt", 0, "0s", "warning", "OK",
+     "{{ $labels.pod }} restarted",
+     "If the heap alert fired too, it ran out of memory. Otherwise check the reason "
+     "(Error = crash, liveness probe failure = hung on /healthz): "
+     "kubectl -n default describe pod -l app=greatdj; "
+     "kubectl logs deploy/greatdj-deployment -c server --previous | tail -50"),
+    ("greatdj-ingress-5xx", "greatdj: high 5xx rate at ingress", "prom",
+     '(sum(rate(traefik_service_requests_total{service="default-greatdj-service-8090@kubernetes", code=~"5.."}[5m])) / '
+     'sum(rate(traefik_service_requests_total{service="default-greatdj-service-8090@kubernetes"}[5m]))) '
+     'and on() (sum(increase(traefik_service_requests_total{service="default-greatdj-service-8090@kubernetes", code=~"5.."}[5m])) >= 5)',
+     "gt", 0.05, "5m", "critical", "OK",
+     "More than 5% of greatdj requests are failing with 5xx",
+     "502/504 usually means the server is restarting or hung. Logs: "
+     "{namespace=\"default\", job=\"greatdj\"} and kubectl -n default get pods -l app=greatdj"),
 ]
 
 # (folder/group title, app label, rules)
