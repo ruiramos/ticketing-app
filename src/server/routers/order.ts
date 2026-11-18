@@ -391,6 +391,52 @@ export const orderRouter = router({
 
       return paypalOrder;
     }),
+  // The buyer closed PayPal without paying, or checkout failed: put the
+  // tickets back on sale now instead of when the reservation expires. Only
+  // unpaid (RESERVED) orders are touched, which would expire anyway.
+  releaseOrder: publicProcedure
+    .input(
+      z.object({
+        id: z.string().min(1).max(64), // PayPal order id
+        reason: z.enum(['cancelled', 'error']),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const order = await prisma.order.findFirst({
+        where: { externalId: input.id, status: 'RESERVED' },
+        select: { id: true, eventId: true, variantId: true, quantity: true },
+      });
+      if (!order) return { released: false };
+
+      const released = await prisma.$transaction(async (tx) => {
+        // still RESERVED? the buyer may have paid in the meantime
+        const { count } = await tx.order.updateMany({
+          where: { id: order.id, status: 'RESERVED' },
+          data: { status: 'EXPIRED' },
+        });
+        if (count === 0) return false;
+
+        await tx.variant.update({
+          where: { id: order.variantId },
+          data: { stock: { increment: order.quantity } },
+        });
+        return true;
+      });
+
+      if (released) {
+        metrics.ordersReleased.inc({ reason: input.reason });
+        logger.info(
+          {
+            orderId: order.id,
+            eventId: order.eventId,
+            quantity: order.quantity,
+            reason: input.reason,
+          },
+          'reservation released',
+        );
+      }
+      return { released };
+    }),
   captureOrder: publicProcedure
     .input(
       z.object({
