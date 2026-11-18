@@ -558,6 +558,78 @@ describe('order.createOrder checks', () => {
   });
 });
 
+describe('order.releaseOrder', () => {
+  async function reserve(quantity: number) {
+    const organization = await prisma.organization.create({
+      data: { name: 'Release Org', email: 'release@test.com' },
+    });
+    const event = await prisma.event.create({
+      data: {
+        title: 'Release Event',
+        text: 'Description',
+        organizationId: organization.id,
+        enabled: true,
+        variants: {
+          create: {
+            title: 'Standard',
+            price: 10,
+            currency: 'GBP',
+            stock: 20,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+    const caller = createCaller(await createContextInner({ session: null }));
+    const paypalOrder = await caller.order.createOrder({
+      id: event.id,
+      variantId: event.variants[0].id,
+      quantity,
+    });
+    const stock = async () =>
+      (await prisma.variant.findUnique({
+        where: { id: event.variants[0].id },
+      }))!.stock;
+    return { caller, paypalOrderId: paypalOrder.id!, stock };
+  }
+
+  test('puts an abandoned reservation back on sale once', async () => {
+    const { caller, paypalOrderId, stock } = await reserve(3);
+    expect(await stock()).toBe(17);
+
+    await expect(
+      caller.order.releaseOrder({ id: paypalOrderId, reason: 'cancelled' }),
+    ).resolves.toEqual({ released: true });
+    expect(await stock()).toBe(20);
+    expect((await prisma.order.findFirst())!.status).toBe('EXPIRED');
+
+    // again (e.g. onCancel and onError both fire): nothing more released
+    await expect(
+      caller.order.releaseOrder({ id: paypalOrderId, reason: 'error' }),
+    ).resolves.toEqual({ released: false });
+    expect(await stock()).toBe(20);
+  });
+
+  test('leaves paid orders alone', async () => {
+    const { caller, paypalOrderId, stock } = await reserve(2);
+    await prisma.order.updateMany({ data: { status: 'CONFIRMED' } });
+
+    await expect(
+      caller.order.releaseOrder({ id: paypalOrderId, reason: 'cancelled' }),
+    ).resolves.toEqual({ released: false });
+    expect(await stock()).toBe(18);
+    expect((await prisma.order.findFirst())!.status).toBe('CONFIRMED');
+  });
+
+  test('ignores unknown ids', async () => {
+    const caller = createCaller(await createContextInner({ session: null }));
+    await expect(
+      caller.order.releaseOrder({ id: 'NOPE', reason: 'cancelled' }),
+    ).resolves.toEqual({ released: false });
+  });
+});
+
 describe('order business logic', () => {
   test('should handle concurrent stock updates correctly', async () => {
     const organization = await prisma.organization.create({

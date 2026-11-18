@@ -53,6 +53,12 @@ function createMetrics() {
       labelNames: ['reason'] as const, // out_of_stock | paypal_error
       registers,
     }),
+    ordersReleased: new Counter({
+      name: 'ticketing_orders_released_total',
+      help: 'Reservations released at once because the buyer closed PayPal or checkout failed',
+      labelNames: ['reason'] as const, // cancelled | error
+      registers,
+    }),
     ordersConfirmed: new Counter({
       name: 'ticketing_orders_confirmed_total',
       help: 'Orders paid and CONFIRMED',

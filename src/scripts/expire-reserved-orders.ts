@@ -2,7 +2,9 @@ import 'dotenv/config';
 import { prisma } from '../server/prisma';
 import { logger as baseLogger } from '../server/logger';
 
-const HOW_MANY_MINUTES = 5;
+// how long a buyer has to pay; reservations they abandon in PayPal are
+// released straight away (order.releaseOrder), this catches the rest
+const HOW_MANY_MINUTES = 15;
 
 const logger = baseLogger.child({ job: 'expire-reserved' });
 
@@ -19,7 +21,7 @@ async function doIt(): Promise<Summary> {
     where: {
       status: 'RESERVED',
       createdAt: {
-        // more than 5 minutes ago
+        // more than HOW_MANY_MINUTES ago
         lt: new Date(Date.now() - 1000 * 60 * HOW_MANY_MINUTES),
       },
     },
