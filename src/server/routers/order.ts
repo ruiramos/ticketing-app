@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { router, publicProcedure, authedProcedure } from '../trpc';
+import {
+  router,
+  publicProcedure,
+  authedProcedureWithEventId,
+  authedProcedureWithOrderId,
+} from '../trpc';
 import {
   CheckoutPaymentIntent,
   Client,
@@ -420,7 +425,8 @@ export const orderRouter = router({
 
       return ourOrder;
     }),
-  cancelOrder: authedProcedure
+  // only members of the event's organization (see authedProcedureWithOrderId)
+  cancelOrder: authedProcedureWithOrderId
     .input(
       z.object({
         orderId: z.string().uuid(),
@@ -497,7 +503,8 @@ export const orderRouter = router({
 
       return ourOrder;
     }),
-  getOrdersForCheckin: authedProcedure
+  // buyers' names, emails and answers: only for the event's organization
+  getOrdersForCheckin: authedProcedureWithEventId
     .input(
       z.object({
         eventId: z.string().uuid(),
@@ -554,7 +561,7 @@ export const orderRouter = router({
         orderBy: [{ checkedIn: 'asc' }, { createdAt: 'desc' }],
       });
     }),
-  toggleCheckin: authedProcedure
+  toggleCheckin: authedProcedureWithOrderId
     .input(
       z.object({
         orderId: z.string().uuid(),

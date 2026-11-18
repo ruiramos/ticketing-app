@@ -3,7 +3,10 @@ import formidable from 'formidable';
 import fs from 'fs/promises';
 import path from 'path';
 import { Storage } from '@google-cloud/storage';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '~/pages/api/auth/[...nextauth]';
 import { logger } from '~/server/logger';
+import { prisma } from '~/server/prisma';
 
 export const config = {
   api: {
@@ -25,6 +28,20 @@ export default async function handler(
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Only organization members (who create and edit events) may upload: this
+  // was open to anyone, letting them store files in our bucket.
+  const session = await getServerSession(req, res, authOptions);
+  if (!session?.user?.email) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const user = await prisma.user.findFirst({
+    where: { email: session.user.email },
+    select: { organizationId: true },
+  });
+  if (!user?.organizationId) {
+    return res.status(403).json({ error: 'Forbidden' });
   }
 
   try {
