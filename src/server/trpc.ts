@@ -110,6 +110,47 @@ export const authedProcedureWithEventId = authedProcedure
     });
   });
 /**
+ * For procedures acting on one order: the order's event must belong to the
+ * user's organization (like authedProcedureWithEventId). Without this any
+ * signed-in user (any Google account) could act on any order.
+ */
+export const authedProcedureWithOrderId = authedProcedure
+  .input(z.object({ orderId: z.string() }))
+  .use(async function validateOrderId(opts) {
+    const { ctx } = opts;
+
+    if (!ctx.user.email) {
+      logger.error('Could not get email from user');
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id: opts.input.orderId },
+      select: {
+        event: {
+          select: {
+            organization: { select: { users: { select: { email: true } } } },
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Order not found' });
+    }
+
+    if (
+      !order.event.organization?.users.find(
+        (user) => user.email === ctx.user.email,
+      )
+    ) {
+      throw new TRPCError({ code: 'FORBIDDEN' });
+    }
+
+    return opts.next();
+  });
+
+/**
  * Merge multiple routers together
  * @see https://trpc.io/docs/v11/merging-routers
  */

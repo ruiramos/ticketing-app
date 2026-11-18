@@ -594,3 +594,138 @@ describe('order metrics', () => {
     ).toBe(errorsBefore + 1);
   });
 });
+
+describe('order authorization (organization members only)', () => {
+  // org A owns the event and its confirmed order; a member of org B, or a
+  // signed-in user with no organization, must not see or change it
+  async function setup() {
+    const orgA = await prisma.organization.create({
+      data: { name: 'Org A', email: 'a@org.test' },
+    });
+    const orgB = await prisma.organization.create({
+      data: { name: 'Org B', email: 'b@org.test' },
+    });
+    await prisma.user.create({
+      data: { email: 'member@org-a.test', organizationId: orgA.id },
+    });
+    await prisma.user.create({
+      data: { email: 'member@org-b.test', organizationId: orgB.id },
+    });
+    const event = await prisma.event.create({
+      data: {
+        title: 'Org A event',
+        text: 'Description',
+        organizationId: orgA.id,
+        variants: {
+          create: {
+            title: 'Slot',
+            price: 5,
+            currency: 'GBP',
+            stock: 10,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+    const order = await prisma.order.create({
+      data: {
+        eventId: event.id,
+        variantId: event.variants[0].id,
+        quantity: 2,
+        status: 'CONFIRMED',
+        selectedExtras: [],
+        items: [],
+        customer: { name: 'Buyer', email: 'buyer@example.com' },
+        amount: 10,
+        currency: 'GBP',
+      },
+    });
+    return { event, order };
+  }
+
+  async function callerFor(email: string) {
+    const ctx = await createContextInner({
+      session: {
+        user: { email },
+        expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+      },
+    });
+    return createCaller(ctx);
+  }
+
+  test('getOrdersForCheckin: FORBIDDEN for another organization', async () => {
+    const { event } = await setup();
+    const caller = await callerFor('member@org-b.test');
+    await expect(
+      caller.order.getOrdersForCheckin({ eventId: event.id }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+
+  test('getOrdersForCheckin: FORBIDDEN for a user with no organization', async () => {
+    const { event } = await setup();
+    const caller = await callerFor('stranger@gmail.test');
+    await expect(
+      caller.order.getOrdersForCheckin({ eventId: event.id }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+
+  test('getOrdersForCheckin: works for the event organization', async () => {
+    const { event, order } = await setup();
+    const caller = await callerFor('member@org-a.test');
+    const result = await caller.order.getOrdersForCheckin({
+      eventId: event.id,
+    });
+    expect(JSON.stringify(result)).toContain(order.id);
+  });
+
+  test('cancelOrder: FORBIDDEN for another organization, order untouched', async () => {
+    const { order } = await setup();
+    const caller = await callerFor('member@org-b.test');
+    await expect(
+      caller.order.cancelOrder({ orderId: order.id }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    const after = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(after?.status).toBe('CONFIRMED');
+    const variant = await prisma.variant.findUnique({
+      where: { id: order.variantId },
+    });
+    expect(variant?.stock).toBe(10);
+  });
+
+  test('cancelOrder: works for the event organization', async () => {
+    const { order } = await setup();
+    const caller = await callerFor('member@org-a.test');
+    await caller.order.cancelOrder({ orderId: order.id });
+    const after = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(after?.status).toBe('CANCELLED');
+  });
+
+  test('toggleCheckin: FORBIDDEN for another organization, order untouched', async () => {
+    const { order } = await setup();
+    const caller = await callerFor('member@org-b.test');
+    await expect(
+      caller.order.toggleCheckin({ orderId: order.id }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    const after = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(after?.checkedIn).toBe(false);
+  });
+
+  test('toggleCheckin: works for the event organization', async () => {
+    const { order } = await setup();
+    const caller = await callerFor('member@org-a.test');
+    await caller.order.toggleCheckin({ orderId: order.id });
+    const after = await prisma.order.findUnique({ where: { id: order.id } });
+    expect(after?.checkedIn).toBe(true);
+  });
+
+  test('cancelOrder: NOT_FOUND for an unknown order', async () => {
+    await setup();
+    const caller = await callerFor('member@org-a.test');
+    await expect(
+      caller.order.cancelOrder({
+        orderId: '00000000-0000-4000-8000-000000000000',
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
