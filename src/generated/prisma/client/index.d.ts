@@ -5247,6 +5247,8 @@ export namespace Prisma {
     refundId: string | null
     refundedAt: Date | null
     refundReason: string | null
+    confirmationEmailSentAt: Date | null
+    confirmationEmailError: string | null
     amount: number | null
     currency: string | null
     createdAt: Date | null
@@ -5269,6 +5271,8 @@ export namespace Prisma {
     refundId: string | null
     refundedAt: Date | null
     refundReason: string | null
+    confirmationEmailSentAt: Date | null
+    confirmationEmailError: string | null
     amount: number | null
     currency: string | null
     createdAt: Date | null
@@ -5297,6 +5301,8 @@ export namespace Prisma {
     refundedAt: number
     refundReason: number
     refundError: number
+    confirmationEmailSentAt: number
+    confirmationEmailError: number
     amount: number
     currency: number
     createdAt: number
@@ -5333,6 +5339,8 @@ export namespace Prisma {
     refundId?: true
     refundedAt?: true
     refundReason?: true
+    confirmationEmailSentAt?: true
+    confirmationEmailError?: true
     amount?: true
     currency?: true
     createdAt?: true
@@ -5355,6 +5363,8 @@ export namespace Prisma {
     refundId?: true
     refundedAt?: true
     refundReason?: true
+    confirmationEmailSentAt?: true
+    confirmationEmailError?: true
     amount?: true
     currency?: true
     createdAt?: true
@@ -5383,6 +5393,8 @@ export namespace Prisma {
     refundedAt?: true
     refundReason?: true
     refundError?: true
+    confirmationEmailSentAt?: true
+    confirmationEmailError?: true
     amount?: true
     currency?: true
     createdAt?: true
@@ -5498,6 +5510,8 @@ export namespace Prisma {
     refundedAt: Date | null
     refundReason: string | null
     refundError: JsonValue | null
+    confirmationEmailSentAt: Date | null
+    confirmationEmailError: string | null
     amount: number
     currency: string
     createdAt: Date
@@ -5545,6 +5559,8 @@ export namespace Prisma {
     refundedAt?: boolean
     refundReason?: boolean
     refundError?: boolean
+    confirmationEmailSentAt?: boolean
+    confirmationEmailError?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5576,6 +5592,8 @@ export namespace Prisma {
     refundedAt?: boolean
     refundReason?: boolean
     refundError?: boolean
+    confirmationEmailSentAt?: boolean
+    confirmationEmailError?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5607,6 +5625,8 @@ export namespace Prisma {
     refundedAt?: boolean
     refundReason?: boolean
     refundError?: boolean
+    confirmationEmailSentAt?: boolean
+    confirmationEmailError?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5638,6 +5658,8 @@ export namespace Prisma {
     refundedAt?: boolean
     refundReason?: boolean
     refundError?: boolean
+    confirmationEmailSentAt?: boolean
+    confirmationEmailError?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5645,7 +5667,7 @@ export namespace Prisma {
     userId?: boolean
   }
 
-  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "externalId" | "externalTransactionId" | "eventId" | "variantId" | "quantity" | "status" | "selectedExtras" | "items" | "customer" | "customFieldResponses" | "error" | "checkedIn" | "checkedInAt" | "refundStatus" | "refundedAmount" | "refundId" | "refundedAt" | "refundReason" | "refundError" | "amount" | "currency" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["order"]>
+  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "externalId" | "externalTransactionId" | "eventId" | "variantId" | "quantity" | "status" | "selectedExtras" | "items" | "customer" | "customFieldResponses" | "error" | "checkedIn" | "checkedInAt" | "refundStatus" | "refundedAmount" | "refundId" | "refundedAt" | "refundReason" | "refundError" | "confirmationEmailSentAt" | "confirmationEmailError" | "amount" | "currency" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["order"]>
   export type OrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     event?: boolean | EventDefaultArgs<ExtArgs>
     variant?: boolean | VariantDefaultArgs<ExtArgs>
@@ -5690,6 +5712,8 @@ export namespace Prisma {
       refundedAt: Date | null
       refundReason: string | null
       refundError: Prisma.JsonValue | null
+      confirmationEmailSentAt: Date | null
+      confirmationEmailError: string | null
       amount: number
       currency: string
       createdAt: Date
@@ -6141,6 +6165,8 @@ export namespace Prisma {
     readonly refundedAt: FieldRef<"Order", 'DateTime'>
     readonly refundReason: FieldRef<"Order", 'String'>
     readonly refundError: FieldRef<"Order", 'Json'>
+    readonly confirmationEmailSentAt: FieldRef<"Order", 'DateTime'>
+    readonly confirmationEmailError: FieldRef<"Order", 'String'>
     readonly amount: FieldRef<"Order", 'Float'>
     readonly currency: FieldRef<"Order", 'String'>
     readonly createdAt: FieldRef<"Order", 'DateTime'>
@@ -10209,6 +10235,8 @@ export namespace Prisma {
     refundedAt: 'refundedAt',
     refundReason: 'refundReason',
     refundError: 'refundError',
+    confirmationEmailSentAt: 'confirmationEmailSentAt',
+    confirmationEmailError: 'confirmationEmailError',
     amount: 'amount',
     currency: 'currency',
     createdAt: 'createdAt',
@@ -10733,6 +10761,8 @@ export namespace Prisma {
     refundedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     refundReason?: StringNullableFilter<"Order"> | string | null
     refundError?: JsonNullableFilter<"Order">
+    confirmationEmailSentAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    confirmationEmailError?: StringNullableFilter<"Order"> | string | null
     amount?: FloatFilter<"Order"> | number
     currency?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -10764,6 +10794,8 @@ export namespace Prisma {
     refundedAt?: SortOrderInput | SortOrder
     refundReason?: SortOrderInput | SortOrder
     refundError?: SortOrderInput | SortOrder
+    confirmationEmailSentAt?: SortOrderInput | SortOrder
+    confirmationEmailError?: SortOrderInput | SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -10798,6 +10830,8 @@ export namespace Prisma {
     refundedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     refundReason?: StringNullableFilter<"Order"> | string | null
     refundError?: JsonNullableFilter<"Order">
+    confirmationEmailSentAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    confirmationEmailError?: StringNullableFilter<"Order"> | string | null
     amount?: FloatFilter<"Order"> | number
     currency?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -10829,6 +10863,8 @@ export namespace Prisma {
     refundedAt?: SortOrderInput | SortOrder
     refundReason?: SortOrderInput | SortOrder
     refundError?: SortOrderInput | SortOrder
+    confirmationEmailSentAt?: SortOrderInput | SortOrder
+    confirmationEmailError?: SortOrderInput | SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -10865,6 +10901,8 @@ export namespace Prisma {
     refundedAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
     refundReason?: StringNullableWithAggregatesFilter<"Order"> | string | null
     refundError?: JsonNullableWithAggregatesFilter<"Order">
+    confirmationEmailSentAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+    confirmationEmailError?: StringNullableWithAggregatesFilter<"Order"> | string | null
     amount?: FloatWithAggregatesFilter<"Order"> | number
     currency?: StringWithAggregatesFilter<"Order"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
@@ -11435,6 +11473,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -11465,6 +11505,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -11491,6 +11533,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11521,6 +11565,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11549,6 +11595,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -11575,6 +11623,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11602,6 +11652,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12451,6 +12503,8 @@ export namespace Prisma {
     refundedAt?: SortOrder
     refundReason?: SortOrder
     refundError?: SortOrder
+    confirmationEmailSentAt?: SortOrder
+    confirmationEmailError?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -12479,6 +12533,8 @@ export namespace Prisma {
     refundId?: SortOrder
     refundedAt?: SortOrder
     refundReason?: SortOrder
+    confirmationEmailSentAt?: SortOrder
+    confirmationEmailError?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -12501,6 +12557,8 @@ export namespace Prisma {
     refundId?: SortOrder
     refundedAt?: SortOrder
     refundReason?: SortOrder
+    confirmationEmailSentAt?: SortOrder
+    confirmationEmailError?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -13786,6 +13844,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -13814,6 +13874,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -13969,6 +14031,8 @@ export namespace Prisma {
     refundedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     refundReason?: StringNullableFilter<"Order"> | string | null
     refundError?: JsonNullableFilter<"Order">
+    confirmationEmailSentAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    confirmationEmailError?: StringNullableFilter<"Order"> | string | null
     amount?: FloatFilter<"Order"> | number
     currency?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -14083,6 +14147,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14111,6 +14177,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14892,6 +14960,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14921,6 +14991,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -15128,6 +15200,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -15213,6 +15287,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15241,6 +15317,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15268,6 +15346,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15295,6 +15375,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -15321,6 +15403,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15349,6 +15433,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15376,6 +15462,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15574,6 +15662,8 @@ export namespace Prisma {
     refundedAt?: Date | string | null
     refundReason?: string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: Date | string | null
+    confirmationEmailError?: string | null
     amount: number
     currency: string
     createdAt?: Date | string
@@ -15612,6 +15702,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15641,6 +15733,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15668,6 +15762,8 @@ export namespace Prisma {
     refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     refundReason?: NullableStringFieldUpdateOperationsInput | string | null
     refundError?: NullableJsonNullValueInput | InputJsonValue
+    confirmationEmailSentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    confirmationEmailError?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

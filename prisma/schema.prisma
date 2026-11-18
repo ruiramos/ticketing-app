@@ -113,6 +113,10 @@ model Order {
   refundReason   String? // shown to the buyer (PayPal note and email)
   refundError    Json?
 
+  // confirmation email ("your tickets"): when it last went out, or why not
+  confirmationEmailSentAt DateTime?
+  confirmationEmailError  String?
+
   amount   Float
   currency String
 
@@ -120,6 +124,9 @@ model Order {
   updatedAt DateTime @default(now()) @updatedAt
   user      User?    @relation(fields: [userId], references: [id])
   userId    String?
+
+  // PayPal capture and releaseOrder look orders up by their PayPal order id
+  @@index([externalId])
 }
 
 model Organization {

@@ -20,11 +20,8 @@ import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
 import { Order, Prisma } from '~/generated/prisma/client';
 import { env } from '../env';
-import {
-  generateCancellationMailContent,
-  generateMailContent,
-  sendEmail,
-} from '~/utils/email';
+import { generateCancellationMailContent, sendEmail } from '~/utils/email';
+import { sendConfirmationEmail } from '../confirmationEmail';
 import { EVENT_MAX_TICKETS } from '~/utils/contants';
 import { logger } from '../logger';
 import { metrics, trackPaypal } from '../metrics';
@@ -590,15 +587,17 @@ export const orderRouter = router({
         'order confirmed',
       );
 
-      // send email
-      if (capturedOrder.payer?.emailAddress) {
-        sendEmail({
-          to: capturedOrder.payer?.emailAddress,
-          replyTo: ourOrder.event.organization?.email || 'noreply@example.com',
-          subject: 'Order Confirmation - ' + ourOrder.event.title,
-          content: generateMailContent(order, ourOrder),
-        });
-      }
+      // email the tickets; not awaited so the buyer isn't kept waiting, and
+      // the outcome is recorded on the order (organisers can resend)
+      sendConfirmationEmail(
+        ourOrder.id,
+        capturedOrder.payer?.emailAddress ?? undefined,
+      ).catch((err) =>
+        logger.error(
+          { err, orderId: ourOrder.id },
+          'failed to send confirmation email',
+        ),
+      );
 
       return ourOrder;
     }),
@@ -773,6 +772,39 @@ export const orderRouter = router({
       });
 
       return { success: true, refundStatus };
+    }),
+  // organiser re-sends the "your tickets" email, optionally to another address
+  resendConfirmation: authedProcedureWithOrderId
+    .input(
+      z.object({
+        orderId: z.string().uuid(),
+        email: z.string().trim().email().max(254).optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const order = await prisma.order.findUnique({
+        where: { id: input.orderId },
+        select: { status: true },
+      });
+      if (order?.status !== 'CONFIRMED') {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Only confirmed orders have tickets to send.',
+        });
+      }
+
+      const result = await sendConfirmationEmail(input.orderId, input.email);
+      if (!result.ok) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `The email couldn't be sent (${result.error}).`,
+        });
+      }
+      logger.info(
+        { orderId: input.orderId, otherAddress: !!input.email },
+        'confirmation email resent',
+      );
+      return { sent: true };
     }),
   byId: publicProcedure
     .input(

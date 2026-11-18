@@ -143,7 +143,7 @@ const EditEventPage = () => {
 
       // Set custom fields
       if (event.customFields) {
-        setCustomFields((event.customFields as CustomField[]) || []);
+        setCustomFields((event.customFields as unknown as CustomField[]) || []);
       }
     }
   }, [event]);

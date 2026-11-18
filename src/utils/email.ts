@@ -1,4 +1,3 @@
-import { Order } from '@paypal/paypal-server-sdk/dist/types/models/order';
 import Mailjet from 'node-mailjet';
 import { env } from '~/server/env';
 import { logger } from '~/server/logger';
@@ -23,12 +22,15 @@ interface SendMailProps {
   replyTo?: string;
 }
 
+type SendResult = { ok: true } | { ok: false; error: string };
+
+/** Sends one email. Never throws: the outcome is returned (and counted). */
 export async function sendEmail({
   to,
   subject,
   content,
   replyTo,
-}: SendMailProps) {
+}: SendMailProps): Promise<SendResult> {
   try {
     const recipients = (Array.isArray(to) ? to : [to]).map((email) => ({
       Email: email,
@@ -44,12 +46,27 @@ export async function sendEmail({
         },
       ],
     });
+    // Mailjet answers 200 even when it rejects a message, with the
+    // message's own status in the body
+    const status = (result.body as { Messages?: { Status?: string }[] })
+      ?.Messages?.[0]?.Status;
+    if (status && status !== 'success') {
+      throw new Error(`Mailjet message status: ${status}`);
+    }
     metrics.emailsSent.inc({ outcome: 'sent' });
-    return result;
+    return { ok: true };
   } catch (e) {
     metrics.emailsSent.inc({ outcome: 'failed' });
     // recipient address deliberately not logged
     logger.error({ err: e, subject }, 'failed to send email');
+    const error = (e as { statusCode?: number; message?: string }) ?? {};
+    return {
+      ok: false,
+      error: [error.statusCode, error.message ?? String(e)]
+        .filter(Boolean)
+        .join(' ')
+        .slice(0, 500),
+    };
   }
 }
 
@@ -57,30 +74,56 @@ type OrderWithEvent = OurOrder & {
   event: Event & { organization: Organization | null };
 };
 
-export function generateMailContent(order: Order, ourOrder: OrderWithEvent) {
+/** The buyer's order page, which is their ticket (null if the site URL isn't set). */
+export function ticketUrl(order: { id: string; eventId: string }) {
+  return env.DEPLOYED_URL
+    ? new URL(
+        `/events/${order.eventId}/orders/${order.id}`,
+        env.DEPLOYED_URL,
+      ).toString()
+    : null;
+}
+
+/** "Your tickets": built from the stored order, so it can be resent later. */
+export function generateMailContent(ourOrder: OrderWithEvent) {
   const { event } = ourOrder;
   const org = event.organization;
+  const customer = (ourOrder.customer ?? {}) as {
+    name?: { givenName?: string };
+  };
+  const items = (Array.isArray(ourOrder.items) ? ourOrder.items : []) as {
+    name?: string;
+    quantity?: string;
+  }[];
+  const ticketLink = ticketUrl(ourOrder);
 
   return `
-<p>Dear ${escapeHtml(order?.payer?.name?.givenName ?? '')},</p>
+<p>Dear ${escapeHtml(customer.name?.givenName ?? '')},</p>
 
 <p>Hello from ${escapeHtml(org?.name ?? '')}!</p>
 
 <p>We're thrilled to confirm your order for the ${escapeHtml(event.title)}.${
     org?.emailMessage ? `<br/>\n${escapeHtml(org.emailMessage)}` : ''
   }</p>
-
+${
+  ticketLink
+    ? `
+<p><strong><a href="${ticketLink}">View your tickets</a></strong><br/>
+Show this email or that page at the event. Keep the link: it's your ticket.</p>
+`
+    : ''
+}
 <p>Here are the details of your order:</p>
 
-<strong>Order Id:</strong> ${order.id}<br/>
-${order?.purchaseUnits?.[0].items
-  ?.map((item, i) => {
-    return i === 0
-      ? `${item.quantity} ticket(s) for: ${escapeHtml(item.name)}`
-      : `${escapeHtml(item.name)}`;
-  })
+<strong>Order Id:</strong> ${escapeHtml(ourOrder.externalId ?? ourOrder.id)}<br/>
+${items
+  .map((item, i) =>
+    i === 0
+      ? `${escapeHtml(item.quantity ?? String(ourOrder.quantity))} ticket(s) for: ${escapeHtml(item.name ?? '')}`
+      : escapeHtml(item.name ?? ''),
+  )
   .join('<br/>')}<br/>
-<strong>Total:</strong> £${order?.purchaseUnits?.[0].amount?.value}
+<strong>Total:</strong> ${escapeHtml(formatMoney(ourOrder.amount, ourOrder.currency))}
 ${customFieldDetails(ourOrder)}
 ${eventDetails(event)}
 ${

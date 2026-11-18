@@ -44,7 +44,8 @@ export default function OrderConfirmation({
           <div>
             <h1 className="text-2xl font-bold">Booking Confirmed!</h1>
             <p className="text-purple-100">
-              Your tickets have been sent to your email address.
+              We&apos;ve emailed your tickets to you. This page is your ticket
+              too: bookmark it or keep the link.
             </p>
           </div>
         </div>
