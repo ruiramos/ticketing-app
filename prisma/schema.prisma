@@ -75,6 +75,14 @@ enum OrderStatus {
   EXPIRED
 }
 
+// Refund of a cancelled order's PayPal payment (order.cancelOrder)
+enum RefundStatus {
+  NONE // not refunded (or refunded outside the app)
+  PENDING // asked PayPal; not confirmed yet (in flight, or PayPal says pending)
+  REFUNDED
+  FAILED // PayPal refused or errored: see refundError, retry with order.retryRefund
+}
+
 model Order {
   id                    String  @id @default(uuid())
   externalId            String?
@@ -97,6 +105,13 @@ model Order {
 
   checkedIn   Boolean?  @default(false)
   checkedInAt DateTime?
+
+  refundStatus   RefundStatus @default(NONE)
+  refundedAmount Float? // amount refunded (or being refunded, see refundStatus)
+  refundId       String? // PayPal refund id
+  refundedAt     DateTime?
+  refundReason   String? // shown to the buyer (PayPal note and email)
+  refundError    Json?
 
   amount   Float
   currency String

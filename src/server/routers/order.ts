@@ -11,14 +11,20 @@ import {
   Environment,
   LogLevel,
   OrdersController,
+  PaymentsController,
   PaypalExperienceUserAction,
   PaypalWalletContextShippingPreference,
+  RefundStatus as PaypalRefundStatus,
 } from '@paypal/paypal-server-sdk';
 import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
 import { Order, Prisma } from '~/generated/prisma/client';
 import { env } from '../env';
-import { generateMailContent, sendEmail } from '~/utils/email';
+import {
+  generateCancellationMailContent,
+  generateMailContent,
+  sendEmail,
+} from '~/utils/email';
 import { logger } from '../logger';
 import { metrics, trackPaypal } from '../metrics';
 
@@ -38,6 +44,115 @@ const client = new Client({
 });
 
 const ordersController = new OrdersController(client);
+const paymentsController = new PaymentsController(client);
+
+type RefundOutcome = 'REFUNDED' | 'PENDING' | 'FAILED';
+
+/** PayPal's error name and message, from an SDK error, for refundError. */
+function paypalErrorInfo(e: unknown) {
+  const body = (e as { body?: unknown })?.body;
+  if (typeof body === 'string') {
+    try {
+      const parsed = JSON.parse(body) as {
+        name?: string;
+        message?: string;
+        details?: { issue?: string }[];
+      };
+      return {
+        name: parsed.name,
+        message: parsed.message,
+        issue: parsed.details?.[0]?.issue,
+      };
+    } catch {
+      // not JSON
+    }
+  }
+  return { message: e instanceof Error ? e.message : String(e) };
+}
+
+/**
+ * Refunds a cancelled order's PayPal capture and records the outcome on the
+ * order. Safe to call again for the same order (order.retryRefund): the
+ * PayPal-Request-Id makes PayPal return the existing refund instead of
+ * refunding twice.
+ */
+async function refundOrder(order: {
+  id: string;
+  eventId: string;
+  externalTransactionId: string;
+  currency: string;
+  amount: number;
+  refundReason: string | null;
+}): Promise<RefundOutcome> {
+  let status: RefundOutcome;
+  try {
+    const { result: refund } = await trackPaypal('refundCapture', () =>
+      paymentsController.refundCapturedPayment({
+        captureId: order.externalTransactionId,
+        paypalRequestId: `refund-${order.id}`,
+        prefer: 'return=representation',
+        body: {
+          amount: {
+            currencyCode: order.currency,
+            value: order.amount.toFixed(2),
+          },
+          customId: order.id,
+          ...(order.refundReason
+            ? { noteToPayer: order.refundReason.slice(0, 255) }
+            : {}),
+        },
+      }),
+    );
+
+    status =
+      refund.status === PaypalRefundStatus.Completed
+        ? 'REFUNDED'
+        : refund.status === PaypalRefundStatus.Pending
+          ? 'PENDING'
+          : 'FAILED';
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        refundStatus: status,
+        refundId: refund.id ?? null,
+        refundedAt: status === 'REFUNDED' ? new Date() : null,
+        refundError:
+          status === 'FAILED'
+            ? { message: `PayPal refund status ${refund.status}` }
+            : Prisma.DbNull,
+      },
+    });
+  } catch (e) {
+    status = 'FAILED';
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        refundStatus: 'FAILED',
+        refundError: { ...paypalErrorInfo(e), at: new Date().toISOString() },
+      },
+    });
+  }
+
+  metrics.ordersRefunded.inc({ outcome: status.toLowerCase() });
+  if (status === 'FAILED') {
+    logger.error(
+      { orderId: order.id, eventId: order.eventId, amount: order.amount },
+      'refund failed',
+    );
+  } else {
+    logger.info(
+      {
+        orderId: order.id,
+        eventId: order.eventId,
+        amount: order.amount,
+        status,
+      },
+      'order refunded',
+    );
+  }
+  return status;
+}
 
 export const orderRouter = router({
   createOrder: publicProcedure
@@ -430,12 +545,18 @@ export const orderRouter = router({
     .input(
       z.object({
         orderId: z.string().uuid(),
+        // refund the buyer's PayPal payment: all of it, or `amount`
+        refund: z.boolean().default(false),
+        amount: z.number().positive().optional(),
+        // shown to the buyer (PayPal refund note and the email)
+        reason: z.string().trim().max(255).optional(),
+        notifyBuyer: z.boolean().default(true),
       }),
     )
     .mutation(async ({ input }) => {
       const order = await prisma.order.findUnique({
         where: { id: input.orderId },
-        include: { variant: true },
+        include: { event: { include: { organization: true } } },
       });
 
       if (!order) {
@@ -452,30 +573,144 @@ export const orderRouter = router({
         });
       }
 
-      // Cancel order and release stock in a transaction
-      await prisma.$transaction(async (tx) => {
-        await tx.order.update({
-          where: { id: input.orderId },
-          data: { status: 'CANCELLED' },
+      // checked before cancelling, so a refund that can't happen doesn't
+      // leave a cancelled order the buyer has paid for
+      const refundAmount = input.refund ? (input.amount ?? order.amount) : null;
+      if (input.refund) {
+        if (!order.externalTransactionId) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message:
+              'No PayPal payment is recorded for this order: refund it in PayPal, then cancel without a refund',
+          });
+        }
+        if (!refundAmount || refundAmount > order.amount + 1e-9) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `The refund must be more than 0 and at most the ${order.amount.toFixed(2)} paid`,
+          });
+        }
+      }
+
+      // cancel and release the stock exactly once, even if two cancels race
+      const cancelled = await prisma.$transaction(async (tx) => {
+        const { count } = await tx.order.updateMany({
+          where: { id: order.id, status: 'CONFIRMED' },
+          data: {
+            status: 'CANCELLED',
+            ...(input.refund
+              ? {
+                  refundStatus: 'PENDING' as const,
+                  refundedAmount: refundAmount,
+                  refundReason: input.reason || null,
+                }
+              : {}),
+          },
         });
+        if (count === 0) return false;
 
         await tx.variant.update({
           where: { id: order.variantId },
-          data: {
-            stock: {
-              increment: order.quantity,
-            },
-          },
+          data: { stock: { increment: order.quantity } },
         });
+        return true;
       });
+
+      if (!cancelled) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'This order has already been cancelled',
+        });
+      }
 
       metrics.ordersCancelled.inc();
       logger.info(
-        { orderId: order.id, eventId: order.eventId, quantity: order.quantity },
+        {
+          orderId: order.id,
+          eventId: order.eventId,
+          quantity: order.quantity,
+          refund: input.refund,
+        },
         'order cancelled by admin',
       );
 
-      return { success: true };
+      let refundStatus: RefundOutcome | 'NONE' = 'NONE';
+      if (input.refund && order.externalTransactionId && refundAmount) {
+        refundStatus = await refundOrder({
+          id: order.id,
+          eventId: order.eventId,
+          externalTransactionId: order.externalTransactionId,
+          currency: order.currency,
+          amount: refundAmount,
+          refundReason: input.reason || null,
+        });
+      }
+
+      const customer = order.customer as {
+        emailAddress?: string;
+        name?: { givenName?: string };
+      } | null;
+      if (input.notifyBuyer && customer?.emailAddress) {
+        // a failed refund isn't mentioned: the organiser retries or refunds
+        // by hand, and the buyer hears about it then
+        await sendEmail({
+          to: customer.emailAddress,
+          replyTo: order.event.organization?.email || 'noreply@example.com',
+          subject: 'Order cancelled - ' + order.event.title,
+          content: generateCancellationMailContent({
+            givenName: customer.name?.givenName,
+            eventTitle: order.event.title,
+            organizationName: order.event.organization?.name,
+            organizationEmail: order.event.organization?.email,
+            refund:
+              refundStatus === 'REFUNDED' || refundStatus === 'PENDING'
+                ? {
+                    amount: refundAmount ?? 0,
+                    currency: order.currency,
+                    pending: refundStatus === 'PENDING',
+                    reason: input.reason,
+                  }
+                : undefined,
+          }),
+        });
+      }
+
+      return { success: true, refundStatus };
+    }),
+
+  /** Tries a failed (or still pending) refund again, for the same amount. */
+  retryRefund: authedProcedureWithOrderId
+    .input(z.object({ orderId: z.string().uuid() }))
+    .mutation(async ({ input }) => {
+      const order = await prisma.order.findUnique({
+        where: { id: input.orderId },
+      });
+
+      if (!order) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Order not found' });
+      }
+
+      if (
+        order.status !== 'CANCELLED' ||
+        (order.refundStatus !== 'FAILED' && order.refundStatus !== 'PENDING') ||
+        !order.externalTransactionId
+      ) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This order has no failed or pending refund to retry',
+        });
+      }
+
+      const refundStatus = await refundOrder({
+        id: order.id,
+        eventId: order.eventId,
+        externalTransactionId: order.externalTransactionId,
+        currency: order.currency,
+        amount: order.refundedAmount ?? order.amount,
+        refundReason: order.refundReason,
+      });
+
+      return { success: true, refundStatus };
     }),
   byId: publicProcedure
     .input(

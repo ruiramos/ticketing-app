@@ -16,6 +16,7 @@ import { createCaller } from './_app';
 import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
 import { metrics } from '../metrics';
+import { generateCancellationMailContent, sendEmail } from '~/utils/email';
 import {
   vi,
   beforeEach,
@@ -26,9 +27,19 @@ import {
   expect,
 } from 'vitest';
 
+// PayPal refunds, controlled per test
+const { mockRefund } = vi.hoisted(() => ({ mockRefund: vi.fn() }));
+
 // Mock PayPal SDK completely to isolate business logic
 vi.mock('@paypal/paypal-server-sdk', () => ({
   Client: vi.fn(),
+  PaymentsController: vi.fn(() => ({ refundCapturedPayment: mockRefund })),
+  RefundStatus: {
+    Completed: 'COMPLETED',
+    Pending: 'PENDING',
+    Failed: 'FAILED',
+    Cancelled: 'CANCELLED',
+  },
   OrdersController: vi.fn(() => ({
     createOrder: vi.fn().mockResolvedValue({
       result: { id: 'MOCK_PAYPAL_ORDER', status: 'CREATED' },
@@ -66,6 +77,9 @@ vi.mock('~/utils/email', () => ({
   generateMailContent: vi
     .fn()
     .mockReturnValue('<html>Mock email content</html>'),
+  generateCancellationMailContent: vi
+    .fn()
+    .mockReturnValue('<html>Mock cancellation email</html>'),
 }));
 
 // Clean up database before and after tests
@@ -727,5 +741,325 @@ describe('order authorization (organization members only)', () => {
         orderId: '00000000-0000-4000-8000-000000000000',
       }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('order.cancelOrder with refunds', () => {
+  beforeEach(() => {
+    mockRefund.mockReset();
+    vi.mocked(sendEmail).mockClear();
+    vi.mocked(generateCancellationMailContent).mockClear();
+  });
+
+  // a paid, confirmed order (2 tickets, 10 GBP) of an event in "Org A"
+  async function setup({ captured = true }: { captured?: boolean } = {}) {
+    const org = await prisma.organization.create({
+      data: { name: 'Org A', email: 'org-a@org.test' },
+    });
+    const other = await prisma.organization.create({
+      data: { name: 'Org B', email: 'org-b@org.test' },
+    });
+    await prisma.user.create({
+      data: { email: 'member@org-a.test', organizationId: org.id },
+    });
+    await prisma.user.create({
+      data: { email: 'member@org-b.test', organizationId: other.id },
+    });
+    const event = await prisma.event.create({
+      data: {
+        title: 'Grotto',
+        text: 'Description',
+        organizationId: org.id,
+        variants: {
+          create: {
+            title: '10:00 slot',
+            price: 5,
+            currency: 'GBP',
+            stock: 10,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+    const order = await prisma.order.create({
+      data: {
+        eventId: event.id,
+        variantId: event.variants[0].id,
+        quantity: 2,
+        status: 'CONFIRMED',
+        externalTransactionId: captured ? 'CAPTURE_123' : null,
+        selectedExtras: [],
+        items: [],
+        customer: {
+          emailAddress: 'buyer@example.com',
+          name: { givenName: 'Bea' },
+        },
+        amount: 10,
+        currency: 'GBP',
+      },
+    });
+    return { order, variantId: event.variants[0].id };
+  }
+
+  async function callerFor(email = 'member@org-a.test') {
+    const ctx = await createContextInner({
+      session: {
+        user: { email },
+        expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+      },
+    });
+    return createCaller(ctx);
+  }
+
+  const stockOf = async (variantId: string) =>
+    (await prisma.variant.findUniqueOrThrow({ where: { id: variantId } }))
+      .stock;
+
+  test('full refund: cancels, releases stock, refunds the capture, emails the buyer', async () => {
+    const { order, variantId } = await setup();
+    mockRefund.mockResolvedValue({
+      result: { id: 'REFUND_1', status: 'COMPLETED' },
+    });
+    const caller = await callerFor();
+
+    const result = await caller.order.cancelOrder({
+      orderId: order.id,
+      refund: true,
+      reason: 'Slot double booked',
+    });
+
+    expect(result.refundStatus).toBe('REFUNDED');
+    expect(mockRefund).toHaveBeenCalledTimes(1);
+    expect(mockRefund).toHaveBeenCalledWith(
+      expect.objectContaining({
+        captureId: 'CAPTURE_123',
+        paypalRequestId: `refund-${order.id}`,
+        body: expect.objectContaining({
+          amount: { currencyCode: 'GBP', value: '10.00' },
+          noteToPayer: 'Slot double booked',
+        }),
+      }),
+    );
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
+    expect(after.status).toBe('CANCELLED');
+    expect(after.refundStatus).toBe('REFUNDED');
+    expect(after.refundId).toBe('REFUND_1');
+    expect(after.refundedAmount).toBe(10);
+    expect(after.refundedAt).not.toBeNull();
+    expect(await stockOf(variantId)).toBe(12);
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'buyer@example.com',
+        replyTo: 'org-a@org.test',
+      }),
+    );
+    expect(generateCancellationMailContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refund: {
+          amount: 10,
+          currency: 'GBP',
+          pending: false,
+          reason: 'Slot double booked',
+        },
+      }),
+    );
+  });
+
+  test('partial refund sends the partial amount', async () => {
+    const { order } = await setup();
+    mockRefund.mockResolvedValue({
+      result: { id: 'REFUND_2', status: 'COMPLETED' },
+    });
+    const caller = await callerFor();
+
+    await caller.order.cancelOrder({
+      orderId: order.id,
+      refund: true,
+      amount: 4,
+    });
+
+    expect(mockRefund).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          amount: { currencyCode: 'GBP', value: '4.00' },
+        }),
+      }),
+    );
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
+    expect(after.refundedAmount).toBe(4);
+  });
+
+  test('refund above the amount paid is refused and nothing changes', async () => {
+    const { order, variantId } = await setup();
+    const caller = await callerFor();
+
+    await expect(
+      caller.order.cancelOrder({
+        orderId: order.id,
+        refund: true,
+        amount: 10.01,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    expect(mockRefund).not.toHaveBeenCalled();
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
+    expect(after.status).toBe('CONFIRMED');
+    expect(await stockOf(variantId)).toBe(10);
+  });
+
+  test('no PayPal capture recorded: refund refused, cancel without refund works', async () => {
+    const { order, variantId } = await setup({ captured: false });
+    const caller = await callerFor();
+
+    await expect(
+      caller.order.cancelOrder({ orderId: order.id, refund: true }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(
+      (await prisma.order.findUniqueOrThrow({ where: { id: order.id } }))
+        .status,
+    ).toBe('CONFIRMED');
+
+    const result = await caller.order.cancelOrder({ orderId: order.id });
+    expect(result.refundStatus).toBe('NONE');
+    expect(mockRefund).not.toHaveBeenCalled();
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
+    expect(after.status).toBe('CANCELLED');
+    expect(after.refundStatus).toBe('NONE');
+    expect(await stockOf(variantId)).toBe(12);
+  });
+
+  test('PayPal error: order cancelled, refund FAILED with the error, buyer not told about a refund', async () => {
+    const { order, variantId } = await setup();
+    mockRefund.mockRejectedValue(
+      Object.assign(new Error('Unprocessable'), {
+        body: JSON.stringify({
+          name: 'UNPROCESSABLE_ENTITY',
+          message: 'The requested action could not be performed',
+          details: [{ issue: 'CAPTURE_FULLY_REFUNDED' }],
+        }),
+      }),
+    );
+    const caller = await callerFor();
+
+    const result = await caller.order.cancelOrder({
+      orderId: order.id,
+      refund: true,
+    });
+
+    expect(result.refundStatus).toBe('FAILED');
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
+    expect(after.status).toBe('CANCELLED');
+    expect(after.refundStatus).toBe('FAILED');
+    expect(after.refundError).toMatchObject({
+      name: 'UNPROCESSABLE_ENTITY',
+      issue: 'CAPTURE_FULLY_REFUNDED',
+    });
+    expect(await stockOf(variantId)).toBe(12);
+    expect(generateCancellationMailContent).toHaveBeenCalledWith(
+      expect.objectContaining({ refund: undefined }),
+    );
+  });
+
+  test('PayPal says the refund is pending', async () => {
+    const { order } = await setup();
+    mockRefund.mockResolvedValue({
+      result: { id: 'REFUND_3', status: 'PENDING' },
+    });
+    const caller = await callerFor();
+
+    const result = await caller.order.cancelOrder({
+      orderId: order.id,
+      refund: true,
+    });
+
+    expect(result.refundStatus).toBe('PENDING');
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
+    expect(after.refundStatus).toBe('PENDING');
+    expect(after.refundedAt).toBeNull();
+  });
+
+  test('two cancels at once: stock released and refund requested only once', async () => {
+    const { order, variantId } = await setup();
+    mockRefund.mockResolvedValue({
+      result: { id: 'REFUND_4', status: 'COMPLETED' },
+    });
+    const caller = await callerFor();
+
+    const results = await Promise.allSettled([
+      caller.order.cancelOrder({ orderId: order.id, refund: true }),
+      caller.order.cancelOrder({ orderId: order.id, refund: true }),
+    ]);
+
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(mockRefund).toHaveBeenCalledTimes(1);
+    expect(await stockOf(variantId)).toBe(12);
+  });
+
+  test('retryRefund after a failure refunds with the same PayPal request id', async () => {
+    const { order } = await setup();
+    mockRefund.mockRejectedValueOnce(new Error('PayPal timeout'));
+    const caller = await callerFor();
+    await caller.order.cancelOrder({
+      orderId: order.id,
+      refund: true,
+      amount: 6,
+    });
+
+    mockRefund.mockResolvedValueOnce({
+      result: { id: 'REFUND_5', status: 'COMPLETED' },
+    });
+    const result = await caller.order.retryRefund({ orderId: order.id });
+
+    expect(result.refundStatus).toBe('REFUNDED');
+    expect(mockRefund).toHaveBeenCalledTimes(2);
+    expect(mockRefund.mock.calls[1][0]).toMatchObject({
+      paypalRequestId: `refund-${order.id}`,
+      body: { amount: { currencyCode: 'GBP', value: '6.00' } },
+    });
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
+    expect(after.refundStatus).toBe('REFUNDED');
+    expect(after.refundError).toBeNull();
+  });
+
+  test('retryRefund is refused when there is nothing to retry', async () => {
+    const { order } = await setup();
+    const caller = await callerFor();
+    await expect(
+      caller.order.retryRefund({ orderId: order.id }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
+  test('another organization cannot cancel, refund or retry', async () => {
+    const { order } = await setup();
+    const caller = await callerFor('member@org-b.test');
+    await expect(
+      caller.order.cancelOrder({ orderId: order.id, refund: true }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      caller.order.retryRefund({ orderId: order.id }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(mockRefund).not.toHaveBeenCalled();
+  });
+
+  test('notifyBuyer: false sends no email', async () => {
+    const { order } = await setup();
+    const caller = await callerFor();
+    await caller.order.cancelOrder({ orderId: order.id, notifyBuyer: false });
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 });

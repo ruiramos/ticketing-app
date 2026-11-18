@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { AdminLayout } from '~/components/AdminLayout';
+import { CancelOrderDialog } from '~/components/CancelOrderDialog';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import {
@@ -30,6 +31,32 @@ import { Label } from '~/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { cx } from 'class-variance-authority';
 
+// refund state of a cancelled order (nothing when there was no refund)
+function RefundBadge({
+  status,
+  amount,
+  currency,
+}: {
+  status: 'NONE' | 'PENDING' | 'REFUNDED' | 'FAILED';
+  amount: number | null;
+  currency: string;
+}) {
+  if (status === 'NONE') return null;
+  const label = {
+    REFUNDED: `Refunded ${(amount ?? 0).toFixed(2)} ${currency}`,
+    PENDING: 'Refund pending',
+    FAILED: 'Refund failed',
+  }[status];
+  return (
+    <Badge
+      variant={status === 'FAILED' ? 'destructive' : 'secondary'}
+      className="ml-2 whitespace-nowrap"
+    >
+      {label}
+    </Badge>
+  );
+}
+
 const EventAdminPage = () => {
   const router = useRouter();
   const id = router.query.id as string;
@@ -58,11 +85,24 @@ const EventAdminPage = () => {
     { enabled: !!id },
   );
 
-  const cancelOrderMutation = trpc.order.cancelOrder.useMutation({
-    onSuccess: () => {
+  // the order being cancelled (opens CancelOrderDialog)
+  const [orderToCancel, setOrderToCancel] = useState<{
+    id: string;
+    amount: number;
+    currency: string;
+    externalTransactionId: string | null;
+  } | null>(null);
+
+  const retryRefundMutation = trpc.order.retryRefund.useMutation({
+    onSuccess: (result) => {
       refetchOrders();
-      refetchEvent();
+      if (result.refundStatus === 'FAILED') {
+        alert(
+          "PayPal still didn't accept the refund. Check the order in PayPal and refund it there if needed.",
+        );
+      }
     },
+    onError: (error) => alert(error.message),
   });
 
   const duplicateEventMutation = trpc.event.duplicate.useMutation({
@@ -82,21 +122,6 @@ const EventAdminPage = () => {
       } catch (error) {
         console.error('Failed to duplicate event:', error);
         alert('Failed to duplicate event. Please try again.');
-      }
-    }
-  };
-
-  const handleCancelOrder = async (orderId: string) => {
-    if (
-      confirm(
-        'Are you sure you want to cancel this order? This action cannot be undone.',
-      )
-    ) {
-      try {
-        await cancelOrderMutation.mutateAsync({ orderId });
-      } catch (error) {
-        console.error('Failed to cancel order:', error);
-        alert('Failed to cancel order. Please try again.');
       }
     }
   };
@@ -136,6 +161,8 @@ const EventAdminPage = () => {
         'Currency',
         'Customer Name',
         'Customer Email',
+        'Refund Status',
+        'Refunded Amount',
         ...Array.from(allCustomFields).sort(),
       ];
 
@@ -180,6 +207,10 @@ const EventAdminPage = () => {
           order.currency,
           customerName,
           customerEmail,
+          order.refundStatus === 'NONE' ? '' : order.refundStatus,
+          order.refundStatus === 'REFUNDED'
+            ? (order.refundedAmount ?? 0).toString()
+            : '',
           ...customFieldValues,
         ];
       });
@@ -551,7 +582,14 @@ const EventAdminPage = () => {
                 }
               >
                 <TableCell>{order.createdAt.toLocaleString()}</TableCell>
-                <TableCell>{order.status}</TableCell>
+                <TableCell>
+                  {order.status}
+                  <RefundBadge
+                    status={order.refundStatus}
+                    amount={order.refundedAmount}
+                    currency={order.currency}
+                  />
+                </TableCell>
                 <TableCell>{order.externalId}</TableCell>
                 <TableCell>{order.externalTransactionId}</TableCell>
                 <TableCell>{order.variant.title}</TableCell>
@@ -598,18 +636,40 @@ const EventAdminPage = () => {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleCancelOrder(order.id)}
-                      disabled={cancelOrderMutation.isPending}
+                      onClick={() => setOrderToCancel(order)}
                     >
                       <X className="w-4 h-4 mr-1" />
                       Cancel
                     </Button>
                   )}
+                  {order.status === 'CANCELLED' &&
+                    (order.refundStatus === 'FAILED' ||
+                      order.refundStatus === 'PENDING') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          retryRefundMutation.mutate({ orderId: order.id })
+                        }
+                        disabled={retryRefundMutation.isPending}
+                      >
+                        Retry refund
+                      </Button>
+                    )}
                 </TableCell>
               </TableRow>
             ))}
         </TableBody>
       </Table>
+
+      <CancelOrderDialog
+        order={orderToCancel}
+        onClose={() => setOrderToCancel(null)}
+        onCancelled={() => {
+          refetchOrders();
+          refetchEvent();
+        }}
+      />
 
       {hasNextPage && (
         <div className="mt-4 text-center">

@@ -63,6 +63,16 @@ export namespace $Enums {
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
 
 
+export const RefundStatus: {
+  NONE: 'NONE',
+  PENDING: 'PENDING',
+  REFUNDED: 'REFUNDED',
+  FAILED: 'FAILED'
+};
+
+export type RefundStatus = (typeof RefundStatus)[keyof typeof RefundStatus]
+
+
 export const InvitationStatus: {
   PENDING: 'PENDING',
   ACCEPTED: 'ACCEPTED',
@@ -84,6 +94,10 @@ export type Role = (typeof Role)[keyof typeof Role]
 export type OrderStatus = $Enums.OrderStatus
 
 export const OrderStatus: typeof $Enums.OrderStatus
+
+export type RefundStatus = $Enums.RefundStatus
+
+export const RefundStatus: typeof $Enums.RefundStatus
 
 export type InvitationStatus = $Enums.InvitationStatus
 
@@ -5208,11 +5222,13 @@ export namespace Prisma {
 
   export type OrderAvgAggregateOutputType = {
     quantity: number | null
+    refundedAmount: number | null
     amount: number | null
   }
 
   export type OrderSumAggregateOutputType = {
     quantity: number | null
+    refundedAmount: number | null
     amount: number | null
   }
 
@@ -5226,6 +5242,11 @@ export namespace Prisma {
     status: $Enums.OrderStatus | null
     checkedIn: boolean | null
     checkedInAt: Date | null
+    refundStatus: $Enums.RefundStatus | null
+    refundedAmount: number | null
+    refundId: string | null
+    refundedAt: Date | null
+    refundReason: string | null
     amount: number | null
     currency: string | null
     createdAt: Date | null
@@ -5243,6 +5264,11 @@ export namespace Prisma {
     status: $Enums.OrderStatus | null
     checkedIn: boolean | null
     checkedInAt: Date | null
+    refundStatus: $Enums.RefundStatus | null
+    refundedAmount: number | null
+    refundId: string | null
+    refundedAt: Date | null
+    refundReason: string | null
     amount: number | null
     currency: string | null
     createdAt: Date | null
@@ -5265,6 +5291,12 @@ export namespace Prisma {
     error: number
     checkedIn: number
     checkedInAt: number
+    refundStatus: number
+    refundedAmount: number
+    refundId: number
+    refundedAt: number
+    refundReason: number
+    refundError: number
     amount: number
     currency: number
     createdAt: number
@@ -5276,11 +5308,13 @@ export namespace Prisma {
 
   export type OrderAvgAggregateInputType = {
     quantity?: true
+    refundedAmount?: true
     amount?: true
   }
 
   export type OrderSumAggregateInputType = {
     quantity?: true
+    refundedAmount?: true
     amount?: true
   }
 
@@ -5294,6 +5328,11 @@ export namespace Prisma {
     status?: true
     checkedIn?: true
     checkedInAt?: true
+    refundStatus?: true
+    refundedAmount?: true
+    refundId?: true
+    refundedAt?: true
+    refundReason?: true
     amount?: true
     currency?: true
     createdAt?: true
@@ -5311,6 +5350,11 @@ export namespace Prisma {
     status?: true
     checkedIn?: true
     checkedInAt?: true
+    refundStatus?: true
+    refundedAmount?: true
+    refundId?: true
+    refundedAt?: true
+    refundReason?: true
     amount?: true
     currency?: true
     createdAt?: true
@@ -5333,6 +5377,12 @@ export namespace Prisma {
     error?: true
     checkedIn?: true
     checkedInAt?: true
+    refundStatus?: true
+    refundedAmount?: true
+    refundId?: true
+    refundedAt?: true
+    refundReason?: true
+    refundError?: true
     amount?: true
     currency?: true
     createdAt?: true
@@ -5442,6 +5492,12 @@ export namespace Prisma {
     error: JsonValue | null
     checkedIn: boolean | null
     checkedInAt: Date | null
+    refundStatus: $Enums.RefundStatus
+    refundedAmount: number | null
+    refundId: string | null
+    refundedAt: Date | null
+    refundReason: string | null
+    refundError: JsonValue | null
     amount: number
     currency: string
     createdAt: Date
@@ -5483,6 +5539,12 @@ export namespace Prisma {
     error?: boolean
     checkedIn?: boolean
     checkedInAt?: boolean
+    refundStatus?: boolean
+    refundedAmount?: boolean
+    refundId?: boolean
+    refundedAt?: boolean
+    refundReason?: boolean
+    refundError?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5508,6 +5570,12 @@ export namespace Prisma {
     error?: boolean
     checkedIn?: boolean
     checkedInAt?: boolean
+    refundStatus?: boolean
+    refundedAmount?: boolean
+    refundId?: boolean
+    refundedAt?: boolean
+    refundReason?: boolean
+    refundError?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5533,6 +5601,12 @@ export namespace Prisma {
     error?: boolean
     checkedIn?: boolean
     checkedInAt?: boolean
+    refundStatus?: boolean
+    refundedAmount?: boolean
+    refundId?: boolean
+    refundedAt?: boolean
+    refundReason?: boolean
+    refundError?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5558,6 +5632,12 @@ export namespace Prisma {
     error?: boolean
     checkedIn?: boolean
     checkedInAt?: boolean
+    refundStatus?: boolean
+    refundedAmount?: boolean
+    refundId?: boolean
+    refundedAt?: boolean
+    refundReason?: boolean
+    refundError?: boolean
     amount?: boolean
     currency?: boolean
     createdAt?: boolean
@@ -5565,7 +5645,7 @@ export namespace Prisma {
     userId?: boolean
   }
 
-  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "externalId" | "externalTransactionId" | "eventId" | "variantId" | "quantity" | "status" | "selectedExtras" | "items" | "customer" | "customFieldResponses" | "error" | "checkedIn" | "checkedInAt" | "amount" | "currency" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["order"]>
+  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "externalId" | "externalTransactionId" | "eventId" | "variantId" | "quantity" | "status" | "selectedExtras" | "items" | "customer" | "customFieldResponses" | "error" | "checkedIn" | "checkedInAt" | "refundStatus" | "refundedAmount" | "refundId" | "refundedAt" | "refundReason" | "refundError" | "amount" | "currency" | "createdAt" | "updatedAt" | "userId", ExtArgs["result"]["order"]>
   export type OrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     event?: boolean | EventDefaultArgs<ExtArgs>
     variant?: boolean | VariantDefaultArgs<ExtArgs>
@@ -5604,6 +5684,12 @@ export namespace Prisma {
       error: Prisma.JsonValue | null
       checkedIn: boolean | null
       checkedInAt: Date | null
+      refundStatus: $Enums.RefundStatus
+      refundedAmount: number | null
+      refundId: string | null
+      refundedAt: Date | null
+      refundReason: string | null
+      refundError: Prisma.JsonValue | null
       amount: number
       currency: string
       createdAt: Date
@@ -6049,6 +6135,12 @@ export namespace Prisma {
     readonly error: FieldRef<"Order", 'Json'>
     readonly checkedIn: FieldRef<"Order", 'Boolean'>
     readonly checkedInAt: FieldRef<"Order", 'DateTime'>
+    readonly refundStatus: FieldRef<"Order", 'RefundStatus'>
+    readonly refundedAmount: FieldRef<"Order", 'Float'>
+    readonly refundId: FieldRef<"Order", 'String'>
+    readonly refundedAt: FieldRef<"Order", 'DateTime'>
+    readonly refundReason: FieldRef<"Order", 'String'>
+    readonly refundError: FieldRef<"Order", 'Json'>
     readonly amount: FieldRef<"Order", 'Float'>
     readonly currency: FieldRef<"Order", 'String'>
     readonly createdAt: FieldRef<"Order", 'DateTime'>
@@ -10111,6 +10203,12 @@ export namespace Prisma {
     error: 'error',
     checkedIn: 'checkedIn',
     checkedInAt: 'checkedInAt',
+    refundStatus: 'refundStatus',
+    refundedAmount: 'refundedAmount',
+    refundId: 'refundId',
+    refundedAt: 'refundedAt',
+    refundReason: 'refundReason',
+    refundError: 'refundError',
     amount: 'amount',
     currency: 'currency',
     createdAt: 'createdAt',
@@ -10312,6 +10410,20 @@ export namespace Prisma {
    * Reference to a field of type 'OrderStatus[]'
    */
   export type ListEnumOrderStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrderStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'RefundStatus'
+   */
+  export type EnumRefundStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RefundStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'RefundStatus[]'
+   */
+  export type ListEnumRefundStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RefundStatus[]'>
     
 
 
@@ -10615,6 +10727,12 @@ export namespace Prisma {
     error?: JsonNullableFilter<"Order">
     checkedIn?: BoolNullableFilter<"Order"> | boolean | null
     checkedInAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    refundStatus?: EnumRefundStatusFilter<"Order"> | $Enums.RefundStatus
+    refundedAmount?: FloatNullableFilter<"Order"> | number | null
+    refundId?: StringNullableFilter<"Order"> | string | null
+    refundedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    refundReason?: StringNullableFilter<"Order"> | string | null
+    refundError?: JsonNullableFilter<"Order">
     amount?: FloatFilter<"Order"> | number
     currency?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -10640,6 +10758,12 @@ export namespace Prisma {
     error?: SortOrderInput | SortOrder
     checkedIn?: SortOrderInput | SortOrder
     checkedInAt?: SortOrderInput | SortOrder
+    refundStatus?: SortOrder
+    refundedAmount?: SortOrderInput | SortOrder
+    refundId?: SortOrderInput | SortOrder
+    refundedAt?: SortOrderInput | SortOrder
+    refundReason?: SortOrderInput | SortOrder
+    refundError?: SortOrderInput | SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -10668,6 +10792,12 @@ export namespace Prisma {
     error?: JsonNullableFilter<"Order">
     checkedIn?: BoolNullableFilter<"Order"> | boolean | null
     checkedInAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    refundStatus?: EnumRefundStatusFilter<"Order"> | $Enums.RefundStatus
+    refundedAmount?: FloatNullableFilter<"Order"> | number | null
+    refundId?: StringNullableFilter<"Order"> | string | null
+    refundedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    refundReason?: StringNullableFilter<"Order"> | string | null
+    refundError?: JsonNullableFilter<"Order">
     amount?: FloatFilter<"Order"> | number
     currency?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -10693,6 +10823,12 @@ export namespace Prisma {
     error?: SortOrderInput | SortOrder
     checkedIn?: SortOrderInput | SortOrder
     checkedInAt?: SortOrderInput | SortOrder
+    refundStatus?: SortOrder
+    refundedAmount?: SortOrderInput | SortOrder
+    refundId?: SortOrderInput | SortOrder
+    refundedAt?: SortOrderInput | SortOrder
+    refundReason?: SortOrderInput | SortOrder
+    refundError?: SortOrderInput | SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -10723,6 +10859,12 @@ export namespace Prisma {
     error?: JsonNullableWithAggregatesFilter<"Order">
     checkedIn?: BoolNullableWithAggregatesFilter<"Order"> | boolean | null
     checkedInAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+    refundStatus?: EnumRefundStatusWithAggregatesFilter<"Order"> | $Enums.RefundStatus
+    refundedAmount?: FloatNullableWithAggregatesFilter<"Order"> | number | null
+    refundId?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    refundedAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+    refundReason?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    refundError?: JsonNullableWithAggregatesFilter<"Order">
     amount?: FloatWithAggregatesFilter<"Order"> | number
     currency?: StringWithAggregatesFilter<"Order"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
@@ -11287,6 +11429,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -11311,6 +11459,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -11331,6 +11485,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11355,6 +11515,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11377,6 +11543,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -11397,6 +11569,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11418,6 +11596,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12229,6 +12413,13 @@ export namespace Prisma {
     not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
   }
 
+  export type EnumRefundStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.RefundStatus | EnumRefundStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.RefundStatus[] | ListEnumRefundStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RefundStatus[] | ListEnumRefundStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumRefundStatusFilter<$PrismaModel> | $Enums.RefundStatus
+  }
+
   export type VariantScalarRelationFilter = {
     is?: VariantWhereInput
     isNot?: VariantWhereInput
@@ -12254,6 +12445,12 @@ export namespace Prisma {
     error?: SortOrder
     checkedIn?: SortOrder
     checkedInAt?: SortOrder
+    refundStatus?: SortOrder
+    refundedAmount?: SortOrder
+    refundId?: SortOrder
+    refundedAt?: SortOrder
+    refundReason?: SortOrder
+    refundError?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -12263,6 +12460,7 @@ export namespace Prisma {
 
   export type OrderAvgOrderByAggregateInput = {
     quantity?: SortOrder
+    refundedAmount?: SortOrder
     amount?: SortOrder
   }
 
@@ -12276,6 +12474,11 @@ export namespace Prisma {
     status?: SortOrder
     checkedIn?: SortOrder
     checkedInAt?: SortOrder
+    refundStatus?: SortOrder
+    refundedAmount?: SortOrder
+    refundId?: SortOrder
+    refundedAt?: SortOrder
+    refundReason?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -12293,6 +12496,11 @@ export namespace Prisma {
     status?: SortOrder
     checkedIn?: SortOrder
     checkedInAt?: SortOrder
+    refundStatus?: SortOrder
+    refundedAmount?: SortOrder
+    refundId?: SortOrder
+    refundedAt?: SortOrder
+    refundReason?: SortOrder
     amount?: SortOrder
     currency?: SortOrder
     createdAt?: SortOrder
@@ -12302,6 +12510,7 @@ export namespace Prisma {
 
   export type OrderSumOrderByAggregateInput = {
     quantity?: SortOrder
+    refundedAmount?: SortOrder
     amount?: SortOrder
   }
 
@@ -12347,6 +12556,16 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedBoolNullableFilter<$PrismaModel>
     _max?: NestedBoolNullableFilter<$PrismaModel>
+  }
+
+  export type EnumRefundStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RefundStatus | EnumRefundStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.RefundStatus[] | ListEnumRefundStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RefundStatus[] | ListEnumRefundStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumRefundStatusWithAggregatesFilter<$PrismaModel> | $Enums.RefundStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumRefundStatusFilter<$PrismaModel>
+    _max?: NestedEnumRefundStatusFilter<$PrismaModel>
   }
 
   export type EventListRelationFilter = {
@@ -12834,6 +13053,10 @@ export namespace Prisma {
 
   export type NullableBoolFieldUpdateOperationsInput = {
     set?: boolean | null
+  }
+
+  export type EnumRefundStatusFieldUpdateOperationsInput = {
+    set?: $Enums.RefundStatus
   }
 
   export type EventUpdateOneRequiredWithoutOrdersNestedInput = {
@@ -13392,6 +13615,13 @@ export namespace Prisma {
     not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
   }
 
+  export type NestedEnumRefundStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.RefundStatus | EnumRefundStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.RefundStatus[] | ListEnumRefundStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RefundStatus[] | ListEnumRefundStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumRefundStatusFilter<$PrismaModel> | $Enums.RefundStatus
+  }
+
   export type NestedEnumOrderStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.OrderStatus | EnumOrderStatusFieldRefInput<$PrismaModel>
     in?: $Enums.OrderStatus[] | ListEnumOrderStatusFieldRefInput<$PrismaModel>
@@ -13431,6 +13661,16 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedBoolNullableFilter<$PrismaModel>
     _max?: NestedBoolNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumRefundStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RefundStatus | EnumRefundStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.RefundStatus[] | ListEnumRefundStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RefundStatus[] | ListEnumRefundStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumRefundStatusWithAggregatesFilter<$PrismaModel> | $Enums.RefundStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumRefundStatusFilter<$PrismaModel>
+    _max?: NestedEnumRefundStatusFilter<$PrismaModel>
   }
 
   export type NestedEnumRoleFilter<$PrismaModel = never> = {
@@ -13540,6 +13780,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -13562,6 +13808,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -13711,6 +13963,12 @@ export namespace Prisma {
     error?: JsonNullableFilter<"Order">
     checkedIn?: BoolNullableFilter<"Order"> | boolean | null
     checkedInAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    refundStatus?: EnumRefundStatusFilter<"Order"> | $Enums.RefundStatus
+    refundedAmount?: FloatNullableFilter<"Order"> | number | null
+    refundId?: StringNullableFilter<"Order"> | string | null
+    refundedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    refundReason?: StringNullableFilter<"Order"> | string | null
+    refundError?: JsonNullableFilter<"Order">
     amount?: FloatFilter<"Order"> | number
     currency?: StringFilter<"Order"> | string
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -13819,6 +14077,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -13841,6 +14105,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14616,6 +14886,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14639,6 +14915,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14840,6 +15122,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -14919,6 +15207,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14941,6 +15235,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14962,6 +15262,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14983,6 +15289,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -15003,6 +15315,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15025,6 +15343,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15046,6 +15370,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15238,6 +15568,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: boolean | null
     checkedInAt?: Date | string | null
+    refundStatus?: $Enums.RefundStatus
+    refundedAmount?: number | null
+    refundId?: string | null
+    refundedAt?: Date | string | null
+    refundReason?: string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount: number
     currency: string
     createdAt?: Date | string
@@ -15270,6 +15606,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15293,6 +15635,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15314,6 +15662,12 @@ export namespace Prisma {
     error?: NullableJsonNullValueInput | InputJsonValue
     checkedIn?: NullableBoolFieldUpdateOperationsInput | boolean | null
     checkedInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundStatus?: EnumRefundStatusFieldUpdateOperationsInput | $Enums.RefundStatus
+    refundedAmount?: NullableFloatFieldUpdateOperationsInput | number | null
+    refundId?: NullableStringFieldUpdateOperationsInput | string | null
+    refundedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    refundReason?: NullableStringFieldUpdateOperationsInput | string | null
+    refundError?: NullableJsonNullValueInput | InputJsonValue
     amount?: FloatFieldUpdateOperationsInput | number
     currency?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
