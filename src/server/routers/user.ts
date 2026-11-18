@@ -588,11 +588,6 @@ export const userRouter = router({
           quantity: true,
           amount: true,
           selectedExtras: true,
-          variant: {
-            select: {
-              price: true,
-            },
-          },
         },
         where: { eventId: input.eventId },
       });
@@ -606,24 +601,23 @@ export const userRouter = router({
         0,
       );
 
-      // Calculate ticket revenue (from variants)
-      const ticketRevenue = confirmedOrders.reduce((sum, order) => {
-        return sum + order.variant.price * order.quantity;
-      }, 0);
+      // What buyers paid: order.amount, with the extras (at the prices stored
+      // on the order) split out. Not the variant's current price, which the
+      // organiser may have changed since.
+      const extrasTotal = (order: (typeof confirmedOrders)[number]) =>
+        (
+          (order.selectedExtras as { price?: number; quantity: number }[]) ?? []
+        ).reduce((sum, extra) => sum + (extra.price ?? 0) * extra.quantity, 0);
 
-      // Calculate addon revenue (from extras)
-      const addonRevenue = confirmedOrders.reduce((sum, order) => {
-        const extrasTotal = ((order.selectedExtras as any[]) || []).reduce(
-          (extraSum, extra) => {
-            return extraSum + extra.price * extra.quantity;
-          },
-          0,
-        );
-        return sum + extrasTotal;
-      }, 0);
-
-      const totalRevenue = ticketRevenue + addonRevenue;
-
+      const totalRevenue = confirmedOrders.reduce(
+        (sum, order) => sum + order.amount,
+        0,
+      );
+      const addonRevenue = confirmedOrders.reduce(
+        (sum, order) => sum + extrasTotal(order),
+        0,
+      );
+      const ticketRevenue = totalRevenue - addonRevenue;
       const extrasSold = confirmedOrders.reduce(
         (acc, order) => {
           if (!order.selectedExtras) return acc;

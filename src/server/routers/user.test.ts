@@ -613,6 +613,93 @@ describe('user.getUserEventOrders', () => {
   });
 });
 
+describe('user.getUserEventOrdersSummary', () => {
+  test('reports what buyers paid, not the current ticket price', async () => {
+    const organization = await prisma.organization.create({
+      data: { name: 'Test Org', email: 'org@test.com' },
+    });
+    await prisma.user.create({
+      data: {
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'ADMIN',
+        organizationId: organization.id,
+      },
+    });
+    const event = await prisma.event.create({
+      data: {
+        title: 'Test Event',
+        text: 'Description',
+        organizationId: organization.id,
+        variants: {
+          create: {
+            title: 'Standard Ticket',
+            // raised after the orders below were bought at 10
+            price: 20,
+            currency: 'GBP',
+            stock: 100,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+    const order = {
+      eventId: event.id,
+      variantId: event.variants[0].id,
+      items: [],
+      customer: {},
+      currency: 'GBP',
+    };
+    await prisma.order.createMany({
+      data: [
+        {
+          ...order,
+          quantity: 2,
+          status: 'CONFIRMED',
+          selectedExtras: [{ id: 'extra-1', price: 5, quantity: 1 }],
+          amount: 25,
+        },
+        {
+          ...order,
+          quantity: 1,
+          status: 'CONFIRMED',
+          selectedExtras: [],
+          amount: 10,
+        },
+        {
+          ...order,
+          quantity: 3,
+          status: 'CANCELLED',
+          selectedExtras: [],
+          amount: 30,
+        },
+      ],
+    });
+
+    const caller = createCaller(
+      await createContextInner({
+        session: {
+          user: { email: 'test@example.com' },
+          expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+        },
+      }),
+    );
+    const summary = await caller.user.getUserEventOrdersSummary({
+      eventId: event.id,
+    });
+
+    expect(summary).toMatchObject({
+      totalOrders: 2,
+      totalTickets: 3,
+      ticketRevenue: 30,
+      addonRevenue: 5,
+      totalRevenue: 35,
+      extrasSold: { 'extra-1': 1 },
+    });
+  });
+});
+
 describe('user.updateOrganization', () => {
   test("should update the current user's organization", async () => {
     const organization = await prisma.organization.create({

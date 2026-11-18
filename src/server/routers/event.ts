@@ -336,6 +336,9 @@ export const eventRouter = router({
               title: z.string().min(1),
               price: z.number().min(0),
               stock: z.number().int().min(0),
+              // the stock the form loaded: if given, only the organiser's change
+              // is applied, so tickets sold meanwhile aren't put back on sale
+              loadedStock: z.number().int().min(0).optional(),
               displayOrder: z.number().int().min(0),
             }),
           )
@@ -453,35 +456,39 @@ export const eventRouter = router({
           include: { orders: true },
         });
 
-        // Check which variants have orders (cannot be deleted)
-        const variantsWithOrders = existingVariants.filter(
-          (v) => v.orders.length > 0,
-        );
-        const variantIdsWithOrders = new Set(
-          variantsWithOrders.map((v) => v.id),
-        );
-
         // Process input variants
         for (const inputVariant of input.variants) {
-          if (inputVariant.id && variantIdsWithOrders.has(inputVariant.id)) {
-            // Update existing variant with orders (preserve it)
+          if (inputVariant.id) {
+            // only this event's variants (an id from another event would
+            // otherwise update that event's variant)
+            const existing = existingVariants.find(
+              (v) => v.id === inputVariant.id,
+            );
+            if (!existing) {
+              throw new TRPCError({
+                code: 'BAD_REQUEST',
+                message: 'Variant does not belong to this event',
+              });
+            }
+
+            // Apply the organiser's change to the current stock rather than
+            // overwriting it: orders placed while the form was open have
+            // already taken tickets from it.
+            const stock =
+              inputVariant.loadedStock === undefined
+                ? inputVariant.stock
+                : Math.max(
+                    0,
+                    existing.stock +
+                      (inputVariant.stock - inputVariant.loadedStock),
+                  );
+
             await tx.variant.update({
               where: { id: inputVariant.id },
               data: {
                 title: inputVariant.title,
                 price: inputVariant.price,
-                stock: inputVariant.stock,
-                displayOrder: inputVariant.displayOrder,
-              },
-            });
-          } else if (inputVariant.id) {
-            // Update existing variant without orders
-            await tx.variant.update({
-              where: { id: inputVariant.id },
-              data: {
-                title: inputVariant.title,
-                price: inputVariant.price,
-                stock: inputVariant.stock,
+                stock,
                 displayOrder: inputVariant.displayOrder,
               },
             });

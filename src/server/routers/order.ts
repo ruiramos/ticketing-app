@@ -25,6 +25,7 @@ import {
   generateMailContent,
   sendEmail,
 } from '~/utils/email';
+import { EVENT_MAX_TICKETS } from '~/utils/contants';
 import { logger } from '../logger';
 import { metrics, trackPaypal } from '../metrics';
 
@@ -160,7 +161,7 @@ export const orderRouter = router({
       z.object({
         id: z.string().uuid(),
         variantId: z.string().uuid(),
-        quantity: z.number().min(1),
+        quantity: z.number().int().min(1).max(EVENT_MAX_TICKETS),
         extras: z.record(z.string().uuid(), z.any()).nullish(),
         customFields: z.record(z.string(), z.any()).nullish(),
       }),
@@ -178,6 +179,7 @@ export const orderRouter = router({
             select: {
               id: true,
               title: true,
+              enabled: true,
               eventExtras: true,
               customFields: true,
             },
@@ -189,6 +191,20 @@ export const orderRouter = router({
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: `Variant ${input.variantId} not found.`,
+        });
+      }
+
+      if (variant.event.id !== input.id) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Variant does not belong to this event.',
+        });
+      }
+
+      if (!variant.event.enabled) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Tickets for this event are not on sale.',
         });
       }
 
@@ -238,7 +254,7 @@ export const orderRouter = router({
           sku: extra.id,
           quantity: '1',
           unitAmount: {
-            currencyCode: extra.currency ?? 'GBP',
+            currencyCode: variant.currency,
             value: (extra.price ?? 0).toString(),
           },
         })),
@@ -338,11 +354,11 @@ export const orderRouter = router({
                 {
                   items: items,
                   amount: {
-                    currencyCode: 'GBP',
+                    currencyCode: variant.currency,
                     value: amount.toFixed(2),
                     breakdown: {
                       itemTotal: {
-                        currencyCode: 'GBP',
+                        currencyCode: variant.currency,
                         value: amount.toFixed(2),
                       },
                     },

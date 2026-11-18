@@ -16,6 +16,8 @@ import { createCaller } from './_app';
 import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
 import { metrics } from '../metrics';
+import { OrdersController } from '@paypal/paypal-server-sdk';
+import { EVENT_MAX_TICKETS } from '~/utils/contants';
 import { generateCancellationMailContent, sendEmail } from '~/utils/email';
 import {
   vi,
@@ -117,6 +119,7 @@ describe('order.createOrder', () => {
         title: 'Test Event',
         text: 'Description',
         organizationId: organization.id,
+        enabled: true,
         variants: {
           create: {
             title: 'Standard Ticket',
@@ -196,6 +199,7 @@ describe('order.createOrder', () => {
         title: 'Test Event',
         text: 'Description',
         organizationId: organization.id,
+        enabled: true,
         variants: {
           create: {
             title: 'Standard Ticket',
@@ -245,6 +249,7 @@ describe('order.createOrder', () => {
         title: 'Test Event',
         text: 'Description',
         organizationId: organization.id,
+        enabled: true,
       },
     });
 
@@ -275,6 +280,7 @@ describe('order.createOrder', () => {
         title: 'Test Event',
         text: 'Description',
         organizationId: organization.id,
+        enabled: true,
         variants: {
           create: {
             title: 'Limited Ticket',
@@ -319,6 +325,7 @@ describe('order.createOrder', () => {
         title: 'Test Event',
         text: 'Description',
         organizationId: organization.id,
+        enabled: true,
         variants: {
           create: {
             title: 'Sold Out Ticket',
@@ -362,6 +369,7 @@ describe('order.createOrder', () => {
         title: 'Test Event',
         text: 'Description',
         organizationId: organization.id,
+        enabled: true,
         variants: {
           create: {
             title: 'Standard Ticket',
@@ -439,6 +447,117 @@ describe.skip('order.byId', () => {
   });
 });
 
+describe('order.createOrder checks', () => {
+  async function createEvent({
+    enabled = true,
+    currency = 'GBP',
+  }: { enabled?: boolean; currency?: string } = {}) {
+    const organization = await prisma.organization.create({
+      data: { name: 'Checks Org', email: 'checks@test.com' },
+    });
+    return prisma.event.create({
+      data: {
+        title: 'Checks Event',
+        text: 'Description',
+        organizationId: organization.id,
+        enabled,
+        variants: {
+          create: {
+            title: 'Standard',
+            price: 10,
+            currency,
+            stock: 50,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+  }
+
+  test('rejects orders for an event that is not on sale', async () => {
+    const event = await createEvent({ enabled: false });
+    const caller = createCaller(await createContextInner({ session: null }));
+
+    await expect(
+      caller.order.createOrder({
+        id: event.id,
+        variantId: event.variants[0].id,
+        quantity: 1,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    const variant = await prisma.variant.findUnique({
+      where: { id: event.variants[0].id },
+    });
+    expect(variant!.stock).toBe(50);
+    expect(await prisma.order.count()).toBe(0);
+  });
+
+  test('rejects a variant from another event', async () => {
+    const event = await createEvent();
+    const other = await createEvent();
+    const caller = createCaller(await createContextInner({ session: null }));
+
+    await expect(
+      caller.order.createOrder({
+        id: event.id,
+        variantId: other.variants[0].id,
+        quantity: 1,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(await prisma.order.count()).toBe(0);
+  });
+
+  test('rejects more than the maximum tickets per order', async () => {
+    const event = await createEvent();
+    const caller = createCaller(await createContextInner({ session: null }));
+
+    await expect(
+      caller.order.createOrder({
+        id: event.id,
+        variantId: event.variants[0].id,
+        quantity: EVENT_MAX_TICKETS + 1,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    await expect(
+      caller.order.createOrder({
+        id: event.id,
+        variantId: event.variants[0].id,
+        quantity: 1.5,
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await caller.order.createOrder({
+      id: event.id,
+      variantId: event.variants[0].id,
+      quantity: EVENT_MAX_TICKETS,
+    });
+    expect(await prisma.order.count()).toBe(1);
+  });
+
+  test("sends PayPal the order's currency", async () => {
+    const event = await createEvent({ currency: 'EUR' });
+    const caller = createCaller(await createContextInner({ session: null }));
+
+    await caller.order.createOrder({
+      id: event.id,
+      variantId: event.variants[0].id,
+      quantity: 2,
+    });
+
+    const paypalCreateOrder = vi.mocked(OrdersController).mock.results[0].value
+      .createOrder as ReturnType<typeof vi.fn>;
+    const unit = paypalCreateOrder.mock.lastCall![0].body.purchaseUnits[0];
+    expect(unit.amount).toMatchObject({
+      currencyCode: 'EUR',
+      value: '20.00',
+      breakdown: { itemTotal: { currencyCode: 'EUR', value: '20.00' } },
+    });
+    expect(unit.items[0].unitAmount.currencyCode).toBe('EUR');
+  });
+});
+
 describe('order business logic', () => {
   test('should handle concurrent stock updates correctly', async () => {
     const organization = await prisma.organization.create({
@@ -450,6 +569,7 @@ describe('order business logic', () => {
         title: 'Limited Event',
         text: 'Description',
         organizationId: organization.id,
+        enabled: true,
         variants: {
           create: {
             title: 'Last Few Tickets',
@@ -530,6 +650,7 @@ describe('order metrics', () => {
         title: 'Metrics Event',
         text: 'Description',
         organizationId: organization.id,
+        enabled: true,
         variants: {
           create: {
             title: 'Standard',
@@ -770,6 +891,7 @@ describe('order.cancelOrder with refunds', () => {
         title: 'Grotto',
         text: 'Description',
         organizationId: org.id,
+        enabled: true,
         variants: {
           create: {
             title: '10:00 slot',
