@@ -882,6 +882,139 @@ describe('event.update', () => {
   });
 });
 
+describe('event.update stock', () => {
+  async function setup() {
+    const organization = await prisma.organization.create({
+      data: { name: 'Stock Org', email: 'stock@test.com' },
+    });
+    await prisma.user.create({
+      data: {
+        email: 'stock@example.com',
+        name: 'Stock User',
+        role: 'ADMIN',
+        organizationId: organization.id,
+      },
+    });
+    const event = await prisma.event.create({
+      data: {
+        title: 'Stock Event',
+        text: 'Description',
+        organizationId: organization.id,
+        variants: {
+          create: {
+            title: 'Standard',
+            price: 10,
+            currency: 'GBP',
+            stock: 50,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+    const caller = createCaller(
+      await createContextInner({
+        session: {
+          user: { email: 'stock@example.com' },
+          expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+        },
+      }),
+    );
+    const update = (
+      variant: Partial<
+        inferProcedureInput<AppRouter['event']['update']>['variants'][number]
+      >,
+    ) =>
+      caller.event.update({
+        id: event.id,
+        title: 'Stock Event',
+        text: 'Description',
+        startsAt: new Date('2030-01-01T10:00:00Z'),
+        enabled: true,
+        variants: [
+          {
+            id: event.variants[0].id,
+            title: 'Standard',
+            price: 10,
+            stock: 50,
+            displayOrder: 0,
+            ...variant,
+          },
+        ],
+        extras: [],
+      });
+    return { event, variant: event.variants[0], update };
+  }
+
+  test('keeps tickets sold while the form was open', async () => {
+    const { variant, update } = await setup();
+    // 3 tickets sell after the organiser opened the form (loaded 50)
+    await prisma.variant.update({
+      where: { id: variant.id },
+      data: { stock: { decrement: 3 } },
+    });
+
+    // saving without touching stock leaves it at 47
+    await update({ stock: 50, loadedStock: 50 });
+    expect(
+      (await prisma.variant.findUnique({ where: { id: variant.id } }))!.stock,
+    ).toBe(47);
+
+    // adding 10 in the form adds 10 to the current stock
+    await update({ stock: 60, loadedStock: 50 });
+    expect(
+      (await prisma.variant.findUnique({ where: { id: variant.id } }))!.stock,
+    ).toBe(57);
+
+    // removing more than is left stops at 0
+    await update({ stock: 0, loadedStock: 100 });
+    expect(
+      (await prisma.variant.findUnique({ where: { id: variant.id } }))!.stock,
+    ).toBe(0);
+  });
+
+  test('without loadedStock, stock is set as given', async () => {
+    const { variant, update } = await setup();
+    await update({ stock: 20 });
+    expect(
+      (await prisma.variant.findUnique({ where: { id: variant.id } }))!.stock,
+    ).toBe(20);
+  });
+
+  test("rejects another event's variant", async () => {
+    const { update } = await setup();
+    const otherOrg = await prisma.organization.create({
+      data: { name: 'Other Org', email: 'other@test.com' },
+    });
+    const other = await prisma.event.create({
+      data: {
+        title: 'Other Event',
+        text: 'Description',
+        organizationId: otherOrg.id,
+        variants: {
+          create: {
+            title: 'Theirs',
+            price: 5,
+            currency: 'GBP',
+            stock: 10,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+
+    await expect(
+      update({ id: other.variants[0].id, stock: 0 }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(
+      (await prisma.variant.findUnique({
+        where: { id: other.variants[0].id },
+      }))!.stock,
+    ).toBe(10);
+  });
+});
+
 describe('event.duplicate', () => {
   test('should copy event data without orders, restoring original stock', async () => {
     const organization = await prisma.organization.create({

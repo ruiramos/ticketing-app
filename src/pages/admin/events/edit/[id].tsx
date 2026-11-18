@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { format, parse } from 'date-fns';
 import { AdminLayout } from '~/components/AdminLayout';
@@ -46,6 +46,9 @@ const EditEventPage = () => {
   const [endsAt, setEndsAt] = useState('');
   const [enabled, setEnabled] = useState(true);
   const [variants, setVariants] = useState<Partial<Variant>[]>([]);
+  // stock per variant id as loaded, so saving only applies the change made
+  // here and keeps tickets sold while the form was open
+  const loadedStock = useRef<Record<string, number>>({});
   const [extras, setExtras] = useState<Partial<EventExtras>[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [emailNotes, setEmailNotes] = useState('');
@@ -121,6 +124,9 @@ const EditEventPage = () => {
             displayOrder: variant.displayOrder ?? variant.originalIndex,
           }));
         setVariants(sortedVariants);
+        loadedStock.current = Object.fromEntries(
+          event.variants.map((variant) => [variant.id, variant.stock]),
+        );
       }
 
       // Set extras
@@ -315,6 +321,7 @@ const EditEventPage = () => {
             title: v.title!,
             price: v.price!,
             stock: v.stock!,
+            loadedStock: v.id ? loadedStock.current[v.id] : undefined,
             displayOrder: v.displayOrder!,
           })),
         extras: extras

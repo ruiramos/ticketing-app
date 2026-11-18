@@ -267,28 +267,30 @@ export default function OrderConfirmation({
             </Card>
 
             {/* Need Help */}
-            <Card className="border-purple-200">
-              <CardHeader>
-                <CardTitle className="text-base">Need Help?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-4">
-                  If you have any questions about your booking, please contact
-                  us:
-                </p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-purple-500" />
-                    <a
-                      href="mailto:help@summerfair.com"
-                      className="text-purple-700 hover:underline"
-                    >
-                      {order.event.organization?.email}
-                    </a>
+            {order.event.organization?.email && (
+              <Card className="border-purple-200">
+                <CardHeader>
+                  <CardTitle className="text-base">Need Help?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-4">
+                    If you have any questions about your booking, please contact
+                    us:
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-purple-500" />
+                      <a
+                        href={`mailto:${order.event.organization.email}`}
+                        className="text-purple-700 hover:underline"
+                      >
+                        {order.event.organization?.email}
+                      </a>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
