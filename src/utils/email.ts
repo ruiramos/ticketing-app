@@ -96,6 +96,61 @@ ${
 Thank you and see you at the ${escapeHtml(event.title)}!</p>`;
 }
 
+/**
+ * Email to the buyer when an organiser cancels their order, saying whether
+ * (and how much) was refunded.
+ */
+export function generateCancellationMailContent({
+  givenName,
+  eventTitle,
+  organizationName,
+  organizationEmail,
+  refund,
+}: {
+  givenName?: string;
+  eventTitle: string;
+  organizationName?: string | null;
+  organizationEmail?: string | null;
+  // undefined: no refund made through the app
+  refund?: {
+    amount: number;
+    currency: string;
+    pending: boolean;
+    reason?: string | null;
+  };
+}) {
+  const refundText = refund
+    ? `<p>A refund of ${escapeHtml(formatMoney(refund.amount, refund.currency))} ${
+        refund.pending
+          ? 'has been requested and should reach your PayPal account shortly'
+          : 'has been issued to your PayPal account; it can take a few days to show'
+      }.</p>${refund.reason ? `\n<p>Note from the organiser: ${escapeHtml(refund.reason)}</p>` : ''}`
+    : '';
+
+  return `<p>Dear ${escapeHtml(givenName ?? '')},</p>
+
+<p>Your order for the ${escapeHtml(eventTitle)} has been cancelled${
+    organizationName ? ` by ${escapeHtml(organizationName)}` : ''
+  }.</p>
+${refundText}
+<p>${
+    organizationEmail
+      ? `If you have any questions, simply reply to this email or write to ${escapeHtml(organizationEmail)}.`
+      : 'If you have any questions, simply reply to this email.'
+  }</p>`;
+}
+
+function formatMoney(amount: number, currency: string) {
+  try {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency,
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency}`;
+  }
+}
+
 function escapeHtml(text: string) {
   return text
     .replace(/&/g, '&amp;')

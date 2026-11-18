@@ -80,6 +80,12 @@ function createMetrics() {
       help: 'Confirmed orders cancelled by an admin',
       registers,
     }),
+    ordersRefunded: new Counter({
+      name: 'ticketing_orders_refunded_total',
+      help: 'Refunds of cancelled orders through PayPal, by outcome',
+      labelNames: ['outcome'] as const, // refunded | pending | failed
+      registers,
+    }),
 
     paypalRequests: new Counter({
       name: 'ticketing_paypal_requests_total',

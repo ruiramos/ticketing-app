@@ -173,6 +173,12 @@ exports.Prisma.OrderScalarFieldEnum = {
   error: 'error',
   checkedIn: 'checkedIn',
   checkedInAt: 'checkedInAt',
+  refundStatus: 'refundStatus',
+  refundedAmount: 'refundedAmount',
+  refundId: 'refundId',
+  refundedAt: 'refundedAt',
+  refundReason: 'refundReason',
+  refundError: 'refundError',
   amount: 'amount',
   currency: 'currency',
   createdAt: 'createdAt',
@@ -255,6 +261,13 @@ exports.OrderStatus = exports.$Enums.OrderStatus = {
   CONFIRMED: 'CONFIRMED',
   CANCELLED: 'CANCELLED',
   EXPIRED: 'EXPIRED'
+};
+
+exports.RefundStatus = exports.$Enums.RefundStatus = {
+  NONE: 'NONE',
+  PENDING: 'PENDING',
+  REFUNDED: 'REFUNDED',
+  FAILED: 'FAILED'
 };
 
 exports.Role = exports.$Enums.Role = {
