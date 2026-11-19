@@ -179,6 +179,8 @@ exports.Prisma.OrderScalarFieldEnum = {
   refundedAt: 'refundedAt',
   refundReason: 'refundReason',
   refundError: 'refundError',
+  confirmationEmailSentAt: 'confirmationEmailSentAt',
+  confirmationEmailError: 'confirmationEmailError',
   amount: 'amount',
   currency: 'currency',
   createdAt: 'createdAt',

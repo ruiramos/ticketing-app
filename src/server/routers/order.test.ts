@@ -75,7 +75,7 @@ vi.mock('@paypal/paypal-server-sdk', () => ({
 
 // Mock email utility
 vi.mock('~/utils/email', () => ({
-  sendEmail: vi.fn(),
+  sendEmail: vi.fn().mockResolvedValue({ ok: true }),
   generateMailContent: vi
     .fn()
     .mockReturnValue('<html>Mock email content</html>'),
@@ -1254,6 +1254,173 @@ describe('order.cancelOrder with refunds', () => {
     const { order } = await setup();
     const caller = await callerFor();
     await caller.order.cancelOrder({ orderId: order.id, notifyBuyer: false });
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe('ticket emails', () => {
+  beforeEach(() => {
+    vi.mocked(sendEmail).mockReset().mockResolvedValue({ ok: true });
+  });
+
+  async function setup(status: 'CONFIRMED' | 'RESERVED' = 'CONFIRMED') {
+    const org = await prisma.organization.create({
+      data: { name: 'Org A', email: 'org-a@org.test' },
+    });
+    const other = await prisma.organization.create({
+      data: { name: 'Org B', email: 'org-b@org.test' },
+    });
+    await prisma.user.create({
+      data: { email: 'member@org-a.test', organizationId: org.id },
+    });
+    await prisma.user.create({
+      data: { email: 'member@org-b.test', organizationId: other.id },
+    });
+    const event = await prisma.event.create({
+      data: {
+        title: 'Grotto',
+        text: 'Description',
+        organizationId: org.id,
+        enabled: true,
+        variants: {
+          create: {
+            title: '10:00 slot',
+            price: 5,
+            currency: 'GBP',
+            stock: 10,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+    const order = await prisma.order.create({
+      data: {
+        eventId: event.id,
+        variantId: event.variants[0].id,
+        quantity: 2,
+        status,
+        externalId: 'PAYPAL_ORDER_1',
+        selectedExtras: [],
+        items: [],
+        customer:
+          status === 'CONFIRMED'
+            ? { emailAddress: 'buyer@example.com', name: { givenName: 'Bea' } }
+            : {},
+        amount: 10,
+        currency: 'GBP',
+      },
+    });
+    return { order };
+  }
+
+  async function callerFor(email = 'member@org-a.test') {
+    return createCaller(
+      await createContextInner({
+        session: {
+          user: { email },
+          expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+        },
+      }),
+    );
+  }
+
+  const reload = (id: string) =>
+    prisma.order.findUniqueOrThrow({ where: { id } });
+
+  test('capture emails the buyer and records it on the order', async () => {
+    const { order } = await setup('RESERVED');
+    const paypal = vi.mocked(OrdersController).mock.results[0].value as {
+      getOrder: ReturnType<typeof vi.fn>;
+      captureOrder: ReturnType<typeof vi.fn>;
+    };
+    const unit = { referenceId: order.id };
+    paypal.getOrder.mockResolvedValueOnce({
+      result: { id: 'PAYPAL_ORDER_1', purchaseUnits: [unit] },
+    });
+    paypal.captureOrder.mockResolvedValueOnce({
+      result: {
+        id: 'PAYPAL_ORDER_1',
+        status: 'COMPLETED',
+        purchaseUnits: [
+          { ...unit, payments: { captures: [{ id: 'CAPTURE_9' }] } },
+        ],
+        payer: { emailAddress: 'payer@example.com' },
+      },
+    });
+
+    await createCaller(
+      await createContextInner({ session: null }),
+    ).order.captureOrder({ id: 'PAYPAL_ORDER_1' });
+
+    // the email isn't awaited by captureOrder
+    await vi.waitFor(async () =>
+      expect((await reload(order.id)).confirmationEmailSentAt).not.toBeNull(),
+    );
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'payer@example.com',
+        replyTo: 'org-a@org.test',
+      }),
+    );
+    expect((await reload(order.id)).confirmationEmailError).toBeNull();
+  });
+
+  test('organisers can resend, to the buyer or another address', async () => {
+    const { order } = await setup();
+    const caller = await callerFor();
+
+    await caller.order.resendConfirmation({ orderId: order.id });
+    expect(sendEmail).toHaveBeenLastCalledWith(
+      expect.objectContaining({ to: 'buyer@example.com' }),
+    );
+    expect((await reload(order.id)).confirmationEmailSentAt).not.toBeNull();
+
+    await caller.order.resendConfirmation({
+      orderId: order.id,
+      email: ' other@example.com ',
+    });
+    expect(sendEmail).toHaveBeenLastCalledWith(
+      expect.objectContaining({ to: 'other@example.com' }),
+    );
+  });
+
+  test('a failed send is recorded and reported, and a later success clears it', async () => {
+    const { order } = await setup();
+    const caller = await callerFor();
+    vi.mocked(sendEmail).mockResolvedValueOnce({
+      ok: false,
+      error: '401 Unauthorized',
+    });
+
+    await expect(
+      caller.order.resendConfirmation({ orderId: order.id }),
+    ).rejects.toMatchObject({ code: 'INTERNAL_SERVER_ERROR' });
+    let after = await reload(order.id);
+    expect(after.confirmationEmailError).toBe('401 Unauthorized');
+    expect(after.confirmationEmailSentAt).toBeNull();
+
+    await caller.order.resendConfirmation({ orderId: order.id });
+    after = await reload(order.id);
+    expect(after.confirmationEmailError).toBeNull();
+    expect(after.confirmationEmailSentAt).not.toBeNull();
+  });
+
+  test('only confirmed orders, and only by the organisation', async () => {
+    const { order } = await setup('RESERVED');
+    await expect(
+      (await callerFor()).order.resendConfirmation({ orderId: order.id }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'CONFIRMED' },
+    });
+    await expect(
+      (await callerFor('member@org-b.test')).order.resendConfirmation({
+        orderId: order.id,
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
     expect(sendEmail).not.toHaveBeenCalled();
   });
 });

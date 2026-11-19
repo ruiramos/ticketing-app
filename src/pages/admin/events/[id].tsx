@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { AdminLayout } from '~/components/AdminLayout';
 import { CancelOrderDialog } from '~/components/CancelOrderDialog';
+import { ResendTicketsDialog } from '~/components/ResendTicketsDialog';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import {
@@ -24,6 +25,7 @@ import {
   MapPin,
   UserCheck,
   Copy,
+  Mail,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
@@ -55,6 +57,35 @@ function RefundBadge({
       {label}
     </Badge>
   );
+}
+
+// whether a confirmed order's "your tickets" email went out
+function EmailBadge({
+  sentAt,
+  error,
+}: {
+  sentAt: Date | null;
+  error: string | null;
+}) {
+  if (error) {
+    return (
+      <Badge variant="destructive" className="whitespace-nowrap" title={error}>
+        Email failed
+      </Badge>
+    );
+  }
+  if (sentAt) {
+    return (
+      <Badge
+        variant="secondary"
+        className="whitespace-nowrap"
+        title={`Sent ${sentAt.toLocaleString()}`}
+      >
+        Emailed
+      </Badge>
+    );
+  }
+  return null;
 }
 
 const EventAdminPage = () => {
@@ -91,6 +122,13 @@ const EventAdminPage = () => {
     amount: number;
     currency: string;
     externalTransactionId: string | null;
+  } | null>(null);
+
+  // the order whose tickets are being re-sent (opens ResendTicketsDialog)
+  const [orderToResend, setOrderToResend] = useState<{
+    id: string;
+    eventId: string;
+    customer: unknown;
   } | null>(null);
 
   const retryRefundMutation = trpc.order.retryRefund.useMutation({
@@ -607,7 +645,15 @@ const EventAdminPage = () => {
                   {(order.customer as any)?.name?.givenName}{' '}
                   {(order.customer as any)?.name?.surname}
                 </TableCell>
-                <TableCell>{(order.customer as any)?.emailAddress}</TableCell>
+                <TableCell>
+                  <div>{(order.customer as any)?.emailAddress}</div>
+                  {order.status === 'CONFIRMED' && (
+                    <EmailBadge
+                      sentAt={order.confirmationEmailSentAt}
+                      error={order.confirmationEmailError}
+                    />
+                  )}
+                </TableCell>
                 <TableCell>
                   {order.customFieldResponses &&
                   Object.keys(order.customFieldResponses).length > 0 ? (
@@ -633,14 +679,25 @@ const EventAdminPage = () => {
                 </TableCell>
                 <TableCell>
                   {order.status === 'CONFIRMED' && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setOrderToCancel(order)}
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Cancel
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="whitespace-nowrap"
+                        onClick={() => setOrderToResend(order)}
+                      >
+                        <Mail className="w-4 h-4 mr-1" />
+                        Resend tickets
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setOrderToCancel(order)}
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
                   )}
                   {order.status === 'CANCELLED' &&
                     (order.refundStatus === 'FAILED' ||
@@ -661,6 +718,12 @@ const EventAdminPage = () => {
             ))}
         </TableBody>
       </Table>
+
+      <ResendTicketsDialog
+        order={orderToResend}
+        onClose={() => setOrderToResend(null)}
+        onSent={() => refetchOrders()}
+      />
 
       <CancelOrderDialog
         order={orderToCancel}
