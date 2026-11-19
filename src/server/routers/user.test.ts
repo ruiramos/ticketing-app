@@ -18,6 +18,7 @@ import { createContextInner } from '../context';
 import { createCaller } from './_app';
 import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
+import type { Prisma } from '~/generated/prisma/client';
 
 // Clean up database before and after tests
 beforeEach(async () => {
@@ -610,6 +611,124 @@ describe('user.getUserEventOrders', () => {
     // Most recent order should be first
     expect(result.orders[0].id).toBe(order2.id);
     expect(result.orders[1].id).toBe(order1.id);
+  });
+});
+
+describe('user.getUserEventOrders search', () => {
+  async function setup() {
+    const organization = await prisma.organization.create({
+      data: { name: 'Search Org', email: 'search@org.test' },
+    });
+    await prisma.user.create({
+      data: {
+        email: 'member@search.test',
+        name: 'Member',
+        role: 'ADMIN',
+        organizationId: organization.id,
+      },
+    });
+    const makeEvent = () =>
+      prisma.event.create({
+        data: {
+          title: 'Search Event',
+          text: 'Description',
+          organizationId: organization.id,
+          variants: {
+            create: {
+              title: 'Standard',
+              price: 10,
+              currency: 'GBP',
+              stock: 100,
+              displayOrder: 0,
+            },
+          },
+        },
+        include: { variants: true },
+      });
+    const event = await makeEvent();
+    const other = await makeEvent();
+    const order = (
+      e: typeof event,
+      data: Partial<Prisma.OrderUncheckedCreateInput>,
+    ) =>
+      prisma.order.create({
+        data: {
+          eventId: e.id,
+          variantId: e.variants[0].id,
+          quantity: 1,
+          status: 'CONFIRMED',
+          selectedExtras: [],
+          items: [],
+          customer: {},
+          amount: 10,
+          currency: 'GBP',
+          ...data,
+        },
+      });
+
+    const paypal = await order(event, {
+      externalId: '5O190127TN364715T',
+      externalTransactionId: '3C679366HH908993F',
+      customer: {
+        emailAddress: 'Alex.Buyer@example.com',
+        name: { givenName: 'Alex', surname: 'Buyer' },
+      },
+    });
+    const cash = await order(event, {
+      paymentMethod: 'CASH',
+      note: 'paid at the door, 50% off',
+      customer: { name: { givenName: 'Sam', surname: 'Door' } },
+    });
+    const expired = await order(event, {
+      status: 'EXPIRED',
+      externalId: '9XEXPIRED0000000',
+    });
+    // same buyer on another event: never returned
+    await order(other, {
+      customer: { emailAddress: 'alex.buyer@example.com' },
+    });
+
+    const caller = createCaller(
+      await createContextInner({
+        session: {
+          user: { email: 'member@search.test' },
+          expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+        },
+      }),
+    );
+    const search = async (term: string) =>
+      (
+        await caller.user.getUserEventOrders({
+          eventId: event.id,
+          search: term,
+        })
+      ).orders.map((o) => o.id);
+    return { paypal, cash, expired, search };
+  }
+
+  test('finds orders by booking reference, PayPal ids, buyer and note', async () => {
+    const { paypal, cash, expired, search } = await setup();
+
+    expect(await search(paypal.id)).toEqual([paypal.id]);
+    expect(await search(paypal.id.slice(0, 8).toUpperCase())).toEqual([
+      paypal.id,
+    ]);
+    expect(await search('TN3647')).toEqual([paypal.id]);
+    expect(await search('3c679366')).toEqual([paypal.id]);
+    expect(await search('alex.buyer@')).toEqual([paypal.id]);
+    expect(await search('alex buyer')).toEqual([paypal.id]);
+    expect(await search('sam')).toEqual([cash.id]);
+    expect(await search('at the door')).toEqual([cash.id]);
+    // expired orders are found too
+    expect(await search('9XEXPIRED')).toEqual([expired.id]);
+  });
+
+  test('treats LIKE wildcards literally', async () => {
+    const { cash, search } = await setup();
+    expect(await search('50%')).toEqual([cash.id]);
+    expect(await search('%')).toEqual([cash.id]);
+    expect(await search('_')).toEqual([]);
+    expect(await search('nothing like this')).toEqual([]);
   });
 });
 

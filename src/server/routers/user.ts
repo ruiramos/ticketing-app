@@ -545,10 +545,38 @@ export const userRouter = router({
         eventId: z.string().uuid(),
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().uuid().optional(),
+        // booking reference (or its start), PayPal ids, buyer name/email, note
+        search: z.string().trim().max(200).optional(),
       }),
     )
     .query(async ({ input }) => {
       const { eventId, limit, cursor } = input;
+
+      if (input.search) {
+        // escape LIKE wildcards so they match literally
+        const term = input.search.replace(/[\\%_]/g, '\\$&');
+        const like = `%${term}%`;
+        const prefix = `${term}%`;
+        const matches = await prisma.$queryRaw<{ id: string }[]>`
+          SELECT id FROM "Order"
+          WHERE "eventId" = ${eventId}
+            AND (
+              id ILIKE ${prefix}
+              OR "externalId" ILIKE ${like}
+              OR "externalTransactionId" ILIKE ${like}
+              OR customer->>'emailAddress' ILIKE ${like}
+              OR concat_ws(' ', customer->'name'->>'givenName', customer->'name'->>'surname') ILIKE ${like}
+              OR note ILIKE ${like}
+            )
+          ORDER BY "createdAt" DESC
+          LIMIT 100`;
+        const orders = await prisma.order.findMany({
+          include: { variant: { select: { title: true, price: true } } },
+          where: { id: { in: matches.map((m) => m.id) } },
+          orderBy: { createdAt: 'desc' },
+        });
+        return { orders, nextCursor: undefined, hasMore: false };
+      }
 
       const orders = await prisma.order.findMany({
         take: limit + 1, // Take one extra to determine if there are more results
