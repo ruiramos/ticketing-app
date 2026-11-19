@@ -13,12 +13,15 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
 import { trpc } from '~/utils/trpc';
+import { PAYMENT_METHOD_LABELS } from '~/utils/paymentMethods';
+import type { PaymentMethod } from '~/generated/prisma/client';
 
 type CancellableOrder = {
   id: string;
   amount: number;
   currency: string;
   externalTransactionId: string | null;
+  paymentMethod: PaymentMethod;
 };
 
 /**
@@ -114,6 +117,18 @@ export function CancelOrderDialog({
                   {money(order?.amount ?? 0)})
                 </Label>
               </div>
+            ) : order?.paymentMethod === 'COMP' ? (
+              <p className="text-sm text-gray-600">
+                A complimentary order: there&apos;s nothing to refund.
+              </p>
+            ) : order && order.paymentMethod !== 'PAYPAL' ? (
+              <p className="text-sm text-gray-600">
+                Paid by{' '}
+                {PAYMENT_METHOD_LABELS[order.paymentMethod].toLowerCase()} (
+                {money(order.amount)}), not through PayPal: if you&apos;re
+                giving the money back, do it yourself. Cancelling only releases
+                the tickets.
+              </p>
             ) : (
               <p className="text-sm text-gray-600">
                 No PayPal payment is recorded for this order, so it can't be

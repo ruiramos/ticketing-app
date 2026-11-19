@@ -100,7 +100,7 @@ export function ResendTicketsDialog({
               />
               {buyerEmail && email.trim() !== buyerEmail && (
                 <p className="text-xs text-gray-500">
-                  The buyer&apos;s PayPal address is {buyerEmail}.
+                  The buyer&apos;s address is {buyerEmail}.
                 </p>
               )}
             </div>

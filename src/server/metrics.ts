@@ -81,6 +81,12 @@ function createMetrics() {
       labelNames: ['stage'] as const,
       registers,
     }),
+    manualOrders: new Counter({
+      name: 'ticketing_manual_orders_total',
+      help: 'Orders added by an organiser (paid outside PayPal, or comps). Not counted in ticketing_orders_confirmed_total or ticketing_revenue_total',
+      labelNames: ['payment_method'] as const, // cash | card_in_person | bank_transfer | comp
+      registers,
+    }),
     ordersCancelled: new Counter({
       name: 'ticketing_orders_cancelled_total',
       help: 'Confirmed orders cancelled by an admin',

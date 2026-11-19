@@ -18,6 +18,7 @@ import {
 } from '~/components/ui/accordion';
 import { differenceInDays, format } from 'date-fns';
 import { RouterOutput } from '~/utils/trpc';
+import { PAYMENT_METHOD_LABELS } from '~/utils/paymentMethods';
 
 type OrderByIdOutput = RouterOutput['order']['byId'];
 
@@ -29,6 +30,7 @@ export default function OrderConfirmation({
   if (!order) return;
 
   const event = order.event;
+  const cancelled = order.status === 'CANCELLED';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-violet-100 p-4">
@@ -37,18 +39,29 @@ export default function OrderConfirmation({
         <div className="mb-8"></div>
 
         {/* Success Banner */}
-        <div className="bg-gradient-to-r from-purple-600 to-violet-700 rounded-lg p-6 mb-8 text-white flex items-center gap-4">
-          <div className="bg-white/20 rounded-full p-2">
-            <Check className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Booking Confirmed!</h1>
-            <p className="text-purple-100">
-              We&apos;ve emailed your tickets to you. This page is your ticket
-              too: bookmark it or keep the link.
+        {cancelled ? (
+          <div className="bg-gray-700 rounded-lg p-6 mb-8 text-white">
+            <h1 className="text-2xl font-bold">Booking Cancelled</h1>
+            <p className="text-gray-200">
+              This booking has been cancelled and its tickets are no longer
+              valid.
             </p>
           </div>
-        </div>
+        ) : (
+          <div className="bg-gradient-to-r from-purple-600 to-violet-700 rounded-lg p-6 mb-8 text-white flex items-center gap-4">
+            <div className="bg-white/20 rounded-full p-2">
+              <Check className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">Booking Confirmed!</h1>
+              <p className="text-purple-100">
+                {order.buyer.email
+                  ? "We've emailed your tickets to you. This page is your ticket too: bookmark it or keep the link."
+                  : 'This page is your ticket: bookmark it or keep the link.'}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Order Details */}
@@ -116,7 +129,7 @@ export default function OrderConfirmation({
                     variant="outline"
                     className="border-purple-300 text-purple-700"
                   >
-                    {order?.externalId}
+                    {order.id}
                   </Badge>
                 </CardTitle>
                 <CardDescription>
@@ -139,12 +152,12 @@ export default function OrderConfirmation({
                     </div>
 
                     <div>
-                      {(order.selectedExtras as any[]).length ? (
+                      {order.selectedExtras.length ? (
                         <h3 className="text-sm font-medium text-gray-500 mb-1">
                           Add-ons
                         </h3>
                       ) : null}
-                      {(order.selectedExtras as any[]).map((item, index) => (
+                      {order.selectedExtras.map((item, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-amber-500" />
                           <p className="font-medium">{item.title}</p>
@@ -164,17 +177,17 @@ export default function OrderConfirmation({
                       </p>
                     </div> */}
 
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">
-                        Contact
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-purple-500" />
-                        <p className="font-medium">
-                          {(order.customer as any).emailAddress}
-                        </p>
+                    {order.buyer.email && (
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">
+                          Contact
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-purple-500" />
+                          <p className="font-medium">{order.buyer.email}</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
 
@@ -239,7 +252,7 @@ export default function OrderConfirmation({
                       £{(order.quantity * order.variant.price).toFixed(2)}
                     </span>
                   </div>
-                  {(order.selectedExtras as any[]).map((addon, index) => (
+                  {order.selectedExtras.map((addon, index) => (
                     <div key={index} className="flex justify-between text-sm">
                       <span>{addon.title}</span>
                       <span>£{addon.price?.toFixed(2)}</span>
@@ -252,18 +265,25 @@ export default function OrderConfirmation({
                   </div>
                 </div>
 
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Check className="w-5 h-5 text-green-500" />
-                    <p className="font-medium text-green-700">
-                      Payment Successful
+                {!cancelled && (
+                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Check className="w-5 h-5 text-green-500" />
+                      <p className="font-medium text-green-700">
+                        {order.paymentMethod === 'COMP'
+                          ? 'Complimentary'
+                          : 'Payment Successful'}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      {order.paymentMethod === 'PAYPAL'
+                        ? 'Your payment was processed successfully. A receipt has been sent to your email.'
+                        : order.paymentMethod === 'COMP'
+                          ? 'These tickets are on the house.'
+                          : `Paid by ${PAYMENT_METHOD_LABELS[order.paymentMethod].toLowerCase()}.`}
                     </p>
                   </div>
-                  <p className="text-xs text-gray-600">
-                    Your payment was processed successfully. A receipt has been
-                    sent to your email.
-                  </p>
-                </div>
+                )}
               </CardContent>
             </Card>
 

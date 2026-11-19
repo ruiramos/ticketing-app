@@ -18,13 +18,14 @@ import {
 } from '@paypal/paypal-server-sdk';
 import { prisma } from '../prisma';
 import { TRPCError } from '@trpc/server';
-import { Order, Prisma } from '~/generated/prisma/client';
+import { EventExtras, Order, Prisma } from '~/generated/prisma/client';
 import { env } from '../env';
 import { generateCancellationMailContent, sendEmail } from '~/utils/email';
 import { sendConfirmationEmail } from '../confirmationEmail';
 import { EVENT_MAX_TICKETS } from '~/utils/contants';
 import { logger } from '../logger';
 import { metrics, trackPaypal } from '../metrics';
+import { MANUAL_PAYMENT_METHODS } from '~/utils/paymentMethods';
 
 const client = new Client({
   clientCredentialsAuthCredentials: {
@@ -152,6 +153,98 @@ async function refundOrder(order: {
   return status;
 }
 
+type OrderVariant = {
+  id: string;
+  title: string;
+  price: number;
+  currency: string;
+};
+type OrderExtra = EventExtras & { quantity: number };
+
+/** The event's extras with these ids, one of each, as stored on the order. */
+function pickExtras(eventExtras: EventExtras[], ids: string[]): OrderExtra[] {
+  return ids
+    .map((id) => eventExtras.find((extra) => extra.id === id))
+    .filter((extra) => !!extra)
+    .map((extra) => ({ ...extra, quantity: 1 }));
+}
+
+/** Answers to the event's custom fields (others are ignored), or undefined. */
+function customFieldResponsesFor(
+  eventCustomFields: Prisma.JsonValue,
+  values: Record<string, any> | null | undefined,
+) {
+  const customFields = (eventCustomFields as any[]) || [];
+  const customFieldResponses: Record<string, any> = {};
+
+  customFields.forEach((field: any) => {
+    const value = values?.[field.id];
+    if (value !== undefined && value !== null && value !== '') {
+      customFieldResponses[field.id] = {
+        fieldId: field.id,
+        fieldName: field.name,
+        fieldLabel: field.label,
+        value: value,
+      };
+    }
+  });
+
+  return Object.keys(customFieldResponses).length > 0
+    ? customFieldResponses
+    : undefined;
+}
+
+function orderTotal(
+  variant: OrderVariant,
+  quantity: number,
+  extras: OrderExtra[],
+) {
+  return (
+    variant.price * quantity +
+    extras.reduce((acc, extra) => acc + extra.quantity * (extra.price ?? 0), 0)
+  );
+}
+
+/** Line items, in PayPal's format (also used by the confirmation email). */
+function orderItems(
+  variant: OrderVariant,
+  quantity: number,
+  extras: OrderExtra[],
+) {
+  return [
+    {
+      name: variant.title,
+      sku: variant.id,
+      quantity: quantity.toString(),
+      unitAmount: {
+        currencyCode: variant.currency,
+        value: variant.price.toString(),
+      },
+    },
+    ...extras.map((extra) => ({
+      name: extra.title,
+      sku: extra.id,
+      quantity: '1',
+      unitAmount: {
+        currencyCode: variant.currency,
+        value: (extra.price ?? 0).toString(),
+      },
+    })),
+  ];
+}
+
+/**
+ * The buyer of a manual order, in the shape PayPal gives us for payers, so
+ * the orders table, check-in and the CSV export read it the same way.
+ */
+function manualCustomer(name: string, email?: string) {
+  const [givenName, ...rest] = name.trim().split(/\s+/);
+  return {
+    name: { givenName, surname: rest.join(' ') },
+    ...(email ? { emailAddress: email } : {}),
+  };
+}
+
 export const orderRouter = router({
   createOrder: publicProcedure
     .input(
@@ -205,57 +298,16 @@ export const orderRouter = router({
         });
       }
 
-      const extrasState = Object.keys(input.extras ?? {})
-        .map((key) => {
-          if (!input.extras?.[key]) return null;
-          const extra = variant.event.eventExtras.find((ex) => ex.id === key);
-          if (!extra) return null;
-          return { ...extra, quantity: 1 };
-        })
-        .filter((a) => !!a);
-
-      // Process custom field responses
-      const customFields = (variant.event.customFields as any[]) || [];
-      const customFieldResponses: Record<string, any> = {};
-
-      customFields.forEach((field: any) => {
-        const value = input.customFields?.[field.id];
-        if (value !== undefined && value !== null && value !== '') {
-          customFieldResponses[field.id] = {
-            fieldId: field.id,
-            fieldName: field.name,
-            fieldLabel: field.label,
-            value: value,
-          };
-        }
-      });
-
-      const amount =
-        variant.price * input.quantity +
-        extrasState.reduce((acc, extra) => {
-          return acc + extra.quantity * (extra.price ?? 0);
-        }, 0);
-
-      const items = [
-        {
-          name: variant.title,
-          sku: variant.id,
-          quantity: input.quantity.toString(),
-          unitAmount: {
-            currencyCode: variant.currency,
-            value: variant.price.toString(),
-          },
-        },
-        ...extrasState.map((extra) => ({
-          name: extra.title,
-          sku: extra.id,
-          quantity: '1',
-          unitAmount: {
-            currencyCode: variant.currency,
-            value: (extra.price ?? 0).toString(),
-          },
-        })),
-      ];
+      const extrasState = pickExtras(
+        variant.event.eventExtras,
+        Object.keys(input.extras ?? {}).filter((key) => input.extras?.[key]),
+      );
+      const customFieldResponses = customFieldResponsesFor(
+        variant.event.customFields,
+        input.customFields,
+      );
+      const amount = orderTotal(variant, input.quantity, extrasState);
+      const items = orderItems(variant, input.quantity, extrasState);
 
       let ourOrder: Order, _updatedVariant;
       try {
@@ -282,10 +334,7 @@ export const orderRouter = router({
               selectedExtras: extrasState,
               items,
               customer: {}, // TBD later
-              customFieldResponses:
-                Object.keys(customFieldResponses).length > 0
-                  ? customFieldResponses
-                  : undefined,
+              customFieldResponses,
               amount: amount,
               currency: variant.currency,
             },
@@ -601,6 +650,154 @@ export const orderRouter = router({
 
       return ourOrder;
     }),
+  // An organiser records tickets sold outside PayPal (cash at the door, card
+  // in person, bank transfer) or given away (COMP). Takes stock like
+  // createOrder, but the order is CONFIRMED straight away. Allowed while the
+  // event is off sale: that's when door sales happen.
+  createManualOrder: authedProcedureWithEventId
+    .input(
+      z.object({
+        eventId: z.string().uuid(),
+        variantId: z.string().uuid(),
+        quantity: z.number().int().min(1).max(1000),
+        extras: z.array(z.string().uuid()).max(100).optional(),
+        buyerName: z.string().trim().min(1).max(200),
+        buyerEmail: z.string().trim().email().max(254).optional(),
+        customFields: z.record(z.string(), z.any()).nullish(),
+        paymentMethod: z.enum(MANUAL_PAYMENT_METHODS),
+        // what the buyer paid; defaults to the price. COMP is always 0
+        amount: z.number().min(0).max(1_000_000).optional(),
+        note: z.string().trim().max(1000).optional(),
+        // email the tickets (defaults to yes when there's an email address)
+        sendEmail: z.boolean().optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const variant = await prisma.variant.findUnique({
+        where: { id: input.variantId },
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          currency: true,
+          stock: true,
+          event: {
+            select: {
+              id: true,
+              organizationId: true,
+              eventExtras: true,
+              customFields: true,
+            },
+          },
+        },
+      });
+
+      if (!variant || variant.event.id !== input.eventId) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Variant does not belong to this event.',
+        });
+      }
+
+      const extrasState = pickExtras(
+        variant.event.eventExtras,
+        input.extras ?? [],
+      );
+      const amount =
+        input.paymentMethod === 'COMP'
+          ? 0
+          : Math.round(
+              (input.amount ??
+                orderTotal(variant, input.quantity, extrasState)) * 100,
+            ) / 100;
+
+      // the organiser adding it (a member of the event's organization)
+      const createdBy = await prisma.user.findFirst({
+        where: {
+          email: ctx.user.email ?? '',
+          organizationId: variant.event.organizationId,
+        },
+        select: { id: true },
+      });
+
+      let ourOrder: Order;
+      try {
+        [, ourOrder] = await prisma.$transaction([
+          prisma.variant.update({
+            data: { stock: { decrement: input.quantity } },
+            where: { id: variant.id, stock: { gte: input.quantity } },
+          }),
+          prisma.order.create({
+            data: {
+              eventId: variant.event.id,
+              variantId: variant.id,
+              quantity: input.quantity,
+              status: 'CONFIRMED',
+              paymentMethod: input.paymentMethod,
+              note: input.note || null,
+              createdById: createdBy?.id ?? null,
+              selectedExtras: extrasState,
+              items: orderItems(variant, input.quantity, extrasState),
+              customer: manualCustomer(input.buyerName, input.buyerEmail),
+              customFieldResponses: customFieldResponsesFor(
+                variant.event.customFields,
+                input.customFields,
+              ),
+              amount,
+              currency: variant.currency,
+            },
+          }),
+        ]);
+      } catch (error) {
+        metrics.orderReservationFailures.inc({ reason: 'out_of_stock' });
+        logger.warn(
+          {
+            err: error,
+            eventId: variant.event.id,
+            variantId: variant.id,
+            quantity: input.quantity,
+            stock: variant.stock,
+          },
+          'manual order failed: not enough stock',
+        );
+        throw new TRPCError({
+          code: 'UNPROCESSABLE_CONTENT',
+          message: !variant.stock
+            ? 'The selected option is out of stock'
+            : `Sorry, there are not enough tickets of the selected type to fulfill the request. (${variant.stock} left)`,
+        });
+      }
+
+      metrics.manualOrders.inc({
+        payment_method: input.paymentMethod.toLowerCase(),
+      });
+      logger.info(
+        {
+          orderId: ourOrder.id,
+          eventId: ourOrder.eventId,
+          variantId: ourOrder.variantId,
+          quantity: ourOrder.quantity,
+          amount,
+          currency: ourOrder.currency,
+          paymentMethod: input.paymentMethod,
+        },
+        'manual order added',
+      );
+
+      // awaited: the organiser is told in the dialog if it didn't go out
+      let emailError: string | null = null;
+      const emailTickets = !!input.buyerEmail && (input.sendEmail ?? true);
+      if (emailTickets) {
+        const result = await sendConfirmationEmail(ourOrder.id);
+        if (!result.ok) emailError = result.error;
+      }
+
+      return {
+        id: ourOrder.id,
+        emailed: emailTickets && !emailError,
+        emailError,
+      };
+    }),
   // only members of the event's organization (see authedProcedureWithOrderId)
   cancelOrder: authedProcedureWithOrderId
     .input(
@@ -642,7 +839,9 @@ export const orderRouter = router({
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message:
-              'No PayPal payment is recorded for this order: refund it in PayPal, then cancel without a refund',
+              order.paymentMethod === 'PAYPAL'
+                ? 'No PayPal payment is recorded for this order: refund it in PayPal, then cancel without a refund'
+                : "This order wasn't paid through PayPal: refund the buyer yourself, then cancel without a refund",
           });
         }
         if (!refundAmount || refundAmount > order.amount + 1e-9) {
@@ -723,13 +922,13 @@ export const orderRouter = router({
             eventTitle: order.event.title,
             organizationName: order.event.organization?.name,
             organizationEmail: order.event.organization?.email,
+            reason: input.reason,
             refund:
               refundStatus === 'REFUNDED' || refundStatus === 'PENDING'
                 ? {
                     amount: refundAmount ?? 0,
                     currency: order.currency,
                     pending: refundStatus === 'PENDING',
-                    reason: input.reason,
                   }
                 : undefined,
           }),
@@ -806,6 +1005,9 @@ export const orderRouter = router({
       );
       return { sent: true };
     }),
+  // Public: anyone with the link (the buyer's ticket page) can read it, so
+  // only what that page shows. Never the PayPal payer (address, payer id),
+  // errors, PayPal ids or the organization's own details.
   byId: publicProcedure
     .input(
       z.object({
@@ -814,23 +1016,51 @@ export const orderRouter = router({
       }),
     )
     .query(async ({ input }) => {
-      const ourOrder = await prisma.order.findFirst({
-        include: {
-          variant: true,
+      const order = await prisma.order.findFirst({
+        select: {
+          id: true,
+          status: true,
+          paymentMethod: true,
+          quantity: true,
+          amount: true,
+          currency: true,
+          selectedExtras: true,
+          customer: true,
+          variant: { select: { title: true, price: true } },
           event: {
-            include: {
-              organization: true,
+            select: {
+              title: true,
+              text: true,
+              location: true,
+              startsAt: true,
+              endsAt: true,
+              organization: { select: { name: true, email: true } },
             },
           },
         },
         where: { id: input.id, eventId: input.eventId },
       });
+      if (!order) return null;
 
-      // const { result: paypalOrder } = await ordersController.getOrder({
-      //   id: ourOrder.externalTransactionId,
-      // });
-
-      return ourOrder;
+      const { customer, selectedExtras, ...rest } = order;
+      const buyer = (customer ?? {}) as {
+        name?: { givenName?: string };
+        emailAddress?: string;
+      };
+      return {
+        ...rest,
+        buyer: {
+          givenName: buyer.name?.givenName ?? null,
+          email: buyer.emailAddress ?? null,
+        },
+        selectedExtras: (
+          (selectedExtras ?? []) as {
+            title: string;
+            price: number | null;
+            quantity: number;
+          }[]
+        ).map(({ title, price, quantity }) => ({ title, price, quantity })),
+      };
     }),
   // buyers' names, emails and answers: only for the event's organization
   getOrdersForCheckin: authedProcedureWithEventId

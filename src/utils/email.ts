@@ -148,18 +148,20 @@ export function generateCancellationMailContent({
   eventTitle,
   organizationName,
   organizationEmail,
+  reason,
   refund,
 }: {
   givenName?: string;
   eventTitle: string;
   organizationName?: string | null;
   organizationEmail?: string | null;
+  // the organiser's note to the buyer, with or without a refund
+  reason?: string | null;
   // undefined: no refund made through the app
   refund?: {
     amount: number;
     currency: string;
     pending: boolean;
-    reason?: string | null;
   };
 }) {
   const refundText = refund
@@ -167,7 +169,10 @@ export function generateCancellationMailContent({
         refund.pending
           ? 'has been requested and should reach your PayPal account shortly'
           : 'has been issued to your PayPal account; it can take a few days to show'
-      }.</p>${refund.reason ? `\n<p>Note from the organiser: ${escapeHtml(refund.reason)}</p>` : ''}`
+      }.</p>`
+    : '';
+  const reasonText = reason
+    ? `<p>Note from the organiser: ${escapeHtml(reason)}</p>`
     : '';
 
   return `<p>Dear ${escapeHtml(givenName ?? '')},</p>
@@ -176,6 +181,7 @@ export function generateCancellationMailContent({
     organizationName ? ` by ${escapeHtml(organizationName)}` : ''
   }.</p>
 ${refundText}
+${reasonText}
 <p>${
     organizationEmail
       ? `If you have any questions, simply reply to this email or write to ${escapeHtml(organizationEmail)}.`

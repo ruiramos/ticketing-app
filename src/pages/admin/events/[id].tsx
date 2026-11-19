@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { AdminLayout } from '~/components/AdminLayout';
+import { AddOrderDialog } from '~/components/AddOrderDialog';
 import { CancelOrderDialog } from '~/components/CancelOrderDialog';
 import { ResendTicketsDialog } from '~/components/ResendTicketsDialog';
 import { Badge } from '~/components/ui/badge';
@@ -26,12 +27,15 @@ import {
   UserCheck,
   Copy,
   Mail,
+  Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
 import { Label } from '~/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { cx } from 'class-variance-authority';
+import { PAYMENT_METHOD_LABELS } from '~/utils/paymentMethods';
+import type { PaymentMethod } from '~/generated/prisma/client';
 
 // refund state of a cancelled order (nothing when there was no refund)
 function RefundBadge({
@@ -88,6 +92,26 @@ function EmailBadge({
   return null;
 }
 
+// how a manual order was paid (nothing for PayPal orders), with its note
+function PaymentBadge({
+  method,
+  note,
+}: {
+  method: PaymentMethod;
+  note: string | null;
+}) {
+  if (method === 'PAYPAL') return null;
+  return (
+    <Badge
+      variant="outline"
+      className="ml-2 whitespace-nowrap"
+      title={note ?? undefined}
+    >
+      {PAYMENT_METHOD_LABELS[method]}
+    </Badge>
+  );
+}
+
 const EventAdminPage = () => {
   const router = useRouter();
   const id = router.query.id as string;
@@ -111,10 +135,13 @@ const EventAdminPage = () => {
 
   const orders = ordersData?.pages.flatMap((page) => page.orders) ?? [];
 
-  const { data: ordersSummary } = trpc.user.getUserEventOrdersSummary.useQuery(
-    { eventId: id },
-    { enabled: !!id },
-  );
+  const { data: ordersSummary, refetch: refetchSummary } =
+    trpc.user.getUserEventOrdersSummary.useQuery(
+      { eventId: id },
+      { enabled: !!id },
+    );
+
+  const [addingOrder, setAddingOrder] = useState(false);
 
   // the order being cancelled (opens CancelOrderDialog)
   const [orderToCancel, setOrderToCancel] = useState<{
@@ -122,6 +149,7 @@ const EventAdminPage = () => {
     amount: number;
     currency: string;
     externalTransactionId: string | null;
+    paymentMethod: PaymentMethod;
   } | null>(null);
 
   // the order whose tickets are being re-sent (opens ResendTicketsDialog)
@@ -197,6 +225,8 @@ const EventAdminPage = () => {
         'Extras',
         'Grand Total',
         'Currency',
+        'Payment Method',
+        'Note',
         'Customer Name',
         'Customer Email',
         'Refund Status',
@@ -243,6 +273,8 @@ const EventAdminPage = () => {
           extras,
           order.amount.toString(),
           order.currency,
+          PAYMENT_METHOD_LABELS[order.paymentMethod as PaymentMethod],
+          order.note || '',
           customerName,
           customerEmail,
           order.refundStatus === 'NONE' ? '' : order.refundStatus,
@@ -443,6 +475,24 @@ const EventAdminPage = () => {
               Including {currencySymbol}
               {addonRevenue} from add-ons.
             </p>
+            {Object.keys(ordersSummary?.byPaymentMethod ?? {}).length > 1 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {(
+                  Object.entries(ordersSummary?.byPaymentMethod ?? {}) as [
+                    PaymentMethod,
+                    { orders: number; revenue: number },
+                  ][]
+                )
+                  .map(
+                    ([method, { orders, revenue }]) =>
+                      `${PAYMENT_METHOD_LABELS[method]}: ${currencySymbol}${revenue.toLocaleString(
+                        undefined,
+                        { minimumFractionDigits: 2 },
+                      )} (${orders})`,
+                  )
+                  .join(' · ')}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -573,15 +623,25 @@ const EventAdminPage = () => {
 
       <div className="flex items-center justify-between mt-8 mb-4">
         <h2 className="text-xl font-semibold">Orders</h2>
-        <div>
-          <Checkbox
-            id={`show-expired-orders`}
-            checked={showExpiredOrders}
-            onCheckedChange={(checked) => setShowExpiredOrders(!!checked)}
-          />{' '}
-          <Label htmlFor={`show-expired-orders`} className="font-normal">
-            Show expired orders
-          </Label>
+        <div className="flex items-center gap-4">
+          <Button
+            variant={'outline'}
+            size={'sm'}
+            onClick={() => setAddingOrder(true)}
+          >
+            <Plus className="-ms-1 opacity-60" size={16} />
+            <span>Add order</span>
+          </Button>
+          <div>
+            <Checkbox
+              id={`show-expired-orders`}
+              checked={showExpiredOrders}
+              onCheckedChange={(checked) => setShowExpiredOrders(!!checked)}
+            />{' '}
+            <Label htmlFor={`show-expired-orders`} className="font-normal">
+              Show expired orders
+            </Label>
+          </div>
         </div>
       </div>
 
@@ -622,6 +682,10 @@ const EventAdminPage = () => {
                 <TableCell>{order.createdAt.toLocaleString()}</TableCell>
                 <TableCell>
                   {order.status}
+                  <PaymentBadge
+                    method={order.paymentMethod}
+                    note={order.note}
+                  />
                   <RefundBadge
                     status={order.refundStatus}
                     amount={order.refundedAmount}
@@ -731,6 +795,19 @@ const EventAdminPage = () => {
         onCancelled={() => {
           refetchOrders();
           refetchEvent();
+          refetchSummary();
+        }}
+      />
+
+      <AddOrderDialog
+        eventId={id}
+        event={event}
+        open={addingOrder}
+        onClose={() => setAddingOrder(false)}
+        onAdded={() => {
+          refetchOrders();
+          refetchEvent();
+          refetchSummary();
         }}
       />
 

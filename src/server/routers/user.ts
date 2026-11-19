@@ -1,5 +1,5 @@
 import { router, authedProcedure, authedProcedureWithEventId } from '../trpc';
-import type { Prisma } from '~/generated/prisma/client';
+import type { PaymentMethod, Prisma } from '~/generated/prisma/client';
 import { z } from 'zod';
 import {
   InviteOrganizationMemberSchema,
@@ -588,6 +588,7 @@ export const userRouter = router({
           quantity: true,
           amount: true,
           selectedExtras: true,
+          paymentMethod: true,
         },
         where: { eventId: input.eventId },
       });
@@ -603,11 +604,20 @@ export const userRouter = router({
 
       // What buyers paid: order.amount, with the extras (at the prices stored
       // on the order) split out. Not the variant's current price, which the
-      // organiser may have changed since.
+      // organiser may have changed since. A manual order can be paid less
+      // than its price (a discount, a comp), so its extras count for at most
+      // what was paid.
       const extrasTotal = (order: (typeof confirmedOrders)[number]) =>
-        (
-          (order.selectedExtras as { price?: number; quantity: number }[]) ?? []
-        ).reduce((sum, extra) => sum + (extra.price ?? 0) * extra.quantity, 0);
+        Math.min(
+          order.amount,
+          (
+            (order.selectedExtras as { price?: number; quantity: number }[]) ??
+            []
+          ).reduce(
+            (sum, extra) => sum + (extra.price ?? 0) * extra.quantity,
+            0,
+          ),
+        );
 
       const totalRevenue = confirmedOrders.reduce(
         (sum, order) => sum + order.amount,
@@ -631,6 +641,19 @@ export const userRouter = router({
         {} as Record<string, number>,
       );
 
+      // orders and revenue by how they were paid (PayPal, cash, comps...)
+      const byPaymentMethod: Partial<
+        Record<PaymentMethod, { orders: number; revenue: number }>
+      > = {};
+      confirmedOrders.forEach((order) => {
+        const entry = (byPaymentMethod[order.paymentMethod] ??= {
+          orders: 0,
+          revenue: 0,
+        });
+        entry.orders += 1;
+        entry.revenue += order.amount;
+      });
+
       return {
         totalOrders,
         totalTickets,
@@ -638,6 +661,7 @@ export const userRouter = router({
         addonRevenue,
         totalRevenue,
         extrasSold,
+        byPaymentMethod,
       };
     },
   ),
