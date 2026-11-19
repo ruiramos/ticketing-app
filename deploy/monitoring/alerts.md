@@ -142,7 +142,7 @@ credentials changed.
 ```promql
 sum(increase(ticketing_order_capture_failures_total{namespace="default", stage="confirm"}[1h]))
 ```
-Condition: `> 2`. Customers finished PayPal checkout after their 5-minute hold
+Condition: `> 2`. Customers finished PayPal checkout after their 15-minute hold
 had expired. A few are normal; a cluster of them means the hold is too short
 or PayPal is slow.
 
@@ -192,9 +192,41 @@ rule except "no ready pods" (no data means the Deployment or its metrics are gon
 | greatdj: server has no ready pods | critical | metrics | 0 available replicas | 2m |
 | greatdj: server container restarted | warning | metrics | any restart in 10m | 0 |
 | greatdj: high 5xx rate at ingress | critical | metrics | > 5% of requests, and at least 5 of them, in 5m | 5m |
+| greatdj: YouTube search quota spent | critical | logs | a `youtube search quota spent` line in 24h | 0 |
+| greatdj: YouTube search failing | warning | logs | > 5 `youtube search failed` lines in 15m | 0 |
 
-They cover the production server only (`greatdj-deployment`, Traefik service
-`default-greatdj-service-8090@kubernetes`), not staging (`greatdj-test-*`) or the importer.
+The first four cover the production server only (`greatdj-deployment`, Traefik service
+`default-greatdj-service-8090@kubernetes`), not staging (`greatdj-test-*`). The
+YouTube ones match any pod: staging shares the YouTube key and Redis with prod.
+
+### greatdj: YouTube search quota spent
+
+```
+sum(count_over_time({namespace="default"} |= "youtube search quota spent" [24h]))
+```
+
+Song lookups ("paste a list of songs", Spotify import, the Zapier `/create` and
+`/append` API) use YouTube's `search.list`, 100 quota units each. There's no
+app-side cap: when YouTube answers `quotaExceeded`, the server sets the Redis key
+`greatdj:ytsearch:quota-spent` until midnight Pacific (when the quota resets),
+stops searching, tells users to try tomorrow, and logs this line once. Songs
+already cached in Redis keep working. The 24h window keeps the alert firing for
+the whole pause.
+
+What to do: check usage in Google Cloud Console (APIs & Services > YouTube Data
+API v3 > Quotas) and look for unusual `/expand_search` or `/spotify_s` traffic in the
+Traefik access logs. After raising the quota, resume straight away with
+`kubectl exec deploy/redis-deployment -- redis-cli del greatdj:ytsearch:quota-spent`.
+
+### greatdj: YouTube search failing
+
+```
+sum(count_over_time({namespace="default"} |= "youtube search failed" [15m]))
+```
+
+Condition: `> 5`. Searches failing for a reason other than quota: usually the API
+key was revoked or restricted (400/403 `keyInvalid`, `forbidden`) or YouTube is
+having trouble (5xx). The status and reason are in the log line.
 
 ### greatdj: server ran out of memory
 
