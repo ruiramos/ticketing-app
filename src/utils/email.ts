@@ -115,7 +115,7 @@ Show this email or that page at the event. Keep the link: it's your ticket.</p>
 }
 <p>Here are the details of your order:</p>
 
-<strong>Order Id:</strong> ${escapeHtml(ourOrder.externalId ?? ourOrder.id)}<br/>
+<strong>Booking reference:</strong> ${escapeHtml(ourOrder.id)}<br/>
 ${items
   .map((item, i) =>
     i === 0

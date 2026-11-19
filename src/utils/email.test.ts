@@ -70,7 +70,9 @@ describe('generateMailContent', () => {
     expect(html).toContain(
       '<a href="https://tickets.test/events/event-id/orders/order-id">View your tickets</a>',
     );
-    expect(html).toContain('<strong>Order Id:</strong> PAYPAL123');
+    // same reference as the ticket page (not the PayPal order id)
+    expect(html).toContain('<strong>Booking reference:</strong> order-id');
+    expect(html).not.toContain('PAYPAL123');
     expect(html).toContain('<strong>Total:</strong> £20.00');
     expect(html).toContain('Your contribution helps fund the PTA.');
     expect(html).toContain('1 ticket(s) for: 12:00 - 12:10pm<br/>Gift');
