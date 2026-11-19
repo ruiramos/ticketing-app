@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AdminLayout } from '~/components/AdminLayout';
 import { AddOrderDialog } from '~/components/AddOrderDialog';
 import { CancelOrderDialog } from '~/components/CancelOrderDialog';
@@ -28,9 +28,11 @@ import {
   Copy,
   Mail,
   Plus,
+  Search,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Checkbox } from '~/components/ui/checkbox';
+import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { cx } from 'class-variance-authority';
@@ -117,6 +119,14 @@ const EventAdminPage = () => {
   const id = router.query.id as string;
   const utils = trpc.useContext();
   const [showExpiredOrders, setShowExpiredOrders] = useState(false);
+  // order search (booking reference, PayPal ids, buyer, note), run on the
+  // server since orders are paged; debounced while typing
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timeout);
+  }, [search]);
   const { data: event, refetch: refetchEvent } =
     trpc.user.getUserEvent.useQuery({ eventId: id }, { enabled: !!id });
   const {
@@ -126,7 +136,7 @@ const EventAdminPage = () => {
     isFetchingNextPage,
     refetch: refetchOrders,
   } = trpc.user.getUserEventOrders.useInfiniteQuery(
-    { eventId: id, limit: 25 },
+    { eventId: id, limit: 25, search: debouncedSearch || undefined },
     {
       enabled: !!id,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -217,6 +227,7 @@ const EventAdminPage = () => {
       // Define CSV headers
       const headers = [
         'Date',
+        'Booking Reference',
         'Status',
         'External ID',
         'Transaction ID',
@@ -265,6 +276,7 @@ const EventAdminPage = () => {
 
         return [
           order.createdAt.toLocaleString(),
+          order.id,
           order.status,
           order.externalId || '',
           order.externalTransactionId || '',
@@ -624,6 +636,20 @@ const EventAdminPage = () => {
       <div className="flex items-center justify-between mt-8 mb-4">
         <h2 className="text-xl font-semibold">Orders</h2>
         <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <Input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Booking ref, PayPal id, name, email"
+              aria-label="Search orders"
+              className="h-8 w-72 pl-8"
+            />
+          </div>
           <Button
             variant={'outline'}
             size={'sm'}
@@ -649,6 +675,7 @@ const EventAdminPage = () => {
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead>Date</TableHead>
+            <TableHead>Booking ref</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>External ID</TableHead>
             <TableHead>Transaction ID</TableHead>
@@ -664,8 +691,21 @@ const EventAdminPage = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
+          {debouncedSearch && orders.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={14} className="text-center text-gray-500">
+                No orders match &ldquo;{debouncedSearch}&rdquo;
+              </TableCell>
+            </TableRow>
+          )}
           {orders
-            .filter((order) => showExpiredOrders || order.status !== 'EXPIRED')
+            // a search shows every match, expired ones included
+            .filter(
+              (order) =>
+                showExpiredOrders ||
+                !!debouncedSearch ||
+                order.status !== 'EXPIRED',
+            )
             .map((order) => (
               <TableRow
                 key={order.id}
@@ -680,6 +720,11 @@ const EventAdminPage = () => {
                 }
               >
                 <TableCell>{order.createdAt.toLocaleString()}</TableCell>
+                <TableCell>
+                  <span className="font-mono text-xs" title={order.id}>
+                    {order.id.slice(0, 8)}
+                  </span>
+                </TableCell>
                 <TableCell>
                   {order.status}
                   <PaymentBadge
