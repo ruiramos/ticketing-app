@@ -183,6 +183,9 @@ exports.Prisma.OrderScalarFieldEnum = {
   confirmationEmailError: 'confirmationEmailError',
   amount: 'amount',
   currency: 'currency',
+  paymentMethod: 'paymentMethod',
+  note: 'note',
+  createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   userId: 'userId'
@@ -270,6 +273,14 @@ exports.RefundStatus = exports.$Enums.RefundStatus = {
   PENDING: 'PENDING',
   REFUNDED: 'REFUNDED',
   FAILED: 'FAILED'
+};
+
+exports.PaymentMethod = exports.$Enums.PaymentMethod = {
+  PAYPAL: 'PAYPAL',
+  CASH: 'CASH',
+  CARD_IN_PERSON: 'CARD_IN_PERSON',
+  BANK_TRANSFER: 'BANK_TRANSFER',
+  COMP: 'COMP'
 };
 
 exports.Role = exports.$Enums.Role = {

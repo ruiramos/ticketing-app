@@ -430,20 +430,528 @@ describe('order.createOrder', () => {
   });
 });
 
-// TODO fix this test
-describe.skip('order.byId', () => {
-  test('should retrieve order from PayPal', async () => {
-    const ctx = await createContextInner({ session: null });
-    const caller = createCaller(ctx);
+describe('order.byId (public ticket page)', () => {
+  async function setup() {
+    const org = await prisma.organization.create({
+      data: {
+        name: 'Org A',
+        email: 'org-a@org.test',
+        phone: '+44 1234 567890',
+        address: '1 Private Road',
+      },
+    });
+    const event = await prisma.event.create({
+      data: {
+        title: 'Grotto',
+        text: 'Description',
+        location: 'The Barn',
+        organizationId: org.id,
+        enabled: true,
+        variants: {
+          create: {
+            title: '10:00 slot',
+            price: 5,
+            currency: 'GBP',
+            stock: 10,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+    const order = await prisma.order.create({
+      data: {
+        eventId: event.id,
+        variantId: event.variants[0].id,
+        quantity: 2,
+        status: 'CONFIRMED',
+        externalId: 'PAYPAL_ORDER_SECRET',
+        externalTransactionId: 'CAPTURE_SECRET',
+        selectedExtras: [
+          {
+            id: 'extra-1',
+            title: 'Hot chocolate',
+            description: 'internal description',
+            price: 2,
+            currency: 'GBP',
+            eventId: event.id,
+            quantity: 1,
+          },
+        ],
+        items: [{ name: 'ITEMS_SECRET' }],
+        customer: {
+          payer_id: 'PAYER_ID_SECRET',
+          emailAddress: 'buyer@example.com',
+          name: { givenName: 'Bea', surname: 'Buyer' },
+          address: { addressLine1: '42 Secret Street', postalCode: 'AB1 2CD' },
+        },
+        error: { message: 'ERROR_SECRET' },
+        refundError: { message: 'REFUND_ERROR_SECRET' },
+        amount: 12,
+        currency: 'GBP',
+      },
+    });
+    return { event, order };
+  }
+
+  test('returns what the ticket page shows, and nothing sensitive', async () => {
+    const { event, order } = await setup();
+    const caller = createCaller(await createContextInner({ session: null }));
 
     const result = await caller.order.byId({
-      id: 'MOCK_PAYPAL_ORDER',
-      eventId: 'asd',
+      id: order.id,
+      eventId: event.id,
     });
 
     expect(result).toMatchObject({
-      id: 'MOCK_PAYPAL_ORDER',
+      id: order.id,
+      status: 'CONFIRMED',
+      paymentMethod: 'PAYPAL',
+      quantity: 2,
+      amount: 12,
+      currency: 'GBP',
+      buyer: { givenName: 'Bea', email: 'buyer@example.com' },
+      selectedExtras: [{ title: 'Hot chocolate', price: 2, quantity: 1 }],
+      variant: { title: '10:00 slot', price: 5 },
+      event: {
+        title: 'Grotto',
+        location: 'The Barn',
+        organization: { name: 'Org A', email: 'org-a@org.test' },
+      },
     });
+
+    const json = JSON.stringify(result);
+    for (const secret of [
+      'PAYPAL_ORDER_SECRET',
+      'CAPTURE_SECRET',
+      'PAYER_ID_SECRET',
+      'Secret Street',
+      'AB1 2CD',
+      'ITEMS_SECRET',
+      'ERROR_SECRET',
+      'REFUND_ERROR_SECRET',
+      'internal description',
+      '1 Private Road',
+      '+44 1234 567890',
+    ]) {
+      expect(json).not.toContain(secret);
+    }
+    for (const key of [
+      'customer',
+      'externalId',
+      'externalTransactionId',
+      'items',
+      'error',
+      'refundError',
+      'note',
+      'customFieldResponses',
+    ]) {
+      expect(result).not.toHaveProperty(key);
+    }
+  });
+
+  test('null for an unknown order or the wrong event', async () => {
+    const { event, order } = await setup();
+    const caller = createCaller(await createContextInner({ session: null }));
+
+    expect(
+      await caller.order.byId({
+        id: '00000000-0000-4000-8000-000000000000',
+        eventId: event.id,
+      }),
+    ).toBeNull();
+    expect(
+      await caller.order.byId({
+        id: order.id,
+        eventId: '00000000-0000-4000-8000-000000000000',
+      }),
+    ).toBeNull();
+  });
+});
+
+describe('order.createManualOrder', () => {
+  beforeEach(() => {
+    mockRefund.mockReset();
+    vi.mocked(sendEmail).mockReset().mockResolvedValue({ ok: true });
+  });
+
+  // an event of "Org A" (10 tickets at 5 EUR, a 2 EUR extra, a custom
+  // field), plus another event with its own variant
+  async function setup({ stock = 10 }: { stock?: number } = {}) {
+    const org = await prisma.organization.create({
+      data: { name: 'Org A', email: 'org-a@org.test' },
+    });
+    const other = await prisma.organization.create({
+      data: { name: 'Org B', email: 'org-b@org.test' },
+    });
+    const member = await prisma.user.create({
+      data: { email: 'member@org-a.test', organizationId: org.id },
+    });
+    await prisma.user.create({
+      data: { email: 'member@org-b.test', organizationId: other.id },
+    });
+    const event = await prisma.event.create({
+      data: {
+        title: 'Grotto',
+        text: 'Description',
+        organizationId: org.id,
+        enabled: false, // off sale online: door sales still work
+        customFields: [
+          {
+            id: 'dietary',
+            name: 'dietary',
+            label: 'Dietary requirements',
+            type: 'text',
+            required: true,
+            displayOrder: 0,
+          },
+        ],
+        variants: {
+          create: {
+            title: '10:00 slot',
+            price: 5,
+            currency: 'EUR',
+            stock,
+            displayOrder: 0,
+          },
+        },
+        eventExtras: {
+          create: { title: 'Hot chocolate', price: 2, currency: 'EUR' },
+        },
+      },
+      include: { variants: true, eventExtras: true },
+    });
+    const otherEvent = await prisma.event.create({
+      data: {
+        title: 'Other',
+        text: 'Description',
+        organizationId: other.id,
+        variants: {
+          create: {
+            title: 'Other slot',
+            price: 1,
+            currency: 'GBP',
+            stock: 10,
+            displayOrder: 0,
+          },
+        },
+      },
+      include: { variants: true },
+    });
+    return {
+      event,
+      variantId: event.variants[0].id,
+      extraId: event.eventExtras[0].id,
+      otherVariantId: otherEvent.variants[0].id,
+      memberId: member.id,
+    };
+  }
+
+  async function callerFor(email = 'member@org-a.test') {
+    return createCaller(
+      await createContextInner({
+        session: {
+          user: { email },
+          expires: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+        },
+      }),
+    );
+  }
+
+  const stockOf = async (variantId: string) =>
+    (await prisma.variant.findUniqueOrThrow({ where: { id: variantId } }))
+      .stock;
+
+  test('takes the tickets out of stock and confirms the order at the price', async () => {
+    const { event, variantId, extraId, memberId } = await setup();
+    const caller = await callerFor();
+    const before = await metrics.manualOrders.get();
+    const cashBefore =
+      before.values.find((v) => v.labels.payment_method === 'cash')?.value ?? 0;
+
+    const result = await caller.order.createManualOrder({
+      eventId: event.id,
+      variantId,
+      quantity: 3,
+      extras: [extraId],
+      buyerName: '  Jane van der Berg ',
+      customFields: { dietary: 'Vegan', unknown: 'ignored' },
+      paymentMethod: 'CASH',
+      note: 'Paid at the door',
+    });
+
+    const order = await prisma.order.findUniqueOrThrow({
+      where: { id: result.id },
+    });
+    expect(order).toMatchObject({
+      eventId: event.id,
+      variantId,
+      quantity: 3,
+      status: 'CONFIRMED',
+      paymentMethod: 'CASH',
+      amount: 17, // 3 x 5 + 2
+      currency: 'EUR',
+      note: 'Paid at the door',
+      createdById: memberId,
+      externalId: null,
+      externalTransactionId: null,
+      customer: { name: { givenName: 'Jane', surname: 'van der Berg' } },
+      customFieldResponses: {
+        dietary: {
+          fieldId: 'dietary',
+          fieldLabel: 'Dietary requirements',
+          value: 'Vegan',
+        },
+      },
+    });
+    expect(order.selectedExtras).toMatchObject([
+      { id: extraId, title: 'Hot chocolate', price: 2, quantity: 1 },
+    ]);
+    expect(await stockOf(variantId)).toBe(7);
+
+    // no email address: nothing sent
+    expect(result).toMatchObject({ emailed: false, emailError: null });
+    expect(sendEmail).not.toHaveBeenCalled();
+
+    const after = await metrics.manualOrders.get();
+    expect(
+      after.values.find((v) => v.labels.payment_method === 'cash')?.value,
+    ).toBe(cashBefore + 1);
+
+    // shows up for check-in and in the revenue summary
+    const checkin = await caller.order.getOrdersForCheckin({
+      eventId: event.id,
+      search: 'jane',
+    });
+    expect(checkin.map((o) => o.id)).toEqual([order.id]);
+    const summary = await caller.user.getUserEventOrdersSummary({
+      eventId: event.id,
+    });
+    expect(summary).toMatchObject({
+      totalOrders: 1,
+      totalTickets: 3,
+      totalRevenue: 17,
+      addonRevenue: 2,
+      byPaymentMethod: { CASH: { orders: 1, revenue: 17 } },
+    });
+  });
+
+  test('records the amount actually paid', async () => {
+    const { event, variantId } = await setup();
+    const caller = await callerFor();
+
+    const { id } = await caller.order.createManualOrder({
+      eventId: event.id,
+      variantId,
+      quantity: 2,
+      buyerName: 'Bob',
+      paymentMethod: 'BANK_TRANSFER',
+      amount: 8.499,
+    });
+
+    const order = await prisma.order.findUniqueOrThrow({ where: { id } });
+    expect(order.amount).toBe(8.5);
+    expect(order.paymentMethod).toBe('BANK_TRANSFER');
+    expect(order.customer).toEqual({ name: { givenName: 'Bob', surname: '' } });
+  });
+
+  test('COMP orders are free, whatever amount is sent', async () => {
+    const { event, variantId, extraId } = await setup();
+    const caller = await callerFor();
+
+    const { id } = await caller.order.createManualOrder({
+      eventId: event.id,
+      variantId,
+      quantity: 2,
+      extras: [extraId],
+      buyerName: 'Guest',
+      paymentMethod: 'COMP',
+      amount: 25,
+    });
+
+    const order = await prisma.order.findUniqueOrThrow({ where: { id } });
+    expect(order.amount).toBe(0);
+    expect(order.paymentMethod).toBe('COMP');
+    expect(await stockOf(variantId)).toBe(8);
+
+    // the free extra doesn't turn ticket revenue negative
+    const summary = await caller.user.getUserEventOrdersSummary({
+      eventId: event.id,
+    });
+    expect(summary).toMatchObject({
+      totalRevenue: 0,
+      addonRevenue: 0,
+      ticketRevenue: 0,
+      byPaymentMethod: { COMP: { orders: 1, revenue: 0 } },
+    });
+  });
+
+  test('will not oversell, and nothing is created', async () => {
+    const { event, variantId } = await setup({ stock: 2 });
+    const caller = await callerFor();
+
+    await expect(
+      caller.order.createManualOrder({
+        eventId: event.id,
+        variantId,
+        quantity: 3,
+        buyerName: 'Too many',
+        paymentMethod: 'CASH',
+      }),
+    ).rejects.toMatchObject({
+      code: 'UNPROCESSABLE_CONTENT',
+      message: expect.stringContaining('(2 left)'),
+    });
+    expect(await stockOf(variantId)).toBe(2);
+    expect(await prisma.order.count()).toBe(0);
+
+    await prisma.variant.update({
+      where: { id: variantId },
+      data: { stock: 0 },
+    });
+    await expect(
+      caller.order.createManualOrder({
+        eventId: event.id,
+        variantId,
+        quantity: 1,
+        buyerName: 'Sold out',
+        paymentMethod: 'CASH',
+      }),
+    ).rejects.toMatchObject({
+      code: 'UNPROCESSABLE_CONTENT',
+      message: 'The selected option is out of stock',
+    });
+    expect(await prisma.order.count()).toBe(0);
+  });
+
+  test("refuses another event's variant", async () => {
+    const { event, otherVariantId } = await setup();
+    const caller = await callerFor();
+
+    await expect(
+      caller.order.createManualOrder({
+        eventId: event.id,
+        variantId: otherVariantId,
+        quantity: 1,
+        buyerName: 'Sneaky',
+        paymentMethod: 'COMP',
+      }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(await stockOf(otherVariantId)).toBe(10);
+    expect(await prisma.order.count()).toBe(0);
+  });
+
+  test('only members of the event organization', async () => {
+    const { event, variantId } = await setup();
+    const input = {
+      eventId: event.id,
+      variantId,
+      quantity: 1,
+      buyerName: 'Nope',
+      paymentMethod: 'COMP' as const,
+    };
+
+    await expect(
+      (await callerFor('member@org-b.test')).order.createManualOrder(input),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      (await callerFor('stranger@gmail.test')).order.createManualOrder(input),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      createCaller(
+        await createContextInner({ session: null }),
+      ).order.createManualOrder(input),
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    expect(await stockOf(variantId)).toBe(10);
+    expect(await prisma.order.count()).toBe(0);
+  });
+
+  test('emails the tickets when there is an address, unless told not to', async () => {
+    const { event, variantId } = await setup();
+    const caller = await callerFor();
+    const base = {
+      eventId: event.id,
+      variantId,
+      quantity: 1,
+      buyerName: 'Ann Other',
+      paymentMethod: 'CARD_IN_PERSON' as const,
+    };
+
+    const emailed = await caller.order.createManualOrder({
+      ...base,
+      buyerEmail: 'ann@example.com',
+    });
+    expect(emailed).toMatchObject({ emailed: true, emailError: null });
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'ann@example.com',
+        replyTo: 'org-a@org.test',
+      }),
+    );
+    const order = await prisma.order.findUniqueOrThrow({
+      where: { id: emailed.id },
+    });
+    expect(order.customer).toEqual({
+      name: { givenName: 'Ann', surname: 'Other' },
+      emailAddress: 'ann@example.com',
+    });
+    expect(order.confirmationEmailSentAt).not.toBeNull();
+
+    const notEmailed = await caller.order.createManualOrder({
+      ...base,
+      buyerEmail: 'ann@example.com',
+      sendEmail: false,
+    });
+    expect(notEmailed.emailed).toBe(false);
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+
+    // a failed send doesn't undo the order; the organiser is told
+    vi.mocked(sendEmail).mockResolvedValueOnce({
+      ok: false,
+      error: '401 Unauthorized',
+    });
+    const failed = await caller.order.createManualOrder({
+      ...base,
+      buyerEmail: 'ann@example.com',
+    });
+    expect(failed).toMatchObject({
+      emailed: false,
+      emailError: '401 Unauthorized',
+    });
+    expect(
+      (await prisma.order.findUniqueOrThrow({ where: { id: failed.id } }))
+        .status,
+    ).toBe('CONFIRMED');
+    expect(await stockOf(variantId)).toBe(7);
+  });
+
+  test('cancelling releases the stock without PayPal; refunds are refused', async () => {
+    const { event, variantId } = await setup();
+    const caller = await callerFor();
+    const { id } = await caller.order.createManualOrder({
+      eventId: event.id,
+      variantId,
+      quantity: 4,
+      buyerName: 'Cash Buyer',
+      paymentMethod: 'CASH',
+    });
+    expect(await stockOf(variantId)).toBe(6);
+
+    await expect(
+      caller.order.cancelOrder({ orderId: id, refund: true }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: expect.stringContaining("wasn't paid through PayPal"),
+    });
+
+    const result = await caller.order.cancelOrder({ orderId: id });
+    expect(result.refundStatus).toBe('NONE');
+    expect(mockRefund).not.toHaveBeenCalled();
+    const order = await prisma.order.findUniqueOrThrow({ where: { id } });
+    expect(order.status).toBe('CANCELLED');
+    expect(order.refundStatus).toBe('NONE');
+    expect(await stockOf(variantId)).toBe(10);
   });
 });
 
@@ -1052,11 +1560,11 @@ describe('order.cancelOrder with refunds', () => {
     );
     expect(generateCancellationMailContent).toHaveBeenCalledWith(
       expect.objectContaining({
+        reason: 'Slot double booked',
         refund: {
           amount: 10,
           currency: 'GBP',
           pending: false,
-          reason: 'Slot double booked',
         },
       }),
     );

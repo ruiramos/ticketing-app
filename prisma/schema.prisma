@@ -83,6 +83,16 @@ enum RefundStatus {
   FAILED // PayPal refused or errored: see refundError, retry with order.retryRefund
 }
 
+// How an order was paid. PAYPAL orders come from checkout; the others are
+// added by an organiser (order.createManualOrder): sold at the door, comps etc.
+enum PaymentMethod {
+  PAYPAL
+  CASH
+  CARD_IN_PERSON
+  BANK_TRANSFER
+  COMP // complimentary: free tickets
+}
+
 model Order {
   id                    String  @id @default(uuid())
   externalId            String?
@@ -120,9 +130,15 @@ model Order {
   amount   Float
   currency String
 
+  paymentMethod PaymentMethod @default(PAYPAL)
+  // manual orders: the organiser's note (not shown to the buyer) and who added it
+  note          String?
+  createdBy     User?         @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  createdById   String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?    @relation("OrderBuyer", fields: [userId], references: [id])
   userId    String?
 
   // PayPal capture and releaseOrder look orders up by their PayPal order id
@@ -183,10 +199,11 @@ model User {
   phone   String?
   address String?
 
-  orders         Order[]
+  orders         Order[]       @relation("OrderBuyer")
   organization   Organization? @relation(fields: [organizationId], references: [id])
   organizationId String?
 
+  createdOrders   Order[]                  @relation("OrderCreatedBy")
   sentInvitations OrganizationInvitation[]
 
   createdAt DateTime @default(now())
