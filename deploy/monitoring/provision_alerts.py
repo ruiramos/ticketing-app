@@ -68,7 +68,7 @@ RULES = [
      f'sum(increase(ticketing_order_capture_failures_total{{namespace="{NS}", stage="confirm"}}[1h]))',
      "gt", 2, "0s", "warning", "OK",
      "Customers finishing checkout after their reservation expired",
-     "A few are normal; a cluster means the 5-minute hold is too short or PayPal is slow."),
+     "A few are normal; a cluster means the 15-minute hold is too short or PayPal is slow."),
     ("ticketing-email-failures", "Ticketing: confirmation emails failing", "prom",
      f'sum(increase(ticketing_emails_total{{namespace="{NS}", outcome="failed"}}[30m]))',
      "gt", 0, "0s", "warning", "OK",
@@ -123,6 +123,26 @@ GREATDJ_RULES = [
      "More than 5% of greatdj requests are failing with 5xx",
      "502/504 usually means the server is restarting or hung. Logs: "
      "{namespace=\"default\", job=\"greatdj\"} and kubectl -n default get pods -l app=greatdj"),
+    # any greatdj pod (staging shares the YouTube key and Redis, so its pause
+    # stops prod searches too). The line is logged once per pause, so the 24h
+    # window keeps the alert firing for the whole pause (up to a day).
+    ("greatdj-youtube-quota-spent", "greatdj: YouTube search quota spent", "logs",
+     f'sum(count_over_time({{namespace="{NS}"}} |= "youtube search quota spent" [24h]))',
+     "gt", 0, "0s", "critical", "OK",
+     "YouTube search quota ran out in the last 24h: song search pauses until midnight Pacific",
+     "Paste a list of songs, Spotify import and the Zapier API can't find new songs "
+     "(cached ones still work) until the quota resets at midnight Pacific. Check usage in "
+     "Google Cloud Console > APIs & Services > YouTube Data API v3 > Quotas, and look for "
+     "unusual /expand_search or /spotify_s traffic in the Traefik access logs. To resume "
+     "early after raising the quota: kubectl exec deploy/redis-deployment -- redis-cli del "
+     "greatdj:ytsearch:quota-spent"),
+    ("greatdj-youtube-search-errors", "greatdj: YouTube search failing", "logs",
+     f'sum(count_over_time({{namespace="{NS}"}} |= "youtube search failed" [15m]))',
+     "gt", 5, "0s", "warning", "OK",
+     "YouTube searches are failing (not quota)",
+     "Usually the API key was revoked or restricted (400/403 keyInvalid, forbidden) or "
+     "YouTube is having trouble (5xx). The reason is in the log line: "
+     "{namespace=\"default\"} |= \"youtube search failed\""),
 ]
 
 # (folder/group title, app label, rules)
