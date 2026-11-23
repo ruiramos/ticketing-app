@@ -9,6 +9,7 @@ Everything goes to a **Grafana Cloud free** stack:
 | tRPC calls by procedure and result | app metrics on port 9464 (`src/server/metrics.ts`) | dashboard "Traffic" row |
 | Tickets sold, reservations, payments, PayPal, email | app metrics on port 9464 | dashboard "Sales" row |
 | Reservations expired, expiry job errors | expiry job's JSON summary log line | dashboard "Sales" + "Containers" rows |
+| great.dj playlists created (by source/kind), chat messages, multi-song searches, server heap | greatdj server metrics on port 9464 (`server/metrics.js` in ruiramos/greatdj), `job="greatdj"` | Grafana dashboard "GreatDJ — Web Traffic & Product Analytics" (folder greatdj), "App usage" row |
 | Logs | pod stdout → Loki; app writes JSON with pino (`src/server/logger.ts`) | Explore → Loki, dashboard "Logs" row |
 | Uptime from outside the cluster | Synthetic Monitoring | Testing & synthetics |
 

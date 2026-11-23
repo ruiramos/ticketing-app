@@ -77,7 +77,8 @@ podLogsViaLoki:
   onlyGatherNewLogLines: false
 
 # Scrapes pods annotated with prometheus.io/scrape: "true". On this cluster that
-# is Traefik (annotated by Civo's install) and the ticketing app (port 9464).
+# is Traefik (annotated by Civo's install), the ticketing app and greatdj
+# (both on port 9464).
 # Services are not discovered, so kube-dns etc. aren't scraped.
 annotationAutodiscovery:
   enabled: true
