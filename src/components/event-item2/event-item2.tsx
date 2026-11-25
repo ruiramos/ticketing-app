@@ -75,6 +75,15 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
     }
   }, [selectedVariantId]);
 
+  // Never let buyers ask for more tickets than the time slot has left.
+  const maxQuantity = selectedVariant
+    ? Math.max(1, Math.min(EVENT_MAX_TICKETS, selectedVariant.stock))
+    : EVENT_MAX_TICKETS;
+
+  useEffect(() => {
+    setQuantity((q) => Math.min(q, maxQuantity));
+  }, [maxQuantity]);
+
   const selectedExtras = useMemo(() => {
     return Object.entries(extrasState)
       .filter(([_, value]) => Boolean(value))
@@ -99,6 +108,8 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
     let label = `${variant.title}${areAllVariantsSamePrice ? '' : ` - £${variant.price.toFixed(2)}`}`;
     if (variant.stock === 0) {
       label += ' (Sold out)';
+    } else if (variant.stock === 1) {
+      label += ' (Only 1 left)';
     } else if (variant.stock <= LAST_FEW_STOCK_WARNING) {
       label += ` (Last few!)`;
     }
@@ -340,11 +351,9 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={
-                        isPurchaseDisabled || quantity >= EVENT_MAX_TICKETS
-                      }
+                      disabled={isPurchaseDisabled || quantity >= maxQuantity}
                       onClick={() =>
-                        setQuantity(Math.min(quantity + 1, EVENT_MAX_TICKETS))
+                        setQuantity(Math.min(quantity + 1, maxQuantity))
                       }
                       className="border-gray-200 hover:bg-gray-50"
                     >
@@ -352,6 +361,14 @@ export default function EventItem({ event }: { event: EventByIdOutput }) {
                     </Button>
                   </div>
                 </div>
+                {selectedVariant &&
+                  selectedVariant.stock > 0 &&
+                  selectedVariant.stock < EVENT_MAX_TICKETS &&
+                  quantity >= maxQuantity && (
+                    <p className="text-sm text-orange-600">
+                      Only {selectedVariant.stock} left for this time slot
+                    </p>
+                  )}
               </div>
 
               {/* Add-ons */}
