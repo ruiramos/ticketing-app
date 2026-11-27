@@ -20,7 +20,6 @@ RUN pnpm run generate
 RUN pnpm run build
 
 FROM base
-RUN corepack enable
 
 COPY --from=prod /app/prisma ./prisma
 COPY --from=prod /app/node_modules ./node_modules
@@ -28,6 +27,11 @@ COPY --from=prod /app/public ./public
 
 COPY --from=prod /app/.next/standalone ./
 COPY --from=prod /app/.next/static ./.next/static
+
+# Download pnpm (packageManager in package.json) at build time. Otherwise
+# corepack fetches it from npm on every container start, and the expire
+# CronJob fails whenever that download does.
+RUN corepack install
 
 COPY --from=prod /app/pnpm-*.yaml ./
 COPY --from=prod /app/tsconfig.json ./tsconfig.json
